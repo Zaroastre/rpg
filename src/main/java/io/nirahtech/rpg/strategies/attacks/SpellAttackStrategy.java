@@ -11,9 +11,8 @@ public final class SpellAttackStrategy implements AttackStategy {
     }
 
     @Override
-    public void attack(Character target) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'attack'");
+    public void attack(final Character target) {
+        this.spell.cast(target);
     }
     
 }

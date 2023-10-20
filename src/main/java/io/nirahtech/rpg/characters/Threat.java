@@ -5,7 +5,6 @@ public class Threat {
     private static final int LOW_LEVEL_THRESHOLD = 30;
     private static final int MEDIUM_LEVEL_THRESHOLD = 60;
     private static final int HIGH_LEVEL_THRESHOLD = 90;
-    private static final int CRITICAL_LEVEL_THRESHOLD = 90;
 
     private int level = 0;
 

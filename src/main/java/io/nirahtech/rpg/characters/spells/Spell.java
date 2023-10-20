@@ -3,6 +3,7 @@ package io.nirahtech.rpg.characters.spells;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import io.nirahtech.rpg.characters.Character;
 import io.nirahtech.rpg.characters.resources.ResourceType;
 
 public interface Spell {
@@ -18,7 +19,7 @@ public interface Spell {
     ResourceType getRequiredResource();
     int getResourceUsage();
     
-    void cast();
+    void cast(Character target);
     LocalDateTime getLastCastDateTime();
     SpellType getType();
 
