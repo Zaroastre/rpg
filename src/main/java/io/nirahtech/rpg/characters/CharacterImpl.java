@@ -1,5 +1,7 @@
 package io.nirahtech.rpg.characters;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import io.nirahtech.rpg.characters.classes.CharacterClass;
@@ -15,22 +17,16 @@ import io.nirahtech.rpg.weapons.Weapon;
 class CharacterImpl implements Character {
 
     private final String name;
+
     private final Breed breed;
     private final CharacterClass characterClass;
+    
+    private final Level level;
+    private final Life life;
+    
     private final Inventory inventory;
 
-    private int level;
-    private int maximalExperience;
-    private int currentExperience;
-
-    private int maximalLife;
-    private int currentLife;
-
-    private int maximalEndurance;
-    private int currentEndurance;
-    
-    private int maximalResource;
-    private int currentResource;
+    private final Map<Character, Threat> threats = new HashMap<>();
 
     private Point position;
     private float moveSpeed;
@@ -43,8 +39,23 @@ class CharacterImpl implements Character {
     private int treat;
     private Weapon weapon;
 
-    CharacterImpl() {
-        
+
+    CharacterImpl(
+        final String name,
+        final Breed breed,
+        final CharacterClass characterClass,
+        final Level level,
+        final Life life,
+        final Inventory inventory
+    ) {
+        this.name = name;
+        this.breed = breed;
+        this.characterClass = characterClass;
+        this.level = level;
+        this.life = life;
+        this.inventory = inventory;
+        this.life.winBoost(this.breed.getBaseHealth());
+
     }
 
     @Override
@@ -102,14 +113,14 @@ class CharacterImpl implements Character {
 
     @Override
     public void invite(Group group) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'invite'");
+        this.group = group;
     }
 
     @Override
     public void expel(Group group) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'expel'");
+        if (this.group.equals(group)) {
+            this.group = null;
+        }
     }
 
     @Override
@@ -126,39 +137,31 @@ class CharacterImpl implements Character {
 
     @Override
     public void focus(Character target) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'focus'");
+        this.target = target;
     }
 
     @Override
     public void releaseFocus(Character target) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'releaseFocus'");
+        if (this.target.equals(target)) {
+            this.target = null;
+        }
     }
 
     @Override
     public Optional<Character> getFocus() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getFocus'");
+        return Optional.ofNullable(this.target);
     }
 
     @Override
     public Breed getBreed() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getBreed'");
+        return this.breed;
     }
 
     @Override
     public CharacterClass getCharacterClass() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getCharacterClass'");
+        return this.characterClass;
     }
 
-    @Override
-    public int getLevel() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getLevel'");
-    }
 
     @Override
     public Weapon getWeapon() {
@@ -174,44 +177,27 @@ class CharacterImpl implements Character {
 
     @Override
     public Inventory getInventory() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getInventory'");
-    }
-
-    @Override
-    public int getMaximalExperience() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getMaximalExperience'");
-    }
-
-    @Override
-    public int getCurrentExperience() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getCurrentExperience'");
-    }
-
-    @Override
-    public void levelUp() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'levelUp'");
-    }
-
-    @Override
-    public void resetCurrentExperience() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'resetCurrentExperience'");
+        return this.inventory;
     }
 
     @Override
     public Point getPosition() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPosition'");
+        return this.position;
     }
 
     @Override
-    public int getThreat() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getThreat'");
+    public Optional<Threat> getThreat(Character target) {
+        return Optional.ofNullable(this.threats.get(target));
+    }
+
+    @Override
+    public Level getLevel() {
+        return this.level;
+    }
+
+    @Override
+    public Life getLife() {
+        return this.life;
     }
     
 }

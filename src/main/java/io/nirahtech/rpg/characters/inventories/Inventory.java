@@ -1,7 +1,10 @@
 package io.nirahtech.rpg.characters.inventories;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface Inventory {
-    List<Slot<?>> getSlots();
+    Collection<Slot<Object>> getSlots();
+
+    void put(Object object);
+    void remove(Object object);
 }

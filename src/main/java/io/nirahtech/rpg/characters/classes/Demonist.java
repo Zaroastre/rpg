@@ -1,10 +1,11 @@
 package io.nirahtech.rpg.characters.classes;
 
-import java.util.Set;
-
-import io.nirahtech.rpg.characters.abilities.ClassAbility;
-import io.nirahtech.rpg.weapons.Weapon;
+import io.nirahtech.rpg.characters.resources.Mana;
 
 public final class Demonist extends AbstractCharacterClass {
+
+    public Demonist() {
+        super(new Mana(200, 200));
+    }
     
 }

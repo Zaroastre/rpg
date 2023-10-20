@@ -19,4 +19,5 @@ public interface Character extends Attack, Defend, Movable, Groupable, Targetabl
     Weapon getWeapon();
     SkillsTree getSkillsTree();
     Inventory getInventory();
+    Life getLife();
 }

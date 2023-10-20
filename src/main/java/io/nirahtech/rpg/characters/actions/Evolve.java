@@ -1,9 +1,7 @@
 package io.nirahtech.rpg.characters.actions;
 
+import io.nirahtech.rpg.characters.Level;
+
 public interface Evolve {
-    int getLevel();
-    int getMaximalExperience();
-    int getCurrentExperience();
-    void levelUp();
-    void resetCurrentExperience();
+    Level getLevel();
 }
