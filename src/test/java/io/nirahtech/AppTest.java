@@ -58,6 +58,5 @@ public class AppTest
 
         nicolas.attack(AttackStrategyChooser.chooseBestStrategy(nicolas, Set.of(arthas)), arthas);
 
-        rebecca.getCharacterClass().getResource();
     }
 }
