@@ -1,8 +1,8 @@
 package io.nirahtech.rpg.characters.classes;
 
 import io.nirahtech.rpg.characters.Character;
-import io.nirahtech.rpg.characters.spells.Spell;
+import io.nirahtech.rpg.characters.spells.DamageSpell;
 
 interface SpellDamager {
-    void cast(Spell spell, Character target);
+    void cast(DamageSpell spell, Character enenmy);
 }

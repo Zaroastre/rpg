@@ -13,11 +13,12 @@ import io.nirahtech.rpg.characters.races.Breed;
 import io.nirahtech.rpg.characters.skiils.SkillsTree;
 import io.nirahtech.rpg.weapons.Weapon;
 
-public interface Character extends Attack, Defend, Movable, Groupable, Targetable, Evolve, Threatable {
+public interface Character<T extends CharacterClass> extends Attack, Defend, Movable, Groupable, Targetable, Evolve, Threatable {
     Breed getBreed();
-    CharacterClass getCharacterClass();
+    T getCharacterClass();
     Weapon getWeapon();
     SkillsTree getSkillsTree();
     Inventory getInventory();
     Life getLife();
+    Faction getFaction();
 }

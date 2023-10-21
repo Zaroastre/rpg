@@ -13,6 +13,7 @@ public interface Spell {
     int getRank();
     
     Duration getCooldown();
+    Duration getInvantationDuration();
 
     boolean canBeCasted();
     

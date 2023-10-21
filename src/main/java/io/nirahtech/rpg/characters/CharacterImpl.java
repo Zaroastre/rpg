@@ -14,13 +14,14 @@ import io.nirahtech.rpg.teams.Group;
 import io.nirahtech.rpg.teams.Raid;
 import io.nirahtech.rpg.weapons.Weapon;
 
-class CharacterImpl implements Character {
+class CharacterImpl<T extends CharacterClass> implements Character<T> {
 
     private final String name;
 
     private final Breed breed;
-    private final CharacterClass characterClass;
+    private final T characterClass;
     
+    private final Faction faction;
     private final Level level;
     private final Life life;
     
@@ -43,13 +44,15 @@ class CharacterImpl implements Character {
     CharacterImpl(
         final String name,
         final Breed breed,
-        final CharacterClass characterClass,
+        final T characterClass,
+        final Faction faction,
         final Level level,
         final Life life,
         final Inventory inventory
     ) {
         this.name = name;
         this.breed = breed;
+        this.faction = faction;
         this.characterClass = characterClass;
         this.level = level;
         this.life = life;
@@ -158,7 +161,7 @@ class CharacterImpl implements Character {
     }
 
     @Override
-    public CharacterClass getCharacterClass() {
+    public T getCharacterClass() {
         return this.characterClass;
     }
 
@@ -198,6 +201,11 @@ class CharacterImpl implements Character {
     @Override
     public Life getLife() {
         return this.life;
+    }
+
+    @Override
+    public Faction getFaction() {
+        return this.faction;
     }
     
 }

@@ -7,11 +7,12 @@ import io.nirahtech.rpg.characters.races.Breed;
 public final class CharacterFactory {
     private CharacterFactory() { }
 
-    public static final Character create(final String name, final Breed breed, final CharacterClass characterClass, final Level level) {
+    public static final <T extends CharacterClass> Character<T> create(final String name, final Breed breed, final T characterClass, final Faction faction, final Level level) {
         return new CharacterImpl(
             name,
             breed,
             characterClass,
+            faction,
             level,
             new Life(100),
             new Bag(5)

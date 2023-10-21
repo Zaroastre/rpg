@@ -9,7 +9,7 @@ public final class AttackStrategyChooser {
     private AttackStrategyChooser() { }
 
     public static final AttackStategy chooseBestStrategy(Character attacker, Set<Character> vilains) {
-
+        
         /*
         Examinez les caractéristiques de l'attaquant : Vous pouvez prendre en compte des caractéristiques telles que le niveau, la classe, les armes, les compétences, etc., de l'attaquant.
         

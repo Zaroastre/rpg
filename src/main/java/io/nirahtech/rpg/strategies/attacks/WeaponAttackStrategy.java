@@ -12,8 +12,7 @@ public final class WeaponAttackStrategy implements AttackStategy {
 
     @Override
     public void attack(Character target) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'attack'");
+        this.weapon.damage(target);
     }
     
 }
