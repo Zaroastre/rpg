@@ -13,6 +13,7 @@ import io.nirahtech.rpg.characters.classes.Priest;
 import io.nirahtech.rpg.characters.classes.Warrior;
 import io.nirahtech.rpg.characters.races.BloodElf;
 import io.nirahtech.rpg.characters.races.Human;
+import io.nirahtech.rpg.infrastructure.Point;
 import io.nirahtech.rpg.strategies.attacks.AttackStategy;
 import io.nirahtech.rpg.strategies.attacks.AttackStrategyChooser;
 import io.nirahtech.rpg.teams.Group;
@@ -35,6 +36,9 @@ public class AppTest
         lucy.follow(nicolas);
         anthony.follow(nicolas);
 
+
+        nicolas.goTo(new Point(600, 294, 0));
+
         final Character<Paladin> sargeras = CharacterFactory.create("Sargeras", new Human(), new Paladin(), Faction.HORDE, Level.Factory.create(1));
         final Character<Paladin> arthas = CharacterFactory.create("Athas", new Human(), new Paladin(), Faction.HORDE, Level.Factory.create(1));
         final Character<Paladin> kilJaeden = CharacterFactory.create("Kil'jaeden", new Human(), new Paladin(), Faction.HORDE, Level.Factory.create(1));
@@ -55,6 +59,10 @@ public class AppTest
         raid.add(nerZhuul);
         raid.add(azshara);
         raid.add(ragnaros);
+
+        if (nicolas.getHitBox().collide(rebecca.getHitBox())) {
+            System.out.println("We are in love");
+        }
 
         final Group group = Group.create(5);
         group.add(nicolas);

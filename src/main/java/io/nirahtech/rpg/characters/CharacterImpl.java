@@ -2,12 +2,15 @@ package io.nirahtech.rpg.characters;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
+import io.nirahtech.rpg.characters.body.Body;
 import io.nirahtech.rpg.characters.classes.CharacterClass;
 import io.nirahtech.rpg.characters.inventories.Inventory;
 import io.nirahtech.rpg.characters.races.Breed;
 import io.nirahtech.rpg.characters.skiils.SkillsTree;
+import io.nirahtech.rpg.characters.stuff.Wardrobe;
 import io.nirahtech.rpg.infrastructure.Point;
 import io.nirahtech.rpg.strategies.attacks.AttackStategy;
 import io.nirahtech.rpg.teams.Group;
@@ -29,9 +32,11 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     
     private final Inventory inventory;
 
+    private final Wardrobe wardrobe;
     private final Map<Character<? extends CharacterClass>, Threat> threats = new HashMap<>();
 
     private final HitBox hitBox;
+    private final Body body;
     private float moveSpeed;
 
     private Character<? extends CharacterClass> target = null;
@@ -40,6 +45,7 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     private Raid raid;
 
     private Weapon weapon;
+    private boolean isMoving = false;
 
 
     CharacterImpl(
@@ -58,8 +64,10 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
         this.level = level;
         this.life = life;
         this.inventory = inventory;
+        this.wardrobe = new Wardrobe();
         this.life.winBoost(this.breed.getBaseHealth());
         this.hitBox = new HitBox(new Point(0, 0, 0), CHARACTER_HITBOX_RADIUS);
+        this.body = new Body();
         this.moveSpeed = 1.1F;
 
     }
@@ -83,12 +91,14 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
 
     @Override
     public void run() {
+        this.isMoving = true;
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'run'");
     }
 
     @Override
     public void walk() {
+        this.isMoving = true;
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'walk'");
     }
@@ -131,14 +141,20 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
 
     @Override
     public void invite(Raid raid) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'invite'");
+        if (Objects.nonNull(raid)) {
+            if (Objects.nonNull(this.raid)) {
+                this.raid.expel(this);
+            }
+            this.raid = raid;
+            this.raid.add(this);
+        }
     }
 
     @Override
     public void expel(Raid raid) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'expel'");
+        if (Objects.nonNull(this.raid) && this.raid.equals(raid)) {
+            this.raid = null;
+        }
     }
 
     @Override
@@ -176,8 +192,7 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
 
     @Override
     public SkillsTree getSkillsTree() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getSkillsTree'");
+        return this.getCharacterClass().getSkillsTree();
     }
 
     @Override
@@ -212,24 +227,22 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
 
     @Override
     public void follow(Character<? extends CharacterClass> target) {
-        
-        // TODO Auto-generated method stub
-        
+        // TODO [NME] Must be implemented.
     }
+
     @Override
     public void sprint() {
-        // TODO Auto-generated method stub
+        this.isMoving = true;
     }
 
     @Override
     public void stayInPlace() {
-        // TODO Auto-generated method stub
+        this.isMoving = false;
     }
 
     @Override
     public void goTo(Point point) {
-        // TODO Auto-generated method stub
-        
+        // TODO [NME] Must be implemented.
     }
 
     @Override
@@ -239,8 +252,16 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
 
     @Override
     public boolean isMoving() {
-        // TODO Auto-generated method stub
-        return false;
+        return this.isMoving;
+    }
+
+    @Override
+    public Wardrobe getWardrobe() {
+        return this.wardrobe;
+    }
+    @Override
+    public Body getBody() {
+        return this.body;
     }
     
 }
