@@ -32,6 +32,7 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     private final Map<Character<? extends CharacterClass>, Threat> threats = new HashMap<>();
 
     private final HitBox hitBox;
+    private final Gender gender;
     private float moveSpeed;
 
     private Character<? extends CharacterClass> target = null;
@@ -47,6 +48,7 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
         final Breed breed,
         final T characterClass,
         final Faction faction,
+        final Gender gender,
         final Level level,
         final Life life,
         final Inventory inventory
@@ -61,6 +63,7 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
         this.life.winBoost(this.breed.getBaseHealth());
         this.hitBox = new HitBox(new Point(0, 0, 0), CHARACTER_HITBOX_RADIUS);
         this.moveSpeed = 1.1F;
+        this.gender = gender;
 
     }
 
@@ -241,6 +244,11 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     public boolean isMoving() {
         // TODO Auto-generated method stub
         return false;
+    }
+
+    @Override
+    public Gender getGender() {
+        return this.gender;
     }
     
 }

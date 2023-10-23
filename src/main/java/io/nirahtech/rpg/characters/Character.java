@@ -22,4 +22,5 @@ public interface Character<T extends CharacterClass> extends Attack, Defend, Mov
     Life getLife();
     Faction getFaction();
     HitBox getHitBox();
+    Gender getGender();
 }
