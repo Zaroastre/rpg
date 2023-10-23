@@ -5,6 +5,9 @@ import io.nirahtech.rpg.characters.classes.CharacterClass;
 import io.nirahtech.rpg.infrastructure.Point;
 
 public interface Movable {
+
+    void goTo(Point point);
+
     void stayInPlace();
     void walk();
     void run();
@@ -16,6 +19,8 @@ public interface Movable {
     void lieDown();
     
     Point getPosition();
-    
+
     void follow(Character<? extends CharacterClass> target);
+
+    boolean isMoving();
 }

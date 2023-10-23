@@ -16,6 +16,8 @@ import io.nirahtech.rpg.weapons.Weapon;
 
 class CharacterImpl<T extends CharacterClass> implements Character<T> {
 
+    private static final int CHARACTER_HITBOX_RADIUS = 10;
+
     private final String name;
 
     private final Breed breed;
@@ -27,12 +29,12 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     
     private final Inventory inventory;
 
-    private final Map<Character, Threat> threats = new HashMap<>();
+    private final Map<Character<? extends CharacterClass>, Threat> threats = new HashMap<>();
 
-    private Point position;
+    private final HitBox hitBox;
     private float moveSpeed;
 
-    private Character target = null;
+    private Character<? extends CharacterClass> target = null;
 
     private Group group;
     private Raid raid;
@@ -57,11 +59,13 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
         this.life = life;
         this.inventory = inventory;
         this.life.winBoost(this.breed.getBaseHealth());
+        this.hitBox = new HitBox(new Point(0, 0, 0), CHARACTER_HITBOX_RADIUS);
+        this.moveSpeed = 1.1F;
 
     }
 
     @Override
-    public void attack(AttackStategy attackStategy, Character target) {
+    public void attack(AttackStategy attackStategy, Character<? extends CharacterClass> target) {
         attackStategy.attack(target);
     }
 
@@ -138,12 +142,12 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     }
 
     @Override
-    public void focus(Character target) {
+    public void focus(Character<? extends CharacterClass> target) {
         this.target = target;
     }
 
     @Override
-    public void releaseFocus(Character target) {
+    public void releaseFocus(Character<? extends CharacterClass> target) {
         if (this.target.equals(target)) {
             this.target = null;
         }
@@ -183,11 +187,11 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
 
     @Override
     public Point getPosition() {
-        return this.position;
+        return this.hitBox.getCenter();
     }
 
     @Override
-    public Optional<Threat> getThreat(Character target) {
+    public Optional<Threat> getThreat(Character<? extends CharacterClass> target) {
         return Optional.ofNullable(this.threats.get(target));
     }
 
@@ -220,6 +224,23 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     @Override
     public void stayInPlace() {
         // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void goTo(Point point) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public HitBox getHitBox() {
+        return this.hitBox;
+    }
+
+    @Override
+    public boolean isMoving() {
+        // TODO Auto-generated method stub
+        return false;
     }
     
 }
