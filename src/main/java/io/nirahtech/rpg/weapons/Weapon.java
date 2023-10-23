@@ -1,6 +1,7 @@
 package io.nirahtech.rpg.weapons;
 
 import io.nirahtech.rpg.characters.Character;
+import io.nirahtech.rpg.characters.classes.CharacterClass;
 
 public interface Weapon {
     String getName();
@@ -9,5 +10,5 @@ public interface Weapon {
     int getMaximalDamage();
     float getSpeed();
     float getHitChance();
-    int damage(Character target);
+    int damage(Character<? extends CharacterClass> target);
 }

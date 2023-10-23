@@ -33,7 +33,7 @@ public final class WeaponAttackStrategy implements AttackStategy {
     }
 
     @Override
-    public void attack(Character target) {
+    public void attack(Character<? extends CharacterClass> target) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'attack'");
     }
@@ -42,7 +42,7 @@ public final class WeaponAttackStrategy implements AttackStategy {
 package io.nirahtech.rpg.strategies.attacks;
 
 public interface AttackStategy {
-    void attack(Character target);
+    void attack(Character<? extends CharacterClass> target);
 }
 package io.nirahtech.rpg.strategies.attacks;
 
@@ -56,7 +56,7 @@ public final class SpellAttackStrategy implements AttackStategy {
     }
 
     @Override
-    public void attack(Character target) {
+    public void attack(Character<? extends CharacterClass> target) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'attack'");
     }
@@ -185,7 +185,7 @@ import io.nirahtech.rpg.teams.Group;
 import io.nirahtech.rpg.teams.Raid;
 import io.nirahtech.rpg.weapons.Weapon;
 
-class CharacterImpl implements Character {
+class CharacterImpl implements Character<? extends CharacterClass> {
 
     private final String name;
     private final Breed breed;
@@ -208,7 +208,7 @@ class CharacterImpl implements Character {
     private Point position;
     private float moveSpeed;
 
-    private Character target = null;
+    private Character<? extends CharacterClass> target = null;
 
     private Group group;
     private Raid raid;
@@ -221,7 +221,7 @@ class CharacterImpl implements Character {
     }
 
     @Override
-    public void attack(Character target) {
+    public void attack(Character<? extends CharacterClass> target) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'attack'");
     }
@@ -299,13 +299,13 @@ class CharacterImpl implements Character {
     }
 
     @Override
-    public void focus(Character target) {
+    public void focus(Character<? extends CharacterClass> target) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'focus'");
     }
 
     @Override
-    public void releaseFocus(Character target) {
+    public void releaseFocus(Character<? extends CharacterClass> target) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'releaseFocus'");
     }
@@ -513,8 +513,8 @@ import io.nirahtech.rpg.characters.Character;
 import java.util.Optional;
 
 public interface Targetable {
-    void focus(Character target);
-    void releaseFocus(Character target);
+    void focus(Character<? extends CharacterClass> target);
+    void releaseFocus(Character<? extends CharacterClass> target);
     Optional<io.nirahtech.rpg.characters.Character> getFocus();
 }
 package io.nirahtech.rpg.characters.actions;
@@ -560,7 +560,7 @@ package io.nirahtech.rpg.characters.actions;
 import io.nirahtech.rpg.characters.Character;
 
 public interface Attack {
-    void attack(Character target);
+    void attack(Character<? extends CharacterClass> target);
 }
 package io.nirahtech.rpg.characters.actions;
 
@@ -590,7 +590,7 @@ import io.nirahtech.rpg.characters.races.Breed;
 import io.nirahtech.rpg.characters.skiils.SkillsTree;
 import io.nirahtech.rpg.weapons.Weapon;
 
-public interface Character extends Attack, Defend, Movable, Groupable, Targetable, Evolve, Threatable {
+public interface Character<? extends CharacterClass> extends Attack, Defend, Movable, Groupable, Targetable, Evolve, Threatable {
     Breed getBreed();
     CharacterClass getCharacterClass();
     Weapon getWeapon();
@@ -621,7 +621,7 @@ import io.nirahtech.rpg.characters.races.Breed;
 public final class CharacterFactory {
     private CharacterFactory() { }
 
-    public static final Character create(final Breed breed, final CharacterClass characterClass) {
+    public static final Character<? extends CharacterClass> create(final Breed breed, final CharacterClass characterClass) {
         return new CharacterImpl();
     }
 }
@@ -672,7 +672,7 @@ public final class CharacterBuilder {
 
     
 
-    public final Character build() {
+    public final Character<? extends CharacterClass> build() {
         return null;
     }
 }
@@ -711,8 +711,8 @@ import io.nirahtech.rpg.characters.Character;
 public class AppTest 
 {
     public static void main(String[] args) {
-        Character nicolas = CharacterFactory.create(BloodElf.class, Paladin.class);
-        Character victor = CharacterFactory.create(BloodElf.class, Paladin.class);
+        Character<? extends CharacterClass> nicolas = CharacterFactory.create(BloodElf.class, Paladin.class);
+        Character<? extends CharacterClass> victor = CharacterFactory.create(BloodElf.class, Paladin.class);
         nicolas.attack(victor);
     }
 }

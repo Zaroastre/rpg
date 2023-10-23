@@ -1,6 +1,9 @@
 package io.nirahtech.rpg.strategies.attacks;
 
+import java.util.Objects;
+
 import io.nirahtech.rpg.characters.Character;
+import io.nirahtech.rpg.characters.classes.CharacterClass;
 import io.nirahtech.rpg.weapons.Weapon;
 
 public final class WeaponAttackStrategy implements AttackStategy {
@@ -11,8 +14,10 @@ public final class WeaponAttackStrategy implements AttackStategy {
     }
 
     @Override
-    public void attack(Character target) {
-        this.weapon.damage(target);
+    public void attack(Character<? extends CharacterClass> target) {
+        if (Objects.nonNull(this.weapon) && Objects.nonNull(target)) {
+            this.weapon.damage(target);
+        }
     }
     
 }

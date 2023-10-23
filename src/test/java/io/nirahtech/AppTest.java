@@ -13,6 +13,7 @@ import io.nirahtech.rpg.characters.classes.Priest;
 import io.nirahtech.rpg.characters.classes.Warrior;
 import io.nirahtech.rpg.characters.races.BloodElf;
 import io.nirahtech.rpg.characters.races.Human;
+import io.nirahtech.rpg.strategies.attacks.AttackStategy;
 import io.nirahtech.rpg.strategies.attacks.AttackStrategyChooser;
 import io.nirahtech.rpg.teams.Group;
 import io.nirahtech.rpg.teams.Raid;
@@ -28,6 +29,11 @@ public class AppTest
         final Character<Priest> rebecca = CharacterFactory.create("Rebecca", new BloodElf(), new Priest(), Faction.HORDE, Level.Factory.create(1));
         final Character<Demonist> lucy = CharacterFactory.create("Lucy", new BloodElf(), new Demonist(), Faction.HORDE, Level.Factory.create(1));
         final Character<Warrior> anthony = CharacterFactory.create("Anthony", new BloodElf(), new Warrior(), Faction.HORDE, Level.Factory.create(1));
+
+        victor.follow(nicolas);
+        rebecca.follow(nicolas);
+        lucy.follow(nicolas);
+        anthony.follow(nicolas);
 
         final Character<Paladin> sargeras = CharacterFactory.create("Sargeras", new Human(), new Paladin(), Faction.HORDE, Level.Factory.create(1));
         final Character<Paladin> arthas = CharacterFactory.create("Athas", new Human(), new Paladin(), Faction.HORDE, Level.Factory.create(1));
@@ -57,7 +63,8 @@ public class AppTest
         group.add(lucy);
         group.add(anthony);
 
-        nicolas.attack(AttackStrategyChooser.chooseBestStrategy(nicolas, Set.of(arthas)), arthas);
+        final AttackStategy attackStategy = AttackStrategyChooser.chooseBestStrategy(nicolas, Set.of(arthas));
+        nicolas.attack(attackStategy, arthas);
 
     }
 }

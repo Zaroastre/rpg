@@ -37,7 +37,6 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     private Group group;
     private Raid raid;
 
-    private int treat;
     private Weapon weapon;
 
 
@@ -151,7 +150,7 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     }
 
     @Override
-    public Optional<Character> getFocus() {
+    public Optional<Character<? extends CharacterClass>> getFocus() {
         return Optional.ofNullable(this.target);
     }
 
@@ -168,8 +167,7 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
 
     @Override
     public Weapon getWeapon() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getWeapon'");
+        return this.weapon;
     }
 
     @Override
@@ -206,6 +204,22 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     @Override
     public Faction getFaction() {
         return this.faction;
+    }
+
+    @Override
+    public void follow(Character<? extends CharacterClass> target) {
+        
+        // TODO Auto-generated method stub
+        
+    }
+    @Override
+    public void sprint() {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void stayInPlace() {
+        // TODO Auto-generated method stub
     }
     
 }

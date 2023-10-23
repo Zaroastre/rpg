@@ -31,7 +31,7 @@ public final class CharacterBuilder {
 
     
 
-    public final Character build() {
+    public final Character<? extends CharacterClass> build() {
         return null;
     }
 }

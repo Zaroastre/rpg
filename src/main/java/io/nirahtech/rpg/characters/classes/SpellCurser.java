@@ -5,5 +5,5 @@ import io.nirahtech.rpg.characters.spells.InfectSpell;
 
 public interface SpellCurser {
     
-    void curse(InfectSpell spell, Character enemy);
+    void curse(InfectSpell spell, Character<? extends CharacterClass> enemy);
 }

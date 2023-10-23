@@ -1,6 +1,6 @@
 package io.nirahtech.rpg.characters.roles;
 
-public enum CharacterRole {
+public enum Role {
     TANK,
     DPS,
     HEAL
