@@ -1,5 +1,7 @@
 package io.nirahtech.rpg.characters;
 
+import java.io.File;
+
 import io.nirahtech.rpg.characters.actions.Attack;
 import io.nirahtech.rpg.characters.actions.Defend;
 import io.nirahtech.rpg.characters.actions.Evolve;
@@ -26,4 +28,5 @@ public interface Character<T extends CharacterClass> extends Attack, Defend, Mov
     HitBox getHitBox();
     Gender getGender();
     Currency getCurrency();
+    File getAvatarPicture();
 }

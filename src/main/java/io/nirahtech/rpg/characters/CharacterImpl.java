@@ -1,5 +1,6 @@
 package io.nirahtech.rpg.characters;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -38,6 +39,7 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     private float moveSpeed;
 
     private Character<? extends CharacterClass> target = null;
+    private File avatarPicture;
 
     private Group group;
     private Raid raid;
@@ -260,6 +262,10 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     @Override
     public String getName() {
         return this.name;
+    }
+    @Override
+    public File getAvatarPicture() {
+        return this.avatarPicture;
     }
     
 }

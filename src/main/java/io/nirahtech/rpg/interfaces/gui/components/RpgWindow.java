@@ -3,11 +3,17 @@ package io.nirahtech.rpg.interfaces.gui.components;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+
+import io.nirahtech.rpg.environment.Planet;
+import io.nirahtech.rpg.environment.World;
 
 public final class RpgWindow {
 
@@ -27,6 +33,13 @@ public final class RpgWindow {
         this.root.add(this.creatorPanel);
         this.creatorPanel.addOnCharacterCreated((character) -> {
             System.out.println(String.format("%s was created!", character.getName()));
+
+            final String worldName = UUID.randomUUID().toString();
+            final Set<Planet> planets = new HashSet<>();
+            planets.add(new Planet(UUID.randomUUID().toString(), null));
+            planets.add(new Planet(UUID.randomUUID().toString(), null));
+            final World world = new World(worldName, planets);
+            world.planets().stream().findFirst().get().continents().stream().findFirst().get().regions().stream().findFirst().get();
             this.root.remove(this.creatorPanel);
             this.inGamePanel = new InGamePanel(character);
             this.root.add(this.inGamePanel);
