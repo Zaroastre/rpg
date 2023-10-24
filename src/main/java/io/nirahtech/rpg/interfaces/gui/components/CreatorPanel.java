@@ -2,6 +2,7 @@ package io.nirahtech.rpg.interfaces.gui.components;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import javax.swing.DefaultComboBoxModel;
@@ -13,8 +14,10 @@ import javax.swing.JSlider;
 import javax.swing.JTextField;
 
 import io.nirahtech.rpg.characters.Character;
+import io.nirahtech.rpg.characters.CharacterFactory;
 import io.nirahtech.rpg.characters.Faction;
 import io.nirahtech.rpg.characters.Gender;
+import io.nirahtech.rpg.characters.Level;
 import io.nirahtech.rpg.characters.classes.CharacterClass;
 import io.nirahtech.rpg.characters.classes.ClassType;
 import io.nirahtech.rpg.characters.races.BreedType;
@@ -71,7 +74,7 @@ public class CreatorPanel extends JPanel {
 
         this.breedPanel = new JPanel(new GridLayout(1, 2));
         this.breedLabel = new JLabel("Breed");
-        this.breedComboBox = new JComboBox<>(BreedType.values());
+        this.breedComboBox = new JComboBox<>(new BreedComboBoxModel(BreedType.values()));
         this.breedPanel.add(this.breedLabel);
         this.breedPanel.add(this.breedComboBox);
 
@@ -102,13 +105,22 @@ public class CreatorPanel extends JPanel {
         this.actionPanel.add(this.actionLabel);
         this.actionPanel.add(this.creatorButton);
         this.creatorButton.addActionListener((event) -> {
-            System.out.println(this.breedComboBox.getSelectedItem());
-            // Breed breed = this.breedComboBox.getSelectedItem(),
-            // Character<? extends CharacterClass> character =
-            // CharacterFactory.create(this.usernameTextField.getText(), null, null,
-            // this.genderComboBox.getSelectedItem(),
-            // this.factionComboBox.getSelectedItem(),
-            // Level.Factory.create(this.levelSlider.getValue()));
+            final String name = this.usernameTextField.getText();
+            final BreedType breedType = (BreedType) this.breedComboBox.getSelectedItem();
+            final ClassType characterClassType = (ClassType) this.classComboBox.getSelectedItem();
+            final Gender gender = (Gender) this.genderComboBox.getSelectedItem();
+            final Level level = Level.Factory.create(this.levelSlider.getValue());
+            final Faction faction = (Faction) this.factionComboBox.getSelectedItem();
+            final Character<? extends CharacterClass> character = CharacterFactory.create(
+                        name, 
+                        breedType.create(),
+                        characterClassType.create(),
+                        gender,
+                        faction,
+                        level);
+            if (Objects.nonNull(this.onClickCallback)) {
+                this.onClickCallback.accept(character);
+            }
         });
 
         this.add(this.usernamePanel);
@@ -127,8 +139,20 @@ public class CreatorPanel extends JPanel {
 
         @Override
         public Gender getSelectedItem() {
-            Gender selectedJob = (Gender) super.getSelectedItem();
-            return selectedJob;
+            final Gender item = (Gender) super.getSelectedItem();
+            return item;
+        }
+    }
+
+    private final class BreedComboBoxModel extends DefaultComboBoxModel<BreedType> {
+        public BreedComboBoxModel(BreedType[] items) {
+            super(items);
+        }
+
+        @Override
+        public BreedType getSelectedItem() {
+            final BreedType item = (BreedType) super.getSelectedItem();
+            return item;
         }
     }
 }

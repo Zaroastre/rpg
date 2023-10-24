@@ -16,6 +16,7 @@ public final class RpgWindow {
     private final JPanel root;
 
     private final CreatorPanel creatorPanel;
+    private InGamePanel inGamePanel;
 
     public RpgWindow() {
         this.windowSize = new Dimension(800, 600);
@@ -24,6 +25,13 @@ public final class RpgWindow {
         this.frame.add(this.root);
         this.creatorPanel = new CreatorPanel();
         this.root.add(this.creatorPanel);
+        this.creatorPanel.addOnCharacterCreated((character) -> {
+            System.out.println(String.format("%s was created!", character.getName()));
+            this.root.remove(this.creatorPanel);
+            this.inGamePanel = new InGamePanel(character);
+            this.root.add(this.inGamePanel);
+            this.root.updateUI();
+        });
     }
 
     public void display() {

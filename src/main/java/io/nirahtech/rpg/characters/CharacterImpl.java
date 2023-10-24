@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import io.nirahtech.rpg.characters.classes.CharacterClass;
 import io.nirahtech.rpg.characters.inventories.Inventory;
+import io.nirahtech.rpg.characters.money.Currency;
 import io.nirahtech.rpg.characters.races.Breed;
 import io.nirahtech.rpg.characters.skiils.SkillsTree;
 import io.nirahtech.rpg.infrastructure.Point;
@@ -33,6 +34,7 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
 
     private final HitBox hitBox;
     private final Gender gender;
+    private final Currency currency;
     private float moveSpeed;
 
     private Character<? extends CharacterClass> target = null;
@@ -64,6 +66,7 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
         this.hitBox = new HitBox(new Point(0, 0, 0), CHARACTER_HITBOX_RADIUS);
         this.moveSpeed = 1.1F;
         this.gender = gender;
+        this.currency = new Currency(10, 0, 0);
 
     }
 
@@ -249,6 +252,14 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     @Override
     public Gender getGender() {
         return this.gender;
+    }
+    @Override
+    public Currency getCurrency() {
+        return this.currency;
+    }
+    @Override
+    public String getName() {
+        return this.name;
     }
     
 }
