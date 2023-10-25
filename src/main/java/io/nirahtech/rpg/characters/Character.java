@@ -28,12 +28,9 @@ public interface Character<T extends CharacterClass> extends Attack, Defend, Mov
     Life getLife();
     Faction getFaction();
     HitBox getHitBox();
-<<<<<<< HEAD
     Wardrobe getWardrobe();
     Body getBody();
-=======
     Gender getGender();
     Currency getCurrency();
     File getAvatarPicture();
->>>>>>> 7093937391065b1d1207799095eb0e9954e6cd33
 }

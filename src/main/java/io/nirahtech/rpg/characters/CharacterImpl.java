@@ -38,12 +38,9 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     private final Map<Character<? extends CharacterClass>, Threat> threats = new HashMap<>();
 
     private final HitBox hitBox;
-<<<<<<< HEAD
     private final Body body;
-=======
     private final Gender gender;
     private final Currency currency;
->>>>>>> 7093937391065b1d1207799095eb0e9954e6cd33
     private float moveSpeed;
 
     private Character<? extends CharacterClass> target = null;
