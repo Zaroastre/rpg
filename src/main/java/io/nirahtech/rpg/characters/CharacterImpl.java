@@ -1,5 +1,6 @@
 package io.nirahtech.rpg.characters;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -8,6 +9,7 @@ import java.util.Optional;
 import io.nirahtech.rpg.characters.body.Body;
 import io.nirahtech.rpg.characters.classes.CharacterClass;
 import io.nirahtech.rpg.characters.inventories.Inventory;
+import io.nirahtech.rpg.characters.money.Currency;
 import io.nirahtech.rpg.characters.races.Breed;
 import io.nirahtech.rpg.characters.skiils.SkillsTree;
 import io.nirahtech.rpg.characters.stuff.Wardrobe;
@@ -36,10 +38,16 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     private final Map<Character<? extends CharacterClass>, Threat> threats = new HashMap<>();
 
     private final HitBox hitBox;
+<<<<<<< HEAD
     private final Body body;
+=======
+    private final Gender gender;
+    private final Currency currency;
+>>>>>>> 7093937391065b1d1207799095eb0e9954e6cd33
     private float moveSpeed;
 
     private Character<? extends CharacterClass> target = null;
+    private File avatarPicture;
 
     private Group group;
     private Raid raid;
@@ -53,6 +61,7 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
         final Breed breed,
         final T characterClass,
         final Faction faction,
+        final Gender gender,
         final Level level,
         final Life life,
         final Inventory inventory
@@ -69,6 +78,8 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
         this.hitBox = new HitBox(new Point(0, 0, 0), CHARACTER_HITBOX_RADIUS);
         this.body = new Body();
         this.moveSpeed = 1.1F;
+        this.gender = gender;
+        this.currency = new Currency(10, 0, 0);
 
     }
 
@@ -262,6 +273,23 @@ class CharacterImpl<T extends CharacterClass> implements Character<T> {
     @Override
     public Body getBody() {
         return this.body;
+    }
+
+    @Override
+    public Gender getGender() {
+        return this.gender;
+    }
+    @Override
+    public Currency getCurrency() {
+        return this.currency;
+    }
+    @Override
+    public String getName() {
+        return this.name;
+    }
+    @Override
+    public File getAvatarPicture() {
+        return this.avatarPicture;
     }
     
 }
