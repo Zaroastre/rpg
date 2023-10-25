@@ -1,9 +1,12 @@
 package io.nirahtech.rpg.interfaces.gui.components;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -12,6 +15,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import io.nirahtech.rpg.characters.Character;
 import io.nirahtech.rpg.characters.CharacterFactory;
@@ -72,6 +77,9 @@ public class CreatorPanel extends JPanel {
         this.genderPanel.add(this.genderLabel);
         this.genderPanel.add(this.genderComboBox, BorderLayout.CENTER);
 
+        this.genderComboBox.setPreferredSize(new Dimension(50, 10));
+        this.genderComboBox.setSize(new Dimension(50, 10));
+
         this.breedPanel = new JPanel(new GridLayout(1, 2));
         this.breedLabel = new JLabel("Breed");
         this.breedComboBox = new JComboBox<>(new BreedComboBoxModel(BreedType.values()));
@@ -104,6 +112,47 @@ public class CreatorPanel extends JPanel {
         this.creatorButton = new JButton("Create");
         this.actionPanel.add(this.actionLabel);
         this.actionPanel.add(this.creatorButton);
+
+
+        this.usernameTextField.getDocument().addDocumentListener(new DocumentListener() {
+            private static final int MINIMUM_ALLOWED_CHARACTERS_LENGTH = 2;
+
+            @Override
+            public void changedUpdate(final DocumentEvent e) {
+                this.handleValue(e);
+            }
+            @Override
+            public void insertUpdate(final DocumentEvent e) {
+                this.handleValue(e);
+            }
+            @Override
+            public void removeUpdate(final DocumentEvent e) {
+                this.handleValue(e);
+            }
+
+            private final void handleValue(final DocumentEvent e) {
+                boolean isEnabled = false;
+                if (usernameTextField.getText().isBlank()) {
+                    isEnabled = false;
+                } else {
+                    if (usernameTextField.getText().length() < MINIMUM_ALLOWED_CHARACTERS_LENGTH) {
+                        isEnabled = false;
+                    } else {
+                        if (usernameTextField.getText().contains(" ")) {
+                            isEnabled = false;
+                        } else {
+                            Pattern pattern = Pattern.compile(".*\\d.*");
+                            Matcher matcher = pattern.matcher(usernameTextField.getText());
+                            isEnabled = !matcher.find();
+                        }
+                    }
+
+                }
+                creatorButton.setEnabled(isEnabled);
+            }
+
+        });
+        this.creatorButton.setEnabled(false);
         this.creatorButton.addActionListener((event) -> {
             final String name = this.usernameTextField.getText();
             final BreedType breedType = (BreedType) this.breedComboBox.getSelectedItem();

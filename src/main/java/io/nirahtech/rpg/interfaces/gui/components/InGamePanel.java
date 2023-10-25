@@ -19,17 +19,20 @@ import javax.swing.JProgressBar;
 
 import io.nirahtech.rpg.characters.Character;
 import io.nirahtech.rpg.characters.classes.CharacterClass;
+import io.nirahtech.rpg.environment.World;
 import io.nirahtech.rpg.teams.Group;
 
 public class InGamePanel extends JPanel {
 
+    private final World world;
     private final Character<? extends CharacterClass> character;
     private final Group group;
 
     private final GroupPanel groupPanel;
 
-    public InGamePanel(Character<? extends CharacterClass> character) {
+    public InGamePanel(final World world, final Character<? extends CharacterClass> character) {
         super(new BorderLayout());
+        this.world = world;
         this.character = character;
         this.group = Group.create(5);
         this.group.add(this.character);

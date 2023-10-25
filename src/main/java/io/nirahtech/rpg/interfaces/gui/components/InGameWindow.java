@@ -12,43 +12,26 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import io.nirahtech.rpg.characters.Character;
+import io.nirahtech.rpg.characters.classes.CharacterClass;
 import io.nirahtech.rpg.environment.Planet;
 import io.nirahtech.rpg.environment.World;
 
-public final class RpgWindow {
+public final class InGameWindow {
 
     private final Dimension windowSize;
     private final JFrame frame;
     private final JPanel root;
 
-    private final CreatorPanel creatorPanel;
-    private InGamePanel inGamePanel;
-
-    public RpgWindow() {
+    private final InGamePanel inGamePanel;
+    
+    public InGameWindow(World world, Character<? extends CharacterClass> character) {
         this.windowSize = new Dimension(800, 600);
         this.root = new JPanel(new BorderLayout());
         this.frame = new JFrame("RPG");
         this.frame.add(this.root);
-        this.creatorPanel = new CreatorPanel();
-        this.root.add(this.creatorPanel);
-        this.creatorPanel.addOnCharacterCreated((character) -> {
-            System.out.println(String.format("%s was created!", character.getName()));
-
-            final String worldName = UUID.randomUUID().toString();
-            final Set<Planet> planets = new HashSet<>();
-            planets.add(new Planet(UUID.randomUUID().toString(), null));
-            planets.add(new Planet(UUID.randomUUID().toString(), null));
-            final World world = new World(worldName, planets);
-            this.root.remove(this.creatorPanel);
-            this.inGamePanel = new InGamePanel(world, character);
-            this.root.add(this.inGamePanel);
-            this.root.updateUI();
-            this.frame.setEnabled(false);
-            this.frame.setVisible(false);
-            InGameWindow inGameWindow = new InGameWindow(world, character);
-            inGameWindow.display();
-
-        });
+        this.inGamePanel = new InGamePanel(world, character);
+        this.root.add(this.inGamePanel);
     }
 
     public void display() {
@@ -63,8 +46,8 @@ public final class RpgWindow {
 
         this.root.setBackground(Color.BLACK);
         
-        // this.frame.setPreferredSize(this.windowSize);
-        // this.frame.setSize(this.windowSize);
+        this.frame.setPreferredSize(this.windowSize);
+        this.frame.setSize(this.windowSize);
         this.frame.pack();
         this.frame.setResizable(false);
         this.frame.setVisible(true);

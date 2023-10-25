@@ -9,12 +9,14 @@ import io.nirahtech.rpg.characters.CharacterFactory;
 import io.nirahtech.rpg.characters.Faction;
 import io.nirahtech.rpg.characters.Gender;
 import io.nirahtech.rpg.characters.Level;
+import io.nirahtech.rpg.characters.classes.ClassType;
 import io.nirahtech.rpg.characters.classes.Demonist;
 import io.nirahtech.rpg.characters.classes.Mage;
 import io.nirahtech.rpg.characters.classes.Paladin;
 import io.nirahtech.rpg.characters.classes.Priest;
 import io.nirahtech.rpg.characters.classes.Warrior;
 import io.nirahtech.rpg.characters.races.BloodElf;
+import io.nirahtech.rpg.characters.races.BreedType;
 import io.nirahtech.rpg.characters.races.Human;
 import io.nirahtech.rpg.interfaces.UserInterface;
 import io.nirahtech.rpg.interfaces.cli.CommandLineInterface;
@@ -35,7 +37,7 @@ public class App
         final UserInterface userInterface = new CommandLineInterface();
         userInterface.run(configuration);
 
-        final Character<Paladin> nicolas = CharacterFactory.create("Nicolas", new BloodElf(), new Paladin(), Gender.MALE, Faction.HORDE, Level.Factory.create(1));
+        final Character<Paladin> nicolas = CharacterFactory.create("Nicolas", BreedType.BLOOD_ELF.create(), new Paladin(), Gender.MALE, Faction.HORDE, Level.Factory.create(1));
         final Character<Mage> victor = CharacterFactory.create("Victor", new BloodElf(), new Mage(), Gender.MALE, Faction.HORDE, Level.Factory.create(1));
         final Character<Priest> rebecca = CharacterFactory.create("Rebecca", new BloodElf(), new Priest(), Gender.FEMALE, Faction.HORDE, Level.Factory.create(1));
         final Character<Demonist> lucy = CharacterFactory.create("Lucy", new BloodElf(), new Demonist(), Gender.FEMALE, Faction.HORDE, Level.Factory.create(1));
