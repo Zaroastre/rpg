@@ -1,0 +1,46 @@
+{
+    "planet": {
+        "name": "",
+        "continents": [
+            {
+                "name": "",
+                "regions": [
+                    {
+                        "name": "",
+                        "level": {
+                            "minimum": 0,
+                            "maximum": 0
+                        },
+                        "cities": [
+                            {
+                                "name": "",
+                                "location": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0
+                                },
+                                "factions": [
+                                    "HORDE",
+                                    "ALLIANCE"
+                                ],
+                                "chief": {
+                                    "name": "",
+                                    "level": 0,
+                                    "gender": "MALE",
+                                    "class": "Demonist",
+                                    "breed": "Human",
+                                    "faction": "",
+                                    "army": [
+                                        {
+                                            
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

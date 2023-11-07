@@ -5,11 +5,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import io.nirahtech.rpg.characters.Factory;
+import io.nirahtech.rpg.infrastructure.Point;
+import io.nirahtech.rpg.teams.Raid;
 
 public final class WorldFactory implements Factory<World> {
 
@@ -49,16 +55,25 @@ public final class WorldFactory implements Factory<World> {
     }
 
     private final Region createRegion(final String regionId, final ResourceBundle resourceBundle) {
-        return new Region(null, 0, 0, null, null);
+        final String regionName = resourceBundle.getString("planet.name");
+        final Set<City> cities = new HashSet<>();
+        final Map<Point, Raid> enemies = new HashMap<>();
+        
+        return new Region(regionName, 0, 0, cities, enemies);
     }
 
     private final Continent createContinent(final String continentId, final ResourceBundle resourceBundle) {
-        return new Continent(null, null);
+        final String continentName = resourceBundle.getString("planet.name");
+        final Set<Region> regions = new HashSet<>();
+        
+        return new Continent(continentName, regions);
     }
 
     private final Planet createPlanet(final String planetId, final ResourceBundle resourceBundle) {
         final String planetName = resourceBundle.getString("planet.name");
-        return new Planet(planetName, null);
+        final Set<Continent> continents = new HashSet<>();
+
+        return new Planet(planetName, continents);
     }
 
     @Override

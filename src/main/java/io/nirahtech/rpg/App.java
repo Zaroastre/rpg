@@ -4,12 +4,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import io.nirahtech.drivers.gamepad.Gamepad;
+import io.nirahtech.drivers.gamepad.Gamepads;
+import io.nirahtech.drivers.keyboard.Keyboard;
 import io.nirahtech.rpg.characters.Character;
 import io.nirahtech.rpg.characters.CharacterFactory;
 import io.nirahtech.rpg.characters.Faction;
 import io.nirahtech.rpg.characters.Gender;
 import io.nirahtech.rpg.characters.Level;
-import io.nirahtech.rpg.characters.classes.ClassType;
 import io.nirahtech.rpg.characters.classes.Demonist;
 import io.nirahtech.rpg.characters.classes.Mage;
 import io.nirahtech.rpg.characters.classes.Paladin;
@@ -78,6 +80,20 @@ public class App
 
         final AttackStategy attackStategy = AttackStrategyChooser.chooseBestStrategy(nicolas, Set.of(arthas));
         nicolas.attack(attackStategy, arthas);
+
+        final Gamepad gamepad = Gamepads.get();
+        final Keyboard keyboard = new Keyboard();
+        userInterface.addInputDevice(gamepad);
+        userInterface.addInputDevice(keyboard);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            gamepad.shutdown();
+        }));
+
+        gamepad.onPressA(() -> {
+            System.out.println("A pressed");
+        });
+
 
     }
 }
