@@ -2,6 +2,7 @@ import pygame
 from abc import abstractmethod
 from math import sqrt, atan2, cos, sin
 from typing import TypeVar, Generic
+from datetime import datetime
 
 _T = TypeVar("_T")
 
@@ -190,6 +191,20 @@ class Frame(Draw, InputEventHandler):
             copy.points.append(point.copy())
         return copy
 
+    def __draw_points(self, master: pygame.Surface):
+        for point in self.points:
+            point.draw(master)
+
+    def __draw_line_between_each_points(self, master: pygame.Surface):
+        if (len(self.points) > 1):
+            for point in self.points:
+                if (point.parent is not None):
+                    parent: Point = point.parent
+                    pygame.draw.line(master, pygame.Color(255,255,255), (parent.position.x, parent.position.y), (point.position.x, point.position.y))
+    def draw(self, master: pygame.Surface):
+        self.__draw_points(master)
+        self.__draw_line_between_each_points(master)
+
 class Timeline(pygame.sprite.Sprite, Draw, InputEventHandler):
     FRAME_MARGIN: int = 5
     def __init__(self, width: float, height: float, position: Position) -> None:
@@ -240,12 +255,28 @@ class Timeline(pygame.sprite.Sprite, Draw, InputEventHandler):
                 self.frames.append(frame)
                 self.select_frame(frame)
 
+    def __handle_select_previous_frame(self):
+        if (self.selected_frame.is_present()):
+            index: int = self.frames.index(self.selected_frame.get())
+            if (index > 0):
+                self.select_frame(self.frames[index-1])
+    
+    def __handle_select_next_frame(self):
+        if (self.selected_frame.is_present()):
+            index: int = self.frames.index(self.selected_frame.get())
+            if (index < (len(self.frames)-1)):
+                self.select_frame(self.frames[index+1])
+
     def handle(self, event: pygame.event.Event):
         mouse_position = pygame.mouse.get_pos()
         if (event.type == pygame.KEYDOWN and event.key == pygame.K_c):
             self.__handle_duplicate_frame()
         if (event.type == pygame.KEYDOWN and event.key == pygame.K_d):
             self.__handle_delete_frame()
+        if (event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT):
+            self.__handle_select_previous_frame()
+        if (event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT):
+            self.__handle_select_next_frame()
 
     def draw(self, master: pygame.Surface):
         # Timeline
@@ -268,11 +299,27 @@ class Timeline(pygame.sprite.Sprite, Draw, InputEventHandler):
             frame_position_x += (self.frame_texture.get_width()+(Timeline.FRAME_MARGIN*2))
 
 class Video(Draw, InputEventHandler):
-    def __init__(self) -> None:
+    def __init__(self, fps: int, width: float, height: float, position: Position) -> None:
         self.frames: list[Frame] = []
+        self.texture: pygame.Surface = pygame.Surface([width, height])
+        self.position: Position = position
+        self.frames_per_seconds: int = fps
+        self.frame_index: int = 0
+        self.frame_display_duration: float = 1_000 / self.frames_per_seconds
+        self.last_render_timestamp: int = 0
+
+    def set_movie(self, movie: list[Frame]):
+        self.frames = movie
 
     def draw(self, master: pygame.Surface):
-        pass
+        now: int = int(datetime.now().timestamp()*1000)
+        if ((self.last_render_timestamp + self.frame_display_duration) >= now):
+            self.frame_index += 1
+            if (self.frame_index >= len(self.frames)):
+                self.frame_index = 0
+        self.frames[self.frame_index].draw(self.texture)
+        self.last_render_timestamp = now
+        master.blit(self.texture, (self.position.x, self.position.y))
     
     def handle(self, event: pygame.event.Event):
         pass
@@ -290,13 +337,6 @@ class WorkspaceBuilder(pygame.sprite.Sprite, Draw, InputEventHandler):
         self.must_display_line: bool = False
         self.is_dragging: bool = False
         self.selected_point: Optional[Point] = Optional.empty()
-
-    # def get_selected_point(self) -> Point|None:
-    #     point: Point|None = None
-    #     selected_points: list[Point] = [point for point in self.frame.points if point.is_selected]
-    #     if (len(selected_points >= 1)):
-    #         point = selected_points[0]
-    #     return point
 
     def __draw_points(self, master: pygame.Surface):
         for point in self.frame.points:
@@ -458,6 +498,7 @@ class WorkspaceBuilder(pygame.sprite.Sprite, Draw, InputEventHandler):
                         self.__handle_move_point_on_circle(Position(mouse_position[0], mouse_position[1]))
                     if (self.must_display_line):
                         self.__handle_move_point_on_line(Position(mouse_position[0], mouse_position[1]))
+
 class App:
     """Class that represents the program.
     """
@@ -468,6 +509,8 @@ class App:
     TIMELINE_HEIGHT: int = 100
     WORKSPACE_WIDTH: int = WINDOW_WIDTH / 2
     WORKSPACE_HEIGHT: int = WINDOW_HEIGHT - TIMELINE_HEIGHT
+    MOVIE_WIDTH: int = WORKSPACE_WIDTH
+    MOVIE_HEIGHT: int = WORKSPACE_HEIGHT
     BACKGROUND_COLOR: pygame.Color = pygame.Color(0,0,0)
     
     def __init__(self) -> None:
@@ -482,7 +525,7 @@ class App:
         frame.is_selected = True
         self.workspace: WorkspaceBuilder = WorkspaceBuilder(App.WORKSPACE_WIDTH, App.WORKSPACE_HEIGHT, Position(0, 0))
         self.workspace.frame = frame
-        self.video: Video = Video()
+        self.video: Video = Video(App.FRAMES_PER_SECOND/2, App.MOVIE_WIDTH, App.MOVIE_HEIGHT, Position(App.MOVIE_WIDTH, 0))
         self.video.frames.append(frame)
         self.timeline: Timeline = Timeline(App.TIMELINE_WIDTH, App.TIMELINE_HEIGHT, Position(0, App.WINDOW_HEIGHT-App.TIMELINE_HEIGHT))
         self.timeline.frames.append(frame)
@@ -502,6 +545,7 @@ class App:
                     self.workspace.handle(event)
                     self.timeline.handle(event)
                     self.video.handle(event)
+                    self.video.set_movie(self.timeline.frames)
 
             self.screen.fill(App.BACKGROUND_COLOR)
 
