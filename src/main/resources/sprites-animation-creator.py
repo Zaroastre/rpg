@@ -172,6 +172,10 @@ class Point(pygame.sprite.Sprite, Draw,InputEventHandler):
         else:
             self.hitbox = pygame.draw.circle(master, Point.UNSELECTED_COLOR, (self.position.x,self.position.y), self.radius)
 
+    def copy(self):
+        copy: Point = Point(Position(self.position.x, self.position.y, self.position.z))
+        return copy
+
     def __repr__(self) -> str:
         return f"{self.name}(P={self.parent})"
 
@@ -179,6 +183,12 @@ class Frame(Draw, InputEventHandler):
     def __init__(self) -> None:
         self.points: list[Point] = []
         self.is_selected: bool = False
+
+    def copy(self):
+        copy: Frame = Frame()
+        for point in self.points:
+            copy.points.append(point.copy())
+        return copy
 
 class Timeline(pygame.sprite.Sprite, Draw, InputEventHandler):
     FRAME_MARGIN: int = 5
@@ -188,13 +198,55 @@ class Timeline(pygame.sprite.Sprite, Draw, InputEventHandler):
         self.texture = pygame.Surface([width, height])
         self.position: Position = position
         self.background_color: pygame.Color = pygame.Color(50, 50, 50)
+        self.selected_frame: Optional[Frame] = Optional.empty()
         
         self.frame_texture: pygame.Surface = pygame.Surface((self.texture.get_height()-(Timeline.FRAME_MARGIN*2), self.texture.get_height()-(Timeline.FRAME_MARGIN*2)))
         self.frame_background_color: pygame.Color = pygame.Color(150,150,150)
+        self.__on_selected_frame_change_callback = None
     
+    def add_event_listener_on_selected_frame_change(self, callback):
+        self.__on_selected_frame_change_callback = callback
+    
+    def select_frame(self, frame_to_select: Frame):
+        if (frame_to_select in self.frames):
+            for frame in self.frames:
+                frame.is_selected = False
+            frame_to_select.is_selected = True
+            self.selected_frame = Optional.of_nullable(frame_to_select)
+            if (self.__on_selected_frame_change_callback is not None):
+                self.__on_selected_frame_change_callback(frame_to_select)
+    
+    def __handle_duplicate_frame(self):
+        if (self.selected_frame.is_present()):
+            frame: Frame = self.selected_frame.get()
+            new_frame: Frame = frame.copy()
+            self.frames.append(new_frame)
+            self.select_frame(new_frame)
+
+    def __handle_delete_frame(self):
+        if (self.selected_frame.is_present()):
+            frame_to_delete: Frame = self.selected_frame.get()
+            index: int = self.frames.index(frame_to_delete)
+            if (index >= 0):
+                self.frames.remove(frame_to_delete)
+            self.selected_frame = Optional.empty()
+            if (index == 0):
+                if (len(self.frames) > 0):
+                    self.select_frame(self.frames[0])
+            elif (index > 0):
+                self.select_frame(self.frames[index-1])
+            if (self.selected_frame.is_empty()):
+                frame: Frame = Frame()
+                self.frames.append(frame)
+                self.select_frame(frame)
+
     def handle(self, event: pygame.event.Event):
-        pass
-    
+        mouse_position = pygame.mouse.get_pos()
+        if (event.type == pygame.KEYDOWN and event.key == pygame.K_c):
+            self.__handle_duplicate_frame()
+        if (event.type == pygame.KEYDOWN and event.key == pygame.K_d):
+            self.__handle_delete_frame()
+
     def draw(self, master: pygame.Surface):
         # Timeline
         self.texture.fill(self.background_color)
@@ -214,7 +266,6 @@ class Timeline(pygame.sprite.Sprite, Draw, InputEventHandler):
                 master.blit(self.frame_texture, (frame_position_x, self.position.y + Timeline.FRAME_MARGIN))
                 
             frame_position_x += (self.frame_texture.get_width()+(Timeline.FRAME_MARGIN*2))
-    
 
 class Video(Draw, InputEventHandler):
     def __init__(self) -> None:
@@ -418,46 +469,55 @@ class App:
     WORKSPACE_WIDTH: int = WINDOW_WIDTH / 2
     WORKSPACE_HEIGHT: int = WINDOW_HEIGHT - TIMELINE_HEIGHT
     BACKGROUND_COLOR: pygame.Color = pygame.Color(0,0,0)
- 
-    @staticmethod
-    def main():
-        
+    
+    def __init__(self) -> None:
         pygame.init()
         
-        screen: pygame.Surface = pygame.display.set_mode((App.WINDOW_WIDTH, App.WINDOW_HEIGHT))
+        self.screen: pygame.Surface = pygame.display.set_mode((App.WINDOW_WIDTH, App.WINDOW_HEIGHT))
         pygame.display.set_caption("Sprites Motion Creator")
-        clock: pygame.time.Clock = pygame.time.Clock()
-        is_running: bool = True
+        self.clock: pygame.time.Clock = pygame.time.Clock()
+        self.is_running: bool = True
         
         frame: Frame = Frame()
         frame.is_selected = True
-        workspace: WorkspaceBuilder = WorkspaceBuilder(App.WORKSPACE_WIDTH, App.WORKSPACE_HEIGHT, Position(0, 0))
-        workspace.frame = frame
-        video: Video = Video()
-        video.frames.append(frame)
-        timeline: Timeline = Timeline(App.TIMELINE_WIDTH, App.TIMELINE_HEIGHT, Position(0, App.WINDOW_HEIGHT-App.TIMELINE_HEIGHT))
-        timeline.frames.append(frame)
-        
-        while (is_running):
+        self.workspace: WorkspaceBuilder = WorkspaceBuilder(App.WORKSPACE_WIDTH, App.WORKSPACE_HEIGHT, Position(0, 0))
+        self.workspace.frame = frame
+        self.video: Video = Video()
+        self.video.frames.append(frame)
+        self.timeline: Timeline = Timeline(App.TIMELINE_WIDTH, App.TIMELINE_HEIGHT, Position(0, App.WINDOW_HEIGHT-App.TIMELINE_HEIGHT))
+        self.timeline.frames.append(frame)
+        self.timeline.select_frame(frame)
+        self.timeline.add_event_listener_on_selected_frame_change(self.on_selected_frame_change_handler)
+    
+    def on_selected_frame_change_handler(self, selected_frame: Frame):
+        self.workspace.frame = selected_frame
+    
+    def run(self):
+        while (self.is_running):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    is_running = False
+                    self.is_running = False
                 else:
                     # HANDLE YOUR GAME HERE
-                    workspace.handle(event)
-                    timeline.handle(event)
-                    video.handle(event)
+                    self.workspace.handle(event)
+                    self.timeline.handle(event)
+                    self.video.handle(event)
 
-            screen.fill(App.BACKGROUND_COLOR)
+            self.screen.fill(App.BACKGROUND_COLOR)
 
             # RENDER YOUR GAME HERE
-            workspace.draw(screen)
-            timeline.draw(screen)
-            video.draw(screen)
+            self.workspace.draw(self.screen)
+            self.timeline.draw(self.screen)
+            self.video.draw(self.screen)
 
             pygame.display.flip()
-            clock.tick(App.FRAMES_PER_SECOND)
+            self.clock.tick(App.FRAMES_PER_SECOND)
         pygame.quit()
+
+    @staticmethod
+    def main():
+        app: App = App()
+        app.run()
 
 if (__name__ == "__main__"):
     App.main()
