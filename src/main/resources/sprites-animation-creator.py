@@ -312,13 +312,14 @@ class Video(Draw, InputEventHandler):
         self.frames = movie
 
     def draw(self, master: pygame.Surface):
+        self.texture.fill(pygame.Color(0,0,0))
         now: int = int(datetime.now().timestamp()*1000)
-        if ((self.last_render_timestamp + self.frame_display_duration) >= now):
+        if ((self.last_render_timestamp + self.frame_display_duration) < now):
             self.frame_index += 1
             if (self.frame_index >= len(self.frames)):
                 self.frame_index = 0
+            self.last_render_timestamp = now
         self.frames[self.frame_index].draw(self.texture)
-        self.last_render_timestamp = now
         master.blit(self.texture, (self.position.x, self.position.y))
     
     def handle(self, event: pygame.event.Event):
@@ -511,6 +512,7 @@ class App:
     WORKSPACE_HEIGHT: int = WINDOW_HEIGHT - TIMELINE_HEIGHT
     MOVIE_WIDTH: int = WORKSPACE_WIDTH
     MOVIE_HEIGHT: int = WORKSPACE_HEIGHT
+    MOVIE_FPS: int = 30
     BACKGROUND_COLOR: pygame.Color = pygame.Color(0,0,0)
     
     def __init__(self) -> None:
@@ -525,7 +527,7 @@ class App:
         frame.is_selected = True
         self.workspace: WorkspaceBuilder = WorkspaceBuilder(App.WORKSPACE_WIDTH, App.WORKSPACE_HEIGHT, Position(0, 0))
         self.workspace.frame = frame
-        self.video: Video = Video(App.FRAMES_PER_SECOND/2, App.MOVIE_WIDTH, App.MOVIE_HEIGHT, Position(App.MOVIE_WIDTH, 0))
+        self.video: Video = Video(App.MOVIE_FPS, App.MOVIE_WIDTH, App.MOVIE_HEIGHT, Position(App.MOVIE_WIDTH, 0))
         self.video.frames.append(frame)
         self.timeline: Timeline = Timeline(App.TIMELINE_WIDTH, App.TIMELINE_HEIGHT, Position(0, App.WINDOW_HEIGHT-App.TIMELINE_HEIGHT))
         self.timeline.frames.append(frame)
