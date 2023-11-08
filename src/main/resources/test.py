@@ -12,8 +12,8 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 
 # Paramètres de la ligne (début et fin)
-start_point = (200, 200)
-end_point = (600, 200)
+start_point = (WIDTH, 0)
+end_point = (0, 200)
 
 # Position initiale du point (milieu de la ligne)
 point_x, point_y = (start_point[0] + end_point[0]) // 2, (start_point[1] + end_point[1]) // 2
@@ -64,3 +64,68 @@ while running:
 
 pygame.quit()
 sys.exit()
+
+# import pygame
+# import sys
+# import math
+
+# # Initialisation de Pygame
+# pygame.init()
+
+# # Dimensions de la fenêtre
+# WIDTH, HEIGHT = 800, 600
+
+# # Couleurs
+# WHITE = (255, 255, 255)
+# RED = (255, 0, 0)
+
+# # Centre du cercle et rayon
+# circle_center = (WIDTH // 2, HEIGHT // 2)
+# circle_radius = 200
+
+# # Paramètres du point
+# point_radius = 10
+# point_x = circle_center[0] + circle_radius
+# point_y = circle_center[1]
+
+# # Création de la fenêtre
+# screen = pygame.display.set_mode((WIDTH, HEIGHT))
+# pygame.display.set_caption("Déplacement d'un point sur un cercle")
+
+# # Boucle principale
+# clock = pygame.time.Clock()
+# running = True
+# dragging = False  # Indique si le point est en cours de déplacement
+
+# while running:
+#     for event in pygame.event.get():
+#         if event.type == pygame.QUIT:
+#             running = False
+#         if event.type == pygame.MOUSEBUTTONDOWN:
+#             mouse_x, mouse_y = pygame.mouse.get_pos()
+#             if math.sqrt((point_x - mouse_x) ** 2 + (point_y - mouse_y) ** 2) < point_radius:
+#                 dragging = True
+#         if event.type == pygame.MOUSEBUTTONUP:
+#             dragging = False
+
+#     if dragging:
+#         mouse_x, mouse_y = pygame.mouse.get_pos()
+#         # Calcul de l'angle entre le centre du cercle et la position de la souris
+#         angle = math.atan2(mouse_y - circle_center[1], mouse_x - circle_center[0])
+#         point_x = circle_center[0] + circle_radius * math.cos(angle)
+#         point_y = circle_center[1] + circle_radius * math.sin(angle)
+
+#     # Effacement de l'écran
+#     screen.fill((0, 0, 0))
+
+#     # Dessin du cercle
+#     pygame.draw.circle(screen, WHITE, circle_center, circle_radius, 2)
+
+#     # Dessin du point
+#     pygame.draw.circle(screen, RED, (int(point_x), int(point_y)), point_radius)
+
+#     pygame.display.flip()
+#     clock.tick(60)
+
+# pygame.quit()
+# sys.exit()
