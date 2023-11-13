@@ -353,8 +353,16 @@ class Frame(Draw):
         self.__draw_points(master)
         self.__draw_line_between_each_points(master)
 
+class FrameGenerator:
+    @staticmethod
+    def generate_missing_frames(start: Frame, end: Frame, number_of_frame_between: int) -> list[Frame]:
+        frames: list[Frame] = []
+        for _ in number_of_frame_between:
+            pass
+        return frames
+
 class Timeline(pygame.sprite.Sprite, Draw, InputEventHandler):
-    
+    NUMBER_OF_FRAME_TO_GENERATE: int = 10
     FRAME_MARGIN: int = 5
     def __init__(self, width: float, height: float, position: Position) -> None:
         pygame.sprite.Sprite.__init__(self)
@@ -363,6 +371,7 @@ class Timeline(pygame.sprite.Sprite, Draw, InputEventHandler):
         self.position: Position = position
         self.background_color: pygame.Color = pygame.Color(50, 50, 50)
         self.selected_frame: Optional[Frame] = Optional.empty()
+        self.second_selected_frame: Optional[Frame] = Optional.empty()
         
         self.frame_texture: pygame.Surface = pygame.Surface((self.texture.get_height()-(Timeline.FRAME_MARGIN*2), self.texture.get_height()-(Timeline.FRAME_MARGIN*2)))
         self.frame_background_color: pygame.Color = pygame.Color(150,150,150)
@@ -443,7 +452,19 @@ class Timeline(pygame.sprite.Sprite, Draw, InputEventHandler):
         print("Select NEXT FRAME")
         if (self.selected_frame.is_present()):
             self.select_next_frame()
+
+    def __handle_generate_intermediates_frames(self):
+        print("Generate intermediates frames")
+        if (self.selected_frame.is_present() and self.second_selected_frame.is_present()):
+            start: Frame = self.selected_frame.get()
+            end: Frame = self.second_selected_frame.get()
+            intermediate_frames: list[Frame] = FrameGenerator.generate_missing_frames(start, end, Timeline.NUMBER_OF_FRAME_TO_GENERATE)
+            start_index: int = self.__frames.index(start)
             
+            if (start_index >= 0):
+                for frame in intermediate_frames:
+                    start_index += 1
+                    self.__frames.insert(start_index, frame)
 
     def handle(self, event: pygame.event.Event):
         if (event.type == pygame.KEYDOWN and event.key == pygame.K_c):
@@ -454,6 +475,8 @@ class Timeline(pygame.sprite.Sprite, Draw, InputEventHandler):
             self.__handle_select_previous_frame()
         if (event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT):
             self.__handle_select_next_frame()
+        if (event.type == pygame.KEYDOWN and event.key == pygame.K_g):
+            self.__handle_generate_intermediates_frames()
 
     def draw(self, master: pygame.Surface):
         # Timeline
@@ -809,3 +832,4 @@ class App:
 
 if (__name__ == "__main__"):
     App.main()
+
