@@ -148,6 +148,25 @@ class Geometry:
         print(Geometry.compute_distance(point1, point2))
         return point1.x == point2.x and point1.y == point2.y and point1.z == point2.z
 
+class Projectil(pygame.sprite.Sprite, InputEventHandler, Draw):
+    HEALTH_COLOR: pygame.Color = pygame.Color(0, 200, 0)
+    DAMAGE_COLOR: pygame.Color = pygame.Color(200, 0, 0)
+    def __init__(self, is_damage: bool, value: float, move_speed: float, position: Position, radius: float) -> None:
+        pygame.sprite.Sprite.__init__(self)
+        self.start_position: Position = position
+        self.position: Position = Position(position.x, position.y)
+        self.__move_speed: float = move_speed
+        self.__is_damage: bool = is_damage
+        self.radius: float = radius
+        self._texture = pygame.Surface([self.radius*2, self.radius*2], pygame.SRCALPHA)
+    
+    def handle(self, event: pygame.event.Event):
+        print(self.position)
+        print(self.start_position)
+    
+    def draw(self, master: pygame.Surface):
+        pygame.draw.circle(master, Projectil.HEALTH_COLOR if not self.__is_damage else Projectil.DAMAGE_COLOR, (self.position.x, self.position.y), self.radius)
+    
 class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
     MENACE_AREA_COLOR: pygame.Color = pygame.Color(255, 255, 0, a=100)
     ZONING_AREA_COLOR: pygame.Color = pygame.Color(255,200, 0)
@@ -167,6 +186,7 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
         self._radius: float = 10.0
         self._texture = pygame.Surface([self._radius*2, self._radius*2], pygame.SRCALPHA)
         self.position: Position = Position(0,0)
+        self.previous_position: Position = Position(0, 0)
         self.__is_selected: bool = False
         self._hitbox: pygame.Rect = None
         self.__font_size: int = 20
@@ -176,6 +196,7 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
         self._title: pygame.Surface = self.__font.render(
             self.name[0], True, self.__font_color)
         self.is_in_fight_mode: bool = False
+        self.trigged_projectils: list[Projectil] = []
 
     @property
     def move_speed(self) -> int:
@@ -219,8 +240,11 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
                 direction_y /= direction_length
 
             # Déplacement du personnage
+            self.previous_position = Position(self.position.x, self.position.y)
             self.position.x += direction_x * self.move_speed
             self.position.y += direction_y * self.move_speed
+
+
 
     def handle(self, event: pygame.event.Event):
         if event is not None:
@@ -241,6 +265,11 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
                     self.__is_going_to_the_bottom = True
                 elif (event.type == pygame.KEYUP and (event.key == pygame.K_DOWN or event.key == pygame.K_s)) or (event.type == pygame.JOYAXISMOTION and event.axis == 1 and event.value == 0.003906369212927641):
                     self.__is_going_to_the_bottom = False
+                if (event.type == pygame.KEYDOWN and event.key == pygame.K_a) or (event.type == pygame.JOYBUTTONDOWN and event.button == 2):
+                    new_projectil: Projectil = Projectil(True, 10.0, 5.0, Position(self.previous_position.x, self.previous_position.y), 5)
+                    new_projectil.position = Position(self.position.x, self.position.y)
+                    self.trigged_projectils.append(new_projectil)
+                    
         self.is_moving = self.__is_going_to_the_bottom or self.__is_going_to_the_left or self.__is_going_to_the_right or self.__is_going_to_the_top
         if self.is_selected():
             diagonal_movement = (self.__is_going_to_the_left or self.__is_going_to_the_right) and \
@@ -249,22 +278,33 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
             if (diagonal_movement):
 
                 if self.__is_going_to_the_left and (self.__is_going_to_the_top or self.__is_going_to_the_bottom):
+                    self.previous_position = Position(self.position.x, self.position.y)
                     self.position.x -= self.__move_speed / sqrt(2)
                 if self.__is_going_to_the_right and (self.__is_going_to_the_top or self.__is_going_to_the_bottom):
+                    self.previous_position = Position(self.position.x, self.position.y)
                     self.position.x += self.__move_speed / sqrt(2)
                 if self.__is_going_to_the_top and (self.__is_going_to_the_left or self.__is_going_to_the_right):
+                    self.previous_position = Position(self.position.x, self.position.y)
                     self.position.y -= self.__move_speed / sqrt(2)
                 if self.__is_going_to_the_bottom and (self.__is_going_to_the_left or self.__is_going_to_the_right):
+                    self.previous_position = Position(self.position.x, self.position.y)
                     self.position.y += self.__move_speed / sqrt(2)
             else:
                 if self.__is_going_to_the_left:
+                    self.previous_position = Position(self.position.x, self.position.y)
                     self.position.x -= self.__move_speed
                 if self.__is_going_to_the_right:
+                    self.previous_position = Position(self.position.x, self.position.y)
                     self.position.x += self.__move_speed
                 if self.__is_going_to_the_top:
+                    self.previous_position = Position(self.position.x, self.position.y)
                     self.position.y -= self.__move_speed
                 if self.__is_going_to_the_bottom:
+                    self.previous_position = Position(self.position.x, self.position.y)
                     self.position.y += self.__move_speed
+
+        for projectil in self.trigged_projectils:
+            projectil.handle(event)
 
     def is_touching(self, other) -> bool:
         is_in_contact: bool = False
@@ -301,11 +341,13 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
 
             # Déplacement de nico
             if (other.can_be_moved):
+                other.previous_position = Position(other.position.x, other.position.y)
                 other.position.x -= direction_x * \
                     (min_distance - distance)
                 other.position.y -= direction_y * \
                     (min_distance - distance)
             else:
+                self.previous_position = Position(self.position.x, self.position.y)
                 self.position.x += direction_x * \
                     (min_distance - distance)
                 self.position.y += direction_y * \
@@ -325,6 +367,8 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
             self._texture, point_color, (self._radius, self._radius), self._radius)
         self._hitbox = master.blit(self._texture, (self.position.x-self._radius, self.position.y-self._radius))
         master.blit(self._title, (self.position.x-(self._radius/2), self.position.y-(self._radius/2)))
+        for projectil in self.trigged_projectils:
+            projectil.draw(master)
 
 
 class Enemy(Character):
@@ -367,24 +411,27 @@ class Group(InputEventHandler, Draw):
         if (member_to_remove in self.__members):
             self.__members.remove(member_to_remove)
 
+    def __handle_character_selection_in_group(self, event: pygame.event.Event):
+        selected_members: list[Character] = [member for member in self.members if member.is_selected()]
+        if (len(selected_members) == 1):
+            previous_selected_member = selected_members[0]
+            index: int = self.__members.index(previous_selected_member)
+            if (event.type == pygame.JOYBUTTONDOWN and event.button == 5):
+                if (index+1 > len(self.__members)-1):
+                    index = 0
+                else:
+                    index += 1
+            if (event.type == pygame.JOYBUTTONDOWN and event.button == 4):
+                if (index == 0):
+                    index = len(self.__members)-1
+                else:
+                    index -= 1
+            previous_selected_member.unselect()
+            self.__members[index].select()
+
     def handle(self, event: pygame.event.Event):
         if (event is not None):
-            selected_members: list[Character] = [member for member in self.members if member.is_selected()]
-            if (len(selected_members) == 1):
-                previous_selected_member = selected_members[0]
-                index: int = self.__members.index(previous_selected_member)
-                if (event.type == pygame.JOYBUTTONDOWN and event.button == 5):
-                    if (index+1 > len(self.__members)-1):
-                        index = 0
-                    else:
-                        index += 1
-                if (event.type == pygame.JOYBUTTONDOWN and event.button == 4):
-                    if (index == 0):
-                        index = len(self.__members)-1
-                    else:
-                        index -= 1
-                previous_selected_member.unselect()
-                self.__members[index].select()
+            self.__handle_character_selection_in_group(event)
         for member in self.__members:
             member.handle(event)
 
@@ -514,6 +561,15 @@ class App:
     ACTION_PANEL_HEIGHT: int = 80
     ACTION_PANEL_POSITION: Position = Position(WINDOW_WIDTH/6, WINDOW_HEIGHT-ACTION_PANEL_HEIGHT)
     RETURN_SPEED = 2
+    FRIENDS_NAMES: list[str] = [
+        "Victor TRUONG",
+        "Rébecca MOLARET",
+        "Lucie LAURENT",
+        "Jimi TRUONG",
+        "Anthony GIRARDO",
+        "Nicolas PIAR",
+        "C... M... 3e",
+    ]
 
     def __init__(self) -> None:
         print("Starting application...")
@@ -524,59 +580,108 @@ class App:
         pygame.display.set_caption("Sprites Motion Creator")
         self.clock: pygame.time.Clock = pygame.time.Clock()
         self.is_running: bool = True
-
-    def run(self):
+        self.__action_panel: ActionPanel = ActionPanel(App.ACTION_PANEL_WIDTH, App.ACTION_PANEL_HEIGHT, App.ACTION_PANEL_POSITION)
+        self.__available_friends: Group = Group(max_capacity=10)
+        self.__enemies: Group = Group(max_capacity=100)
+        self.__group_of_the_player: Group = Group(max_capacity=5)
+        self.__group_panel: GroupPanel = GroupPanel(group=self.__group_of_the_player, width=App.GROUP_PANEL_WIDTH, height=App.GROUP_PANEL_HEIGHT, position=App.GROUP_PANEL_POSITION)
+        self.__played_character: Character = None
         
-        friends_names: list[str] = [
-            "Victor TRUONG",
-            "Rébecca MOLARET",
-            "Lucie LAURENT",
-            "Jimi TRUONG",
-            "Anthony GIRARDO",
-            "Nicolas PIAR",
-            "C... M... 3e",
-        ]
-        
-        action_panel: ActionPanel = ActionPanel(App.ACTION_PANEL_WIDTH, App.ACTION_PANEL_HEIGHT, App.ACTION_PANEL_POSITION)
-        
-        nicolas_metivier: Character = Character("Nicolas METIVIER")
-        nicolas_metivier.position = Position(
-            randint(0, App.WINDOW_WIDTH), randint(0, App.WINDOW_HEIGHT))
-        nicolas_metivier.select()
-        nicolas_metivier.menace = 20.0
-        
-        available_friends: Group = Group(max_capacity=10)
-        
-        for name in friends_names:
+    def __generate_friends(self):
+        for name in App.FRIENDS_NAMES:
             friend: Character = Character(name)
             friend.position = Position(
                 randint(0, App.WINDOW_WIDTH), randint(0, App.WINDOW_HEIGHT))
-            available_friends.add_member(friend)
-            
-        enemies: Group = Group(max_capacity=100)
+            friend.menace = 20
+            self.__available_friends.add_member(friend)
+        
+    def __generate_enemies(self):
         for counter in range(randint(10, 100)):
             enemy: Enemy = Enemy("Vilain #" + str(counter))
             enemy.menace = 100
             enemy.zone_radius = 200
             enemy.position = Position(randint(0, App.WINDOW_WIDTH), randint(0, App.WINDOW_HEIGHT))
             enemy.zone_center = Position(enemy.position.x, enemy.position.y)
-            enemies.add_member(enemy)
-        
-        for friend in available_friends.members:
-            friend.menace = 25
+            self.__enemies.add_member(enemy)
 
-        group_of_the_player: Group = Group(max_capacity=5)
-        group_of_the_player.add_member(nicolas_metivier)
-        
-        group_panel: GroupPanel = GroupPanel(group=group_of_the_player, width=App.GROUP_PANEL_WIDTH, height=App.GROUP_PANEL_HEIGHT, position=App.GROUP_PANEL_POSITION)
+    def __generate_player_character(self):
+        player: Character = Character("Nicolas METIVIER")
+        player.position = Position(
+            randint(0, App.WINDOW_WIDTH), randint(0, App.WINDOW_HEIGHT))
+        player.select()
+        player.menace = 20.0
+        self.__group_of_the_player.add_member(player)
+        self.__played_character = player
+    
+    def __prevent_character_to_disapear_from_scene(self, character: Character):
+        if (character.position.x < (App.GROUP_PANEL_WIDTH + App.GROUP_PANEL_POSITION.x)):
+            character.position.x = App.GROUP_PANEL_WIDTH + App.GROUP_PANEL_POSITION.x
+        if (character.position.x > self.screen.get_width()):
+            character.position.x = self.screen.get_width()
+        if (character.position.y < 0):
+            character.position.y = 0
+        if (character.position.y > self.screen.get_height()):
+            character.position.y = self.screen.get_height()
 
-        joystick_events = [
-            pygame.JOYAXISMOTION,
-            pygame.JOYBALLMOTION,
-            pygame.JOYBUTTONDOWN,
-            pygame.JOYBUTTONUP,
-            pygame.JOYHATMOTION
-        ]
+    def __handle_interaction_and_moves_for_friends(self, group: Group):
+        for member in group.members:
+            others: list[Character] = [
+                other for other in group.members if other is not member]
+            others += self.__available_friends.members
+            others += self.__enemies.members
+            for other in others:
+                if member.is_touching(other):
+                    member.avoid_collision_with_other(other)
+            if member.is_touching(self.__played_character):
+                member.avoid_collision_with_other(self.__played_character)
+            else:
+                member.follow(self.__played_character)
+            self.__prevent_character_to_disapear_from_scene(member)
+
+    def __move_enemy_to_the_default_observation_position(self, enemy: Enemy):
+        
+        # if (attacking_enemy is None):
+        #     self.__played_character.is_in_fight_mode = False
+        
+        if Geometry.compute_distance(enemy.position, enemy.zone_center) > 1:
+            # Calculer le vecteur directionnel vers la position initiale
+            direction_x = enemy.zone_center.x - enemy.position.x
+            direction_y = enemy.zone_center.y - enemy.position.y
+            direction_length = Geometry.compute_distance(enemy.position, enemy.zone_center)
+
+            # Normaliser le vecteur directionnel
+            if direction_length != 0:
+                direction_x /= direction_length
+                direction_y /= direction_length
+
+            # Déplacer progressivement l'ennemi vers sa position initiale
+            enemy.position.x += direction_x * App.RETURN_SPEED
+            enemy.position.y += direction_y * App.RETURN_SPEED
+
+    def __prepare_enemy_to_fight(self, enemy: Enemy, target: Character):
+        target.is_in_fight_mode = True
+        distance_between_enemy_and_zone_center = Geometry.compute_distance(enemy.position, enemy.zone_center)
+        if distance_between_enemy_and_zone_center < enemy.zone_radius:
+            enemy.follow(target)
+            
+
+    def __recruit_member(self, member: Character):
+        if (not self.__group_of_the_player.is_full()):
+            self.__group_of_the_player.add_member(member)
+            self.__available_friends.remove_member(member)
+
+    def __recruit_member_if_is_touching(self, member: Character):
+        if (member.is_touching(self.__played_character)):
+            self.__recruit_member(member)
+        
+
+    def run(self):
+        
+        self.__generate_player_character()
+        self.__generate_friends()
+        self.__generate_enemies()
+
+        
         joystick: pygame.joystick.Joystick
         while (self.is_running):
             events: list[pygame.event.Event] = pygame.event.get()
@@ -588,77 +693,34 @@ class App:
                         self.is_running = False
                     else:
                         # HANDLE YOUR GAME HERE
-                        available_friends.handle(event)
-                        group_panel.handle(event)
-                        action_panel.handle(event)
+                        self.__available_friends.handle(event)
+                        self.__group_panel.handle(event)
+                        self.__action_panel.handle(event)
             else:
-                available_friends.handle(None)
-                group_panel.handle(None)
-                action_panel.handle(None)
+                self.__available_friends.handle(None)
+                self.__group_panel.handle(None)
+                self.__action_panel.handle(None)
             
-            played_character: Character = [character for character in group_of_the_player.members if character.is_selected()][0]
-            action_panel.character = played_character
-            if (played_character.is_moving):
-                for member in available_friends.members:
-                    if (member.is_touching(played_character)):
-                        if (not group_of_the_player.is_full()):
-                            group_of_the_player.add_member(member)
-                            available_friends.remove_member(member)
+            self.__played_character = [character for character in self.__group_of_the_player.members if character.is_selected()][0]
+            self.__action_panel.character = self.__played_character
+            if (self.__played_character.is_moving):
+                for member in self.__available_friends.members:
+                    self.__recruit_member_if_is_touching(member)
 
-            for member in group_of_the_player.members:
-                others: list[Character] = [
-                    other for other in group_of_the_player.members if other is not member]
-                others += available_friends.members
-                others += enemies.members
-                for other in others:
-                    if member.is_touching(other):
-                        member.avoid_collision_with_other(other)
-                if member.is_touching(played_character):
-                    member.avoid_collision_with_other(played_character)
+            self.__handle_interaction_and_moves_for_friends(self.__group_of_the_player)
+
+            for enemy in self.__enemies.members:
+                if (enemy.is_feel_threatened(self.__played_character)):
+                    self.__prepare_enemy_to_fight(enemy, self.__played_character)
                 else:
-                    member.follow(played_character)
-                if (member.position.x < (App.GROUP_PANEL_WIDTH + App.GROUP_PANEL_POSITION.x)):
-                    member.position.x = App.GROUP_PANEL_WIDTH + App.GROUP_PANEL_POSITION.x
-                if (member.position.x > self.screen.get_width()):
-                    member.position.x = self.screen.get_width()
-                if (member.position.y < 0):
-                    member.position.y = 0
-                if (member.position.y > self.screen.get_height()):
-                    member.position.y = self.screen.get_height()
-
-            attacking_enemy: Enemy = None
-            for enemy in enemies.members:
-                if (enemy.is_feel_threatened(played_character)):
-                    attacking_enemy = enemy
-                    played_character.is_in_fight_mode = True
-                    distance_between_enemy_and_zone_center = Geometry.compute_distance(enemy.position, enemy.zone_center)
-                    if distance_between_enemy_and_zone_center < enemy.zone_radius:
-                        enemy.follow(played_character)
-                else:
-                    if (attacking_enemy is None):
-                        played_character.is_in_fight_mode = False
-                    # enemy.position = Position(enemy.zone_center.x, enemy.zone_center.y)
-                    if Geometry.compute_distance(enemy.position, enemy.zone_center) > 1:
-                        # Calculer le vecteur directionnel vers la position initiale
-                        direction_x = enemy.zone_center.x - enemy.position.x
-                        direction_y = enemy.zone_center.y - enemy.position.y
-                        direction_length = Geometry.compute_distance(enemy.position, enemy.zone_center)
-
-                        # Normaliser le vecteur directionnel
-                        if direction_length != 0:
-                            direction_x /= direction_length
-                            direction_y /= direction_length
-
-                        # Déplacer progressivement l'ennemi vers sa position initiale
-                        enemy.position.x += direction_x * App.RETURN_SPEED
-                        enemy.position.y += direction_y * App.RETURN_SPEED
+                    self.__move_enemy_to_the_default_observation_position(enemy)
             self.screen.fill(App.BACKGROUND_COLOR)
 
             # RENDER YOUR GAME HERE
-            enemies.draw(self.screen)
-            available_friends.draw(self.screen)
-            group_panel.draw(self.screen)
-            action_panel.draw(self.screen)
+            self.__enemies.draw(self.screen)
+            self.__available_friends.draw(self.screen)
+            self.__group_panel.draw(self.screen)
+            self.__action_panel.draw(self.screen)
 
             pygame.display.flip()
             self.clock.tick(App.FRAMES_PER_SECOND)
