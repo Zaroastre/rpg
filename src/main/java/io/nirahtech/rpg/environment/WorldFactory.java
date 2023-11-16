@@ -13,8 +13,8 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Set;
 
+import io.nirahtech.geometry.Point;
 import io.nirahtech.rpg.characters.Factory;
-import io.nirahtech.rpg.infrastructure.Point;
 import io.nirahtech.rpg.teams.Raid;
 
 public final class WorldFactory implements Factory<World> {

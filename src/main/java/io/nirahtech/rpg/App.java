@@ -22,6 +22,7 @@ import io.nirahtech.rpg.characters.races.BreedType;
 import io.nirahtech.rpg.characters.races.Human;
 import io.nirahtech.rpg.interfaces.UserInterface;
 import io.nirahtech.rpg.interfaces.cli.CommandLineInterface;
+import io.nirahtech.rpg.runtime.camera.Camera;
 import io.nirahtech.rpg.strategies.attacks.AttackStategy;
 import io.nirahtech.rpg.strategies.attacks.AttackStrategyChooser;
 import io.nirahtech.rpg.teams.Group;
@@ -39,11 +40,15 @@ public class App
         final UserInterface userInterface = new CommandLineInterface();
         userInterface.run(configuration);
 
+        final Camera camera = new Camera(null);
+
         final Character<Paladin> nicolas = CharacterFactory.create("Nicolas", BreedType.BLOOD_ELF.create(), new Paladin(), Gender.MALE, Faction.HORDE, Level.Factory.create(1));
         final Character<Mage> victor = CharacterFactory.create("Victor", new BloodElf(), new Mage(), Gender.MALE, Faction.HORDE, Level.Factory.create(1));
         final Character<Priest> rebecca = CharacterFactory.create("Rebecca", new BloodElf(), new Priest(), Gender.FEMALE, Faction.HORDE, Level.Factory.create(1));
         final Character<Demonist> lucy = CharacterFactory.create("Lucy", new BloodElf(), new Demonist(), Gender.FEMALE, Faction.HORDE, Level.Factory.create(1));
         final Character<Warrior> anthony = CharacterFactory.create("Anthony", new BloodElf(), new Warrior(), Gender.MALE, Faction.HORDE, Level.Factory.create(1));
+
+        camera.track(nicolas);
 
         victor.follow(nicolas);
         rebecca.follow(nicolas);

@@ -1,6 +1,6 @@
 package io.nirahtech.rpg.characters;
 
-import io.nirahtech.rpg.infrastructure.Point;
+import io.nirahtech.geometry.Point;
 
 public final class HitBox {
     private Point center;

@@ -1,4 +1,4 @@
-package io.nirahtech.rpg.infrastructure;
+package io.nirahtech.geometry;
 
 public record Point(
     int x,

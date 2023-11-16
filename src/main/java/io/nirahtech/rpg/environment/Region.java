@@ -3,7 +3,7 @@ package io.nirahtech.rpg.environment;
 import java.util.Collection;
 import java.util.Map;
 
-import io.nirahtech.rpg.infrastructure.Point;
+import io.nirahtech.geometry.Point;
 import io.nirahtech.rpg.teams.Raid;
 
 public final record Region (

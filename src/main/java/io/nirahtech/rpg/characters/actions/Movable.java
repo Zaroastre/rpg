@@ -1,8 +1,8 @@
 package io.nirahtech.rpg.characters.actions;
 
+import io.nirahtech.geometry.Point;
 import io.nirahtech.rpg.characters.Character;
 import io.nirahtech.rpg.characters.classes.CharacterClass;
-import io.nirahtech.rpg.infrastructure.Point;
 
 public interface Movable {
 

@@ -354,11 +354,24 @@ class Frame(Draw):
         self.__draw_line_between_each_points(master)
 
 class FrameGenerator:
+    
+    def __move_points(source: Frame):
+        pass
+    
+    @staticmethod
+    def compute_motion_angle_from_start_to_end(start: Frame, end: Frame) -> float:
+        pass
+    
     @staticmethod
     def generate_missing_frames(start: Frame, end: Frame, number_of_frame_between: int) -> list[Frame]:
         frames: list[Frame] = []
-        for _ in number_of_frame_between:
-            pass
+        if (start is not None and end is not None):
+            original_frame: Frame = start
+            angle: float = FrameGenerator.compute_motion_angle_from_start_to_end(start, end)
+            for _ in number_of_frame_between:
+                new_frame: Frame = original_frame.copy()
+                
+                original_frame = new_frame
         return frames
 
 class Timeline(pygame.sprite.Sprite, Draw, InputEventHandler):

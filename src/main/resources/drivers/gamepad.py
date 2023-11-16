@@ -3,10 +3,6 @@ from sys import exit as shutdown
 from socket import socket as Socket, AF_INET, SOCK_DGRAM
 import pygame
 
-class GamepadEvent:
-    def __init__(self) -> None:
-        pass
-
 class JGamePadServer:
     
     def __init__(self, port: int) -> None:
@@ -17,7 +13,6 @@ class JGamePadServer:
         
         # udp_client: Socket = Socket(AF_INET, SOCK_DGRAM)
         joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
-        print(joysticks)
         is_connected: bool = True
         joystick_events = [
             pygame.JOYAXISMOTION,
@@ -26,7 +21,6 @@ class JGamePadServer:
             pygame.JOYBUTTONUP,
             pygame.JOYHATMOTION
         ]
-        print(joystick_events)
         while (is_connected):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

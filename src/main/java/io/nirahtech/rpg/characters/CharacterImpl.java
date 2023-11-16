@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import io.nirahtech.geometry.Point;
 import io.nirahtech.rpg.characters.body.Body;
 import io.nirahtech.rpg.characters.classes.CharacterClass;
 import io.nirahtech.rpg.characters.inventories.Inventory;
@@ -13,7 +14,6 @@ import io.nirahtech.rpg.characters.money.Currency;
 import io.nirahtech.rpg.characters.races.Breed;
 import io.nirahtech.rpg.characters.skiils.SkillsTree;
 import io.nirahtech.rpg.characters.stuff.Wardrobe;
-import io.nirahtech.rpg.infrastructure.Point;
 import io.nirahtech.rpg.strategies.attacks.AttackStategy;
 import io.nirahtech.rpg.teams.Group;
 import io.nirahtech.rpg.teams.Raid;
