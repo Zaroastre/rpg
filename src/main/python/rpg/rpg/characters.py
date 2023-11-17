@@ -2,9 +2,10 @@ from math import sqrt
 
 import pygame
 
-import constants
-from gameapi import Draw, InputEventHandler
-from geometry import Geometry, Position
+import rpg.constants
+from rpg.gameapi import Draw, InputEventHandler
+from rpg.geometry import Geometry, Position
+from rpg.resources import Resource, Mana
 
 class Projectil(pygame.sprite.Sprite, InputEventHandler, Draw):
     HEALTH_COLOR: pygame.Color = pygame.Color(0, 200, 0)
@@ -24,11 +25,42 @@ class Projectil(pygame.sprite.Sprite, InputEventHandler, Draw):
     def draw(self, master: pygame.Surface):
         pygame.draw.circle(master, Projectil.HEALTH_COLOR if not self.__is_damage else Projectil.DAMAGE_COLOR, (self.to_position.x, self.to_position.y), self.radius)
 
+class Life:
+    def __init__(self, max: int, left: int = None) -> None:
+        self.__maximum: int = max
+        self.__current: int = left if left is not None else max
+        self.__boost: list[int] = []
+        
+    @property
+    def max(self) -> int:
+        return self.__maximum
+
+    @property
+    def actual(self) -> int:
+        return self.__current
+    
+    def loose(self, points: int):
+        self.__current -= points
+        if (self.__current <= 0):
+            self.die()
+
+    def die(self):
+        self.__current = 0
+
+    def is_dead(self) -> bool:
+        return self.__current <= 0
+    
+    def health(self, points: int):
+        self.__current += points
+    
+    def is_alive(self) -> bool:
+        return not self.is_dead()
+
 
 class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
     MENACE_AREA_COLOR: pygame.Color = pygame.Color(255, 255, 0, a=100)
     ZONING_AREA_COLOR: pygame.Color = pygame.Color(255,200, 0)
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, breed: Breed, character_class: Class) -> None:
         pygame.sprite.Sprite.__init__(self)
         self.is_moving: bool = False
         self.__move_speed: int = 2.5
@@ -39,6 +71,8 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
         self.__can_be_moved: bool = True
         self.zone_center: Position = None
         self.zone_radius: float = 0.0
+        self.__breed: Breed = breed
+        self.__class: Class = character_class
         self.menace: float = 0
         self.__name: str = name
         self._radius: float = 10.0
@@ -183,7 +217,7 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
         
         for projectil in self.trigged_projectils:
             projectil.handle(event)
-            if (projectil.to_position.x < 0 or projectil.to_position.x > constants.WINDOW_WIDTH) or (projectil.to_position.y < 0 or projectil.to_position.y > constants.WINDOW_HEIGHT):
+            if (projectil.to_position.x < 0 or projectil.to_position.x > rpg.constants.WINDOW_WIDTH) or (projectil.to_position.y < 0 or projectil.to_position.y > rpg.constants.WINDOW_HEIGHT):
                 self.trigged_projectils.remove(projectil)
                 del projectil
 
@@ -253,8 +287,8 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
 
 
 class Enemy(Character):
-    def __init__(self, name: str) -> None:
-        super().__init__(name)
+    def __init__(self, name: str, breed: Breed, character_class: Class) -> None:
+        super().__init__(name, breed, character_class)
     
     def draw(self, master: pygame.Surface):
         # pygame.draw.circle(master, pygame.Color(150,0,0), (self.position.x,self.position.y), self.menace, 2)

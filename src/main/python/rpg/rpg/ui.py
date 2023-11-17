@@ -1,8 +1,8 @@
 import pygame
 
-from geometry import Position
-from characters import Character, Group
-from gameapi import InputEventHandler, Draw
+from rpg.geometry import Position
+from rpg.characters import Character, Group
+from rpg.gameapi import InputEventHandler, Draw
 
 class MemberPanel(InputEventHandler, Draw):
     def __init__(self, member: Character) -> None:

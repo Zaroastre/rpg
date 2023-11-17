@@ -1,13 +1,12 @@
-
 from random import randint
 
 import pygame
 
-from geometry import Geometry, Position
-from characters import Character, Enemy, Group
-from ui import ActionPanel, GroupPanel
+from rpg.geometry import Geometry, Position
+from rpg.characters import Character, Enemy, Group, Human, Paladin
+from rpg.ui import ActionPanel, GroupPanel
 
-import constants
+import rpg.constants
 
 pygame.init()
 pygame.joystick.init()
@@ -19,24 +18,24 @@ class App:
     def __init__(self) -> None:
         print("Starting application...")
         print("Creating window...")
-        # self.screen: pygame.Surface = pygame.display.set_mode((constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT))
+        # self.screen: pygame.Surface = pygame.display.set_mode((rpg.constants.WINDOW_WIDTH, rpg.constants.WINDOW_HEIGHT))
         self.screen: pygame.Surface = pygame.display.set_mode(
             (0, 0), pygame.FULLSCREEN)
         pygame.display.set_caption("Sprites Motion Creator")
         self.clock: pygame.time.Clock = pygame.time.Clock()
         self.is_running: bool = True
-        self.__action_panel: ActionPanel = ActionPanel(constants.ACTION_PANEL_WIDTH, constants.ACTION_PANEL_HEIGHT, constants.ACTION_PANEL_POSITION)
+        self.__action_panel: ActionPanel = ActionPanel(rpg.constants.ACTION_PANEL_WIDTH, rpg.constants.ACTION_PANEL_HEIGHT, rpg.constants.ACTION_PANEL_POSITION)
         self.__available_friends: Group = Group(max_capacity=10)
         self.__enemies: Group = Group(max_capacity=100)
         self.__group_of_the_player: Group = Group(max_capacity=5)
-        self.__group_panel: GroupPanel = GroupPanel(group=self.__group_of_the_player, width=constants.GROUP_PANEL_WIDTH, height=constants.GROUP_PANEL_HEIGHT, position=constants.GROUP_PANEL_POSITION)
+        self.__group_panel: GroupPanel = GroupPanel(group=self.__group_of_the_player, width=rpg.constants.GROUP_PANEL_WIDTH, height=rpg.constants.GROUP_PANEL_HEIGHT, position=rpg.constants.GROUP_PANEL_POSITION)
         self.__played_character: Character = None
         
     def __generate_friends(self):
-        for name in constants.FRIENDS_NAMES:
+        for name in rpg.constants.FRIENDS_NAMES:
             friend: Character = Character(name)
             friend.position = Position(
-                randint(0, constants.WINDOW_WIDTH), randint(0, constants.WINDOW_HEIGHT))
+                randint(0, rpg.constants.WINDOW_WIDTH), randint(0, rpg.constants.WINDOW_HEIGHT))
             friend.menace = 20
             self.__available_friends.add_member(friend)
         
@@ -45,22 +44,22 @@ class App:
             enemy: Enemy = Enemy("Vilain #" + str(counter))
             enemy.menace = 100
             enemy.zone_radius = 200
-            enemy.position = Position(randint(0, constants.WINDOW_WIDTH), randint(0, constants.WINDOW_HEIGHT))
+            enemy.position = Position(randint(0, rpg.constants.WINDOW_WIDTH), randint(0, rpg.constants.WINDOW_HEIGHT))
             enemy.zone_center = Position(enemy.position.x, enemy.position.y)
             self.__enemies.add_member(enemy)
 
     def __generate_player_character(self):
-        player: Character = Character("Nicolas METIVIER")
+        player: Character = Character("Nicolas METIVIER", Human(), Paladin())
         player.position = Position(
-            randint(0, constants.WINDOW_WIDTH), randint(0, constants.WINDOW_HEIGHT))
+            randint(0, rpg.constants.WINDOW_WIDTH), randint(0, rpg.constants.WINDOW_HEIGHT))
         player.select()
         player.menace = 20.0
         self.__group_of_the_player.add_member(player)
         self.__played_character = player
     
     def __prevent_character_to_disapear_from_scene(self, character: Character):
-        if (character.position.x < (constants.GROUP_PANEL_WIDTH + constants.GROUP_PANEL_POSITION.x)):
-            character.position.x = constants.GROUP_PANEL_WIDTH + constants.GROUP_PANEL_POSITION.x
+        if (character.position.x < (rpg.constants.GROUP_PANEL_WIDTH + rpg.constants.GROUP_PANEL_POSITION.x)):
+            character.position.x = rpg.constants.GROUP_PANEL_WIDTH + rpg.constants.GROUP_PANEL_POSITION.x
         if (character.position.x > self.screen.get_width()):
             character.position.x = self.screen.get_width()
         if (character.position.y < 0):
@@ -100,8 +99,8 @@ class App:
                 direction_y /= direction_length
 
             # Déplacer progressivement l'ennemi vers sa position initiale
-            enemy.position.x += direction_x * constants.RETURN_SPEED
-            enemy.position.y += direction_y * constants.RETURN_SPEED
+            enemy.position.x += direction_x * rpg.constants.RETURN_SPEED
+            enemy.position.y += direction_y * rpg.constants.RETURN_SPEED
 
     def __prepare_enemy_to_fight(self, enemy: Enemy, target: Character):
         target.is_in_fight_mode = True
@@ -159,7 +158,7 @@ class App:
                     self.__prepare_enemy_to_fight(enemy, self.__played_character)
                 else:
                     self.__move_enemy_to_the_default_observation_position(enemy)
-            self.screen.fill(constants.BACKGROUND_COLOR)
+            self.screen.fill(rpg.constants.BACKGROUND_COLOR)
 
             # RENDER YOUR GAME HERE
             self.__enemies.draw(self.screen)
@@ -168,7 +167,7 @@ class App:
             self.__action_panel.draw(self.screen)
 
             pygame.display.flip()
-            self.clock.tick(constants.FRAMES_PER_SECOND)
+            self.clock.tick(rpg.constants.FRAMES_PER_SECOND)
         pygame.quit()
 
     @staticmethod
