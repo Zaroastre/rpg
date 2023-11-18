@@ -3,7 +3,10 @@ from random import randint
 import pygame
 
 from rpg.geometry import Geometry, Position
-from rpg.characters import Character, Enemy, Group, Human, Paladin
+from rpg.characters import Character, Enemy
+from rpg.classes import Paladin
+from rpg.breeds import Human
+from rpg.teams import Group
 from rpg.ui import ActionPanel, GroupPanel
 
 import rpg.constants
@@ -33,7 +36,7 @@ class App:
         
     def __generate_friends(self):
         for name in rpg.constants.FRIENDS_NAMES:
-            friend: Character = Character(name)
+            friend: Character = Character(name, Human(), Paladin())
             friend.position = Position(
                 randint(0, rpg.constants.WINDOW_WIDTH), randint(0, rpg.constants.WINDOW_HEIGHT))
             friend.menace = 20
@@ -41,7 +44,7 @@ class App:
         
     def __generate_enemies(self):
         for counter in range(randint(10, 100)):
-            enemy: Enemy = Enemy("Vilain #" + str(counter))
+            enemy: Enemy = Enemy("Vilain #" + str(counter), Human(), Paladin())
             enemy.menace = 100
             enemy.zone_radius = 200
             enemy.position = Position(randint(0, rpg.constants.WINDOW_WIDTH), randint(0, rpg.constants.WINDOW_HEIGHT))

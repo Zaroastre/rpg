@@ -3,9 +3,12 @@ from math import sqrt
 import pygame
 
 import rpg.constants
+from rpg.breeds import Breed
+from rpg.classes import Class
 from rpg.gameapi import Draw, InputEventHandler
 from rpg.geometry import Geometry, Position
-from rpg.resources import Resource, Mana
+
+pygame.init()
 
 class Projectil(pygame.sprite.Sprite, InputEventHandler, Draw):
     HEALTH_COLOR: pygame.Color = pygame.Color(0, 200, 0)
@@ -25,41 +28,8 @@ class Projectil(pygame.sprite.Sprite, InputEventHandler, Draw):
     def draw(self, master: pygame.Surface):
         pygame.draw.circle(master, Projectil.HEALTH_COLOR if not self.__is_damage else Projectil.DAMAGE_COLOR, (self.to_position.x, self.to_position.y), self.radius)
 
-class Life:
-    def __init__(self, max: int, left: int = None) -> None:
-        self.__maximum: int = max
-        self.__current: int = left if left is not None else max
-        self.__boost: list[int] = []
-        
-    @property
-    def max(self) -> int:
-        return self.__maximum
 
-    @property
-    def actual(self) -> int:
-        return self.__current
-    
-    def loose(self, points: int):
-        self.__current -= points
-        if (self.__current <= 0):
-            self.die()
-
-    def die(self):
-        self.__current = 0
-
-    def is_dead(self) -> bool:
-        return self.__current <= 0
-    
-    def health(self, points: int):
-        self.__current += points
-    
-    def is_alive(self) -> bool:
-        return not self.is_dead()
-
-
-class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
-    MENACE_AREA_COLOR: pygame.Color = pygame.Color(255, 255, 0, a=100)
-    ZONING_AREA_COLOR: pygame.Color = pygame.Color(255,200, 0)
+class Character:
     def __init__(self, name: str, breed: Breed, character_class: Class) -> None:
         pygame.sprite.Sprite.__init__(self)
         self.is_moving: bool = False
@@ -68,6 +38,7 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
         self.__is_going_to_the_bottom: bool = False
         self.__is_going_to_the_right: bool = False
         self.__is_going_to_the_top: bool = False
+        self._radius: float = 10.0
         self.__can_be_moved: bool = True
         self.zone_center: Position = None
         self.zone_radius: float = 0.0
@@ -75,20 +46,20 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
         self.__class: Class = character_class
         self.menace: float = 0
         self.__name: str = name
-        self._radius: float = 10.0
-        self._texture = pygame.Surface([self._radius*2, self._radius*2], pygame.SRCALPHA)
         self.position: Position = Position(0,0)
         self.previous_position: Position = Position(0, 0)
-        self.__is_selected: bool = False
-        self._hitbox: pygame.Rect = None
-        self.__font_size: int = 20
-        self.__font: pygame.font.Font = pygame.font.Font(
-            None, self.__font_size)
-        self.__font_color: pygame.Color = pygame.Color(255, 255, 255)
-        self._title: pygame.Surface = self.__font.render(
-            self.name[0], True, self.__font_color)
         self.is_in_fight_mode: bool = False
         self.trigged_projectils: list[Projectil] = []
+    @property
+    def radius(self) -> float:
+        return self._radius
+    @property
+    def breed(self) -> Breed:
+        return self.__breed
+    
+    @property
+    def character_class(self) -> Class:
+        return self.__class
 
     @property
     def move_speed(self) -> int:
@@ -99,26 +70,10 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
         return self.__can_be_moved
 
 
-    def is_selected(self) -> bool:
-        return self.__is_selected
-
     @property
     def name(self) -> str:
         return self.__name
 
-    @property
-    def hitbox(self) -> pygame.Rect:
-        return self._hitbox
-
-    @property
-    def radius(self) -> float:
-        return self._radius
-
-    def select(self):
-        self.__is_selected = True
-
-    def unselect(self):
-        self.__is_selected = False
 
     def follow(self, target):
         if (isinstance(target, Character)):
@@ -136,97 +91,12 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
             self.position.x += direction_x * self.move_speed
             self.position.y += direction_y * self.move_speed
 
-    def __handle_detect_moves_direction(self, event: pygame.event.Event):
-        if (event.type == pygame.KEYDOWN and (event.key == pygame.K_LEFT or event.key == pygame.K_q)) or (event.type == pygame.JOYAXISMOTION and event.axis == 0 and event.value < 0.003906369212927641):
-            self.__is_going_to_the_left = True
-        elif (event.type == pygame.KEYUP and (event.key == pygame.K_LEFT or event.key == pygame.K_q)) or (event.type == pygame.JOYAXISMOTION and event.axis == 0  and event.value == 0.003906369212927641):
-            self.__is_going_to_the_left = False
-        if (event.type == pygame.KEYDOWN and (event.key == pygame.K_RIGHT or event.key == pygame.K_d)) or (event.type == pygame.JOYAXISMOTION and event.axis == 0  and event.value > 0.003906369212927641):
-            self.__is_going_to_the_right = True
-        elif (event.type == pygame.KEYUP and (event.key == pygame.K_RIGHT or event.key == pygame.K_d)) or (event.type == pygame.JOYAXISMOTION and event.axis == 0  and event.value == 0.003906369212927641):
-            self.__is_going_to_the_right = False
-        if (event.type == pygame.KEYDOWN and (event.key == pygame.K_UP or event.key == pygame.K_z)) or (event.type == pygame.JOYAXISMOTION and event.axis == 1  and event.value < 0.003906369212927641):
-            self.__is_going_to_the_top = True
-        elif (event.type == pygame.KEYUP and (event.key == pygame.K_UP or event.key == pygame.K_z)) or (event.type == pygame.JOYAXISMOTION and event.axis == 1  and event.value == 0.003906369212927641):
-            self.__is_going_to_the_top = False
-        if (event.type == pygame.KEYDOWN and (event.key == pygame.K_DOWN or event.key == pygame.K_s)) or (event.type == pygame.JOYAXISMOTION and event.axis == 1 and event.value > 0.003906369212927641):
-            self.__is_going_to_the_bottom = True
-        elif (event.type == pygame.KEYUP and (event.key == pygame.K_DOWN or event.key == pygame.K_s)) or (event.type == pygame.JOYAXISMOTION and event.axis == 1 and event.value == 0.003906369212927641):
-            self.__is_going_to_the_bottom = False
-        self.is_moving = self.__is_going_to_the_bottom or self.__is_going_to_the_left or self.__is_going_to_the_right or self.__is_going_to_the_top
-        
-    def __handle_apply_moves(self):
-        if (self.previous_position != self.position):
-            self.previous_position = self.position.copy()
-        is_moving_in_diagonal = (self.__is_going_to_the_left or self.__is_going_to_the_right) and \
-                                (self.__is_going_to_the_top or self.__is_going_to_the_bottom)
-        if (is_moving_in_diagonal):
-
-            if self.__is_going_to_the_left and (self.__is_going_to_the_top or self.__is_going_to_the_bottom):
-                self.position.x -= self.__move_speed / sqrt(2)
-            if self.__is_going_to_the_right and (self.__is_going_to_the_top or self.__is_going_to_the_bottom):
-                self.position.x += self.__move_speed / sqrt(2)
-            if self.__is_going_to_the_top and (self.__is_going_to_the_left or self.__is_going_to_the_right):
-                self.position.y -= self.__move_speed / sqrt(2)
-            if self.__is_going_to_the_bottom and (self.__is_going_to_the_left or self.__is_going_to_the_right):
-                self.position.y += self.__move_speed / sqrt(2)
-        else:
-            if self.__is_going_to_the_left:
-                self.position.x -= self.__move_speed
-            if self.__is_going_to_the_right:
-                self.position.x += self.__move_speed
-            if self.__is_going_to_the_top:
-                self.position.y -= self.__move_speed
-            if self.__is_going_to_the_bottom:
-                self.position.y += self.__move_speed
-
-    def __handle_detect_aoe_position(self, event: pygame.event.Event):
-        if (event.type == pygame.MOUSEMOTION):
-            print("AOE with Mouse")
-        else:
-            if (event.type == pygame.JOYAXISMOTION and event.axis == 2 and event.value < 0.003906369212927641):
-                print("AOE with JOY" + str(event.value))
-            elif (event.type == pygame.JOYAXISMOTION and event.axis == 2 and event.value == 0.003906369212927641):
-                print("Cancel AOE on 2")
-            elif (event.type == pygame.JOYAXISMOTION and event.axis == 2 and event.value > 0.003906369212927641):
-                print("AOE with JOY" + str(event.value))
-            
-            if (event.type == pygame.JOYAXISMOTION and event.axis == 3 and event.value < 0.003906369212927641):
-                print("AOE with JOY" + str(event.value))
-            elif (event.type == pygame.JOYAXISMOTION and event.axis == 3 and event.value == 0.003906369212927641):
-                print("Cancel AOE on 3")
-            elif (event.type == pygame.JOYAXISMOTION and event.axis == 3 and event.value > 0.003906369212927641):
-                print("AOE with JOY" + str(event.value))
-           
-    def __handle_attack_ations(self, event: pygame.event.Event):
-        if (event.type == pygame.KEYDOWN and event.key == pygame.K_x) or (event.type == pygame.JOYBUTTONDOWN and event.button == 2):
-            new_projectil: Projectil = Projectil(True, 10.0, 5.0, self.previous_position.copy(), self.position.copy(), 5)
-            self.trigged_projectils.append(new_projectil)
-        self.__handle_detect_aoe_position(event)
-    
-
-    def handle(self, event: pygame.event.Event):
-        if event is not None:
-            if self.is_selected():
-                self.__handle_detect_moves_direction(event)
-                    
-        self.__handle_apply_moves()
-        if event is not None:
-            if self.is_selected():
-                self.__handle_attack_ations(event)
-        
-        for projectil in self.trigged_projectils:
-            projectil.handle(event)
-            if (projectil.to_position.x < 0 or projectil.to_position.x > rpg.constants.WINDOW_WIDTH) or (projectil.to_position.y < 0 or projectil.to_position.y > rpg.constants.WINDOW_HEIGHT):
-                self.trigged_projectils.remove(projectil)
-                del projectil
-
     def is_touching(self, other) -> bool:
         is_in_contact: bool = False
         if (isinstance(other, Character)):
             distance: float = Geometry.compute_distance(
                 self.position, other.position)
-            min_distance: float = (self.radius * 2)
+            min_distance: float = (self._radius * 2)
             if (distance < min_distance):
                 is_in_contact = True
         return is_in_contact
@@ -243,7 +113,7 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
             distance = Geometry.compute_distance(
                 self.position, other.position)
             # Valeur minimale pour éviter la superposition
-            min_distance = self.radius * 2
+            min_distance = self._radius * 2
             # Si un personnage est trop proche de nico, déplacer nico dans la direction opposée
             direction_x = self.position.x - other.position.x
             direction_y = self.position.y - other.position.y
@@ -268,24 +138,6 @@ class Character(pygame.sprite.Sprite, InputEventHandler, Draw):
                 self.position.y += direction_y * \
                     (min_distance - distance)
 
-    def draw(self, master: pygame.Surface):
-        pygame.draw.circle(master, Character.MENACE_AREA_COLOR, (self.position.x,self.position.y), self.menace, 2)
-        if (self.zone_center is not None):
-            pygame.draw.circle(master, Character.ZONING_AREA_COLOR, (self.zone_center.x,self.zone_center.y), self.zone_radius, 1)
-        self._texture.fill(pygame.Color(0,0,0,0))
-        point_color: pygame.Color
-        if (self.is_selected()):
-            point_color = pygame.Color(50,150,50)
-        else:
-            point_color = pygame.Color(0,150,250)
-        self._hitbox = pygame.draw.circle(
-            self._texture, point_color, (self._radius, self._radius), self._radius)
-        self._hitbox = master.blit(self._texture, (self.position.x-self._radius, self.position.y-self._radius))
-        master.blit(self._title, (self.position.x-(self._radius/2), self.position.y-(self._radius/2)))
-        for projectil in self.trigged_projectils:
-            projectil.draw(master)
-
-
 class Enemy(Character):
     def __init__(self, name: str, breed: Breed, character_class: Class) -> None:
         super().__init__(name, breed, character_class)
@@ -304,6 +156,7 @@ class Enemy(Character):
             self._texture, point_color, (self._radius, self._radius), self._radius)
         self._hitbox = master.blit(self._texture, (self.position.x-self._radius, self.position.y-self._radius))
         # master.blit(self._title, (self.position.x+self._radius*2, self.position.y-(self._radius/2)))
+
 
 
 class Group(InputEventHandler, Draw):

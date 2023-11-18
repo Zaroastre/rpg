@@ -1,6 +1,7 @@
 import pygame
 
-from geometry import Position
+from rpg.geometry import Position
+
 FRAMES_PER_SECOND: int = 60
 WINDOW_WIDTH: int = 1920
 WINDOW_HEIGHT: int = 1080
