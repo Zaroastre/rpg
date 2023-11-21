@@ -1,7 +1,7 @@
 from random import randint
 
 from rpg.breeds import Breed, BreedType, BreedFactory
-from rpg.characters import Character
+from rpg.characters import Character, Enemy
 from rpg.classes import Class, ClassType, ClassFactory
 
 
@@ -23,7 +23,7 @@ class GameGenerator:
     def generate_random_name() -> str:
         first_name: list[str] = ["Luke", "Kate", "Lauren", "Phillip", "Gemma", "Sophia", "Tony", "Herman", "Elle", "Allec", "Suzanne", "Kathleen", "Brooke", "Chloe", "Oakley", "Alexandra", "Maxim", "Luna", "Adem", "Jermaine", "Lois", "Dominik", "Sylvie", "Ivan", "Constance", "Sallie"]
         last_name: list[str] = ["Rockatansky", "Blacksmith", "Parker", "Grey", "Rabbit", "Walker", "Blunder", "Nguyen", "Bishop", "Steele", "Mahoney", "Benson", "Atkins", "Suarez", "Gibbs", "Wilkinson", "Wright", "Woodward", "Montes", "Warner", "Velasquez", "Patton", "Levine"]
-        name: str = f"{first_name[randint(0, len(first_name)-1)]} {last_name[randint(0, len(last_name)-1)]}"
+        name: str = f"{first_name[randint(0, len(first_name)-1)]} {last_name[randint(0, len(last_name)-1)].upper()}"
         return name
     
     
@@ -32,8 +32,20 @@ class GameGenerator:
         breed: Breed = GameGenerator.generate_random_breed()
         character_class: Class = GameGenerator.generate_random_class()
         name: str = GameGenerator.generate_random_name()
-        return GameGenerator.create_player(name, breed, character_class)
+        return GameGenerator.create_friend(name, breed, character_class)
     
     @staticmethod
-    def create_player(name: str, breed: Breed, character_class: Class) -> Character:
+    def generate_random_enemy() -> Character:
+        breed: Breed = GameGenerator.generate_random_breed()
+        character_class: Class = GameGenerator.generate_random_class()
+        name: str = GameGenerator.generate_random_name()
+        return GameGenerator.create_mob(name, breed, character_class)
+    
+    
+    @staticmethod
+    def create_friend(name: str, breed: Breed, character_class: Class) -> Character:
         return Character(name, breed, character_class)
+    
+    @staticmethod
+    def create_mob(name: str, breed: Breed, character_class: Class) -> Character:
+        return Enemy(name, breed, character_class)

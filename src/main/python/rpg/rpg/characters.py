@@ -6,9 +6,32 @@ import rpg.constants
 from rpg.breeds import Breed
 from rpg.classes import Class
 from rpg.gameapi import Draw, InputEventHandler
-from rpg.geometry import Geometry, Position
+from rpg.math.geometry import Geometry, Position
+from rpg.geolocation import Moveable, WindRose
+from rpg.gamedesign.progression_system import Level
 
 pygame.init()
+
+class Threat:
+    def __init__(self, level: int = 0) -> None:
+        self.__level: int = level
+
+    @property
+    def level(self) -> int:
+        return self.__level
+    
+    def increase(self, points: int):
+        if (points is not None and points >= 0):
+            self.__level += points
+
+    def decrease(self, points: int):
+        if (points is not None and points >= 0):
+            self.__level -= points
+        if (self.__level < 0):
+            self.__level = 0
+            
+    def is_felling_threating(self) -> bool:
+        return self.__level > 0
 
 class Projectil(pygame.sprite.Sprite, InputEventHandler, Draw):
     HEALTH_COLOR: pygame.Color = pygame.Color(0, 200, 0)
@@ -28,57 +51,127 @@ class Projectil(pygame.sprite.Sprite, InputEventHandler, Draw):
     def draw(self, master: pygame.Surface):
         pygame.draw.circle(master, Projectil.HEALTH_COLOR if not self.__is_damage else Projectil.DAMAGE_COLOR, (self.to_position.x, self.to_position.y), self.radius)
 
+class HitBox:
+    def __init__(self, top_left: Position, width: int, height: int) -> None:
+        self.width: int = width
+        self.height: int = height
+        self.size: tuple[int, int] = [self.width, self.height]
+        self.top: int = top_left.y
+        self.left: int = top_left.x
+        self.bottom: int = top_left.y + self.height
+        self.right: int = top_left.x + self.width
+        self.topleft: Position = top_left
+        self.bottomleft: Position = Position(self.left, self.bottom)
+        self.topright: Position = Position(self.right, self.top)
+        self.bottomright: Position = Position(self.right, self.bottom)
+        self.centerx: int = int(self.left + (self.width/2))
+        self.centery: int = int(self.top + (self.height/2))
+        self.midtop: Position = Position(self.centerx, self.top)
+        self.midleft: Position = Position(self.left, self.centery)
+        self.midbottom: Position = Position(self.centerx, self.bottom)
+        self.midright: Position = Position(self.right, self.centery)
+        self.center: Position = Position(self.centerx, self.centery)
+        self.x: int = self.left
+        self.y: int = self.top
 
-class Character:
+    def is_touching(self, other) -> bool:
+        if (not isinstance(other, HitBox)):
+            raise ValueError()
+        is_in_contact: bool = False
+        distance: float = Geometry.compute_distance(self.center, other.center)
+        min_distance: float = (self.width * 2)
+        if (distance < min_distance):
+            is_in_contact = True
+        return is_in_contact
+
+
+class Character(Moveable):
     def __init__(self, name: str, breed: Breed, character_class: Class) -> None:
-        pygame.sprite.Sprite.__init__(self)
-        self.is_moving: bool = False
+        self.__is_moving: bool = False
         self.__move_speed: int = 2.5
         self.__is_going_to_the_left: bool = False
         self.__is_going_to_the_bottom: bool = False
         self.__is_going_to_the_right: bool = False
         self.__is_going_to_the_top: bool = False
-        self._radius: float = 10.0
+        self.__radius: float = 10.0
+        self.__level: Level = Level(1, 100)
         self.__can_be_moved: bool = True
         self.zone_center: Position = None
         self.zone_radius: float = 0.0
         self.__breed: Breed = breed
         self.__class: Class = character_class
-        self.menace: float = 0
+        self.__threat: Threat = Threat()
         self.__name: str = name
-        self.position: Position = Position(0,0)
-        self.previous_position: Position = Position(0, 0)
+        self.__position: Position = Position(0,0)
+        self.__hitbox: HitBox = HitBox(self.__position, self.__radius,self.__radius)
         self.is_in_fight_mode: bool = False
-        self.trigged_projectils: list[Projectil] = []
-    @property
-    def radius(self) -> float:
-        return self._radius
-    @property
-    def breed(self) -> Breed:
-        return self.__breed
-    
-    @property
-    def character_class(self) -> Class:
-        return self.__class
-
-    @property
-    def move_speed(self) -> int:
-        return self.__move_speed
-
-    @property
-    def can_be_moved(self) -> bool:
-        return self.__can_be_moved
-
+        self.__trigged_projectils: list[Projectil] = []
+        self.__orientation: WindRose = WindRose.EAST
+        self.__position: Position = Position(0, 0)
+        self.previous_position: Position = Position(0, 0)
+        self.__is_selected: bool = False
+        self.is_moving: bool = False
 
     @property
     def name(self) -> str:
         return self.__name
+    @property
+    def breed(self) -> Breed:
+        return self.__breed
+    @property
+    def character_class(self) -> Class:
+        return self.__class
+    @property
+    def level(self) -> Level:
+        return self.__level
+    @property
+    def radius(self) -> float:
+        return self.__radius
+    @property
+    def move_speed(self) -> int:
+        return self.__move_speed
+    @property
+    def can_be_moved(self) -> bool:
+        return self.__can_be_moved
+    @property
+    def threat(self) -> Threat:
+        return self.__threat
+    @property
+    def hitbox(self) -> HitBox:
+        return self.__hitbox
+    @property
+    def trigged_projectils(self) -> list[Projectil]:
+        return self.__trigged_projectils
+    def get_orientation(self) -> WindRose:
+        return self.__orientation
 
-
+    def get_position(self) -> Position:
+        return self.__position
+    
+    def move(self, speed: float, orientation: WindRose):
+        if (self.__orientation is not orientation):
+            self.__orientation = orientation
+        # Impl not finished
+    
+    def move_foreward(self, speed: float):
+        pass
+    
+    def move_backward(self, speed: float):
+        pass
+    
+    def turn_around(self):
+        self.__orientation = WindRose.opposite(self.__orientation)
+    
+    def turn_left(self):
+        self.__orientation = WindRose.compute_following_direction_counterclockwise(self.__orientation)
+    
+    def turn_right(self):
+        self.__orientation = WindRose.compute_following_direction_clockwise(self.__orientation)
+    
     def follow(self, target):
         if (isinstance(target, Character)):
-            direction_x = target.position.x - self.position.x
-            direction_y = target.position.y - self.position.y
+            direction_x = target.get_position().x - self.get_position().x
+            direction_y = target.get_position().y - self.get_position().y
             direction_length = sqrt(direction_x**2 + direction_y**2)
 
             # Normalisation de la direction
@@ -87,36 +180,41 @@ class Character:
                 direction_y /= direction_length
 
             # Déplacement du personnage
-            # self.previous_position = Position(self.position.x, self.position.y)
-            self.position.x += direction_x * self.move_speed
-            self.position.y += direction_y * self.move_speed
+            # self.previous_position = Position(self.get_position().x, self.get_position().y)
+            before: Position = self.get_position().copy()
+            self.get_position().x += direction_x * self.move_speed
+            self.get_position().y += direction_y * self.move_speed
+            after: Position = self.get_position().copy()
+            if (before != after):
+                self.__orientation = WindRose.detect_direction(before, after)
 
     def is_touching(self, other) -> bool:
         is_in_contact: bool = False
         if (isinstance(other, Character)):
             distance: float = Geometry.compute_distance(
-                self.position, other.position)
-            min_distance: float = (self._radius * 2)
+                self.get_position(), other.get_position())
+            min_distance: float = (self.radius * 2)
             if (distance < min_distance):
                 is_in_contact = True
+            # is_in_contact = self.__hitbox.is_touching(other.hitbox)
         return is_in_contact
 
     def is_feel_threatened(self, target) -> bool:
         is_real_threat: bool = False
         if (isinstance(target, Character)):
-            distance_between_enemy_and_target = Geometry.compute_distance(target.position, self.position)
-            is_real_threat = distance_between_enemy_and_target <= self.menace
+            distance_between_enemy_and_target = Geometry.compute_distance(target.get_position(), self.get_position())
+            is_real_threat = distance_between_enemy_and_target <= self.__threat.level
         return is_real_threat
 
     def avoid_collision_with_other(self, other):
         if (isinstance(other, Character)):
             distance = Geometry.compute_distance(
-                self.position, other.position)
+                self.get_position(), other.get_position())
             # Valeur minimale pour éviter la superposition
-            min_distance = self._radius * 2
+            min_distance = self.__radius * 2
             # Si un personnage est trop proche de nico, déplacer nico dans la direction opposée
-            direction_x = self.position.x - other.position.x
-            direction_y = self.position.y - other.position.y
+            direction_x = self.get_position().x - other.get_position().x
+            direction_y = self.get_position().y - other.get_position().y
             direction_length = sqrt(direction_x**2 + direction_y**2)
 
             # Normalisation de la direction
@@ -126,83 +224,30 @@ class Character:
 
             # Déplacement de nico
             if (other.can_be_moved):
-                # other.previous_position = other.position.copy()
-                other.position.x -= direction_x * \
+                # other.previous_position = other.get_position().copy()
+                other.get_position().x -= direction_x * \
                     (min_distance - distance)
-                other.position.y -= direction_y * \
+                other.get_position().y -= direction_y * \
                     (min_distance - distance)
             else:
-                # self.previous_position = self.position.copy()
-                self.position.x += direction_x * \
+                # self.previous_position = self.get_position().copy()
+                self.get_position().x += direction_x * \
                     (min_distance - distance)
-                self.position.y += direction_y * \
+                self.get_position().y += direction_y * \
                     (min_distance - distance)
+
+    def is_selected(self) -> bool:
+        return self.__is_selected
+
+    def select(self):
+        self.__is_selected = True
+
+    def unselect(self):
+        self.__is_selected = False
+
 
 class Enemy(Character):
     def __init__(self, name: str, breed: Breed, character_class: Class) -> None:
         super().__init__(name, breed, character_class)
     
-    def draw(self, master: pygame.Surface):
-        # pygame.draw.circle(master, pygame.Color(150,0,0), (self.position.x,self.position.y), self.menace, 2)
-        # if (self.zone_center is not None):
-        #     pygame.draw.circle(master, pygame.Color(255, 0, 255), (self.zone_center.x,self.zone_center.y), self.zone_radius, 1)
-        self._texture.fill(pygame.Color(0,0,0,0))
-        point_color: pygame.Color
-        if (self.is_selected()):
-            point_color = pygame.Color(50,150,50)
-        else:
-            point_color = pygame.Color(255,150,0)
-        self._hitbox = pygame.draw.circle(
-            self._texture, point_color, (self._radius, self._radius), self._radius)
-        self._hitbox = master.blit(self._texture, (self.position.x-self._radius, self.position.y-self._radius))
-        # master.blit(self._title, (self.position.x+self._radius*2, self.position.y-(self._radius/2)))
-
-
-
-class Group(InputEventHandler, Draw):
-    def __init__(self, max_capacity: int) -> None:
-        self.__members: list[Character] = []
-        self.__max_size: int = max_capacity
-
-    @property
-    def members(self) -> list[Character]:
-        return self.__members
-
-    def add_member(self, new_member: Character):
-        if (len(self.__members) < self.__max_size):
-            self.__members.append(new_member)
-
-    def is_full(self) -> bool:
-        return len(self.__members) == self.__max_size
-
-    def remove_member(self, member_to_remove: Character):
-        if (member_to_remove in self.__members):
-            self.__members.remove(member_to_remove)
-
-    def __handle_character_selection_in_group(self, event: pygame.event.Event):
-        selected_members: list[Character] = [member for member in self.members if member.is_selected()]
-        if (len(selected_members) == 1):
-            previous_selected_member = selected_members[0]
-            index: int = self.__members.index(previous_selected_member)
-            if (event.type == pygame.JOYBUTTONDOWN and event.button == 5):
-                if (index+1 > len(self.__members)-1):
-                    index = 0
-                else:
-                    index += 1
-            if (event.type == pygame.JOYBUTTONDOWN and event.button == 4):
-                if (index == 0):
-                    index = len(self.__members)-1
-                else:
-                    index -= 1
-            previous_selected_member.unselect()
-            self.__members[index].select()
-
-    def handle(self, event: pygame.event.Event):
-        if (event is not None):
-            self.__handle_character_selection_in_group(event)
-        for member in self.__members:
-            member.handle(event)
-
-    def draw(self, master: pygame.Surface):
-        for member in self.__members:
-            member.draw(master)
+    

@@ -1,46 +1,13 @@
 from abc import ABC
 from enum import Enum
 
+from rpg.geolocation import Moveable, WindRose, Position
+from rpg.gamedesign.character_system import AbstractCharacter
 
-class Life:
-    def __init__(self, max: int, left: int = None) -> None:
-        self.__maximum: int = max
-        self.__current: int = left if left is not None else max
-        self.__boost: list[int] = []
-        
-    @property
-    def max(self) -> int:
-        return self.__maximum
 
-    @property
-    def actual(self) -> int:
-        return self.__current
-    
-    def loose(self, points: int):
-        self.__current -= points
-        if (self.__current <= 0):
-            self.die()
-
-    def die(self):
-        self.__current = 0
-
-    def is_dead(self) -> bool:
-        return self.__current <= 0
-    
-    def health(self, points: int):
-        self.__current += points
-    
-    def is_alive(self) -> bool:
-        return not self.is_dead()
-
-class FormOfLife(ABC):
+class FormOfLife(AbstractCharacter):
     def __init__(self) -> None:
-        self.__life: Life = Life(100, 100)
-    
-    @property
-    def life(self) -> Life:
-        return self.__life
-    
+        super().__init__()
 
 class BreedTypeValue:
     def __init__(self, name: str) -> None:
@@ -49,7 +16,7 @@ class BreedTypeValue:
     @property
     def name(self) -> str:
         return self.__name
-    
+
 
 class BreedType(Enum):
     HUMAN: BreedTypeValue = BreedTypeValue("HUMAN")
@@ -63,7 +30,7 @@ class BreedType(Enum):
     ORC: BreedTypeValue = BreedTypeValue("ORC")
     TROLL: BreedTypeValue = BreedTypeValue("TROLL")
     TAUREN: BreedTypeValue = BreedTypeValue("TAUREN")
-    
+
 
 class Breed(FormOfLife):
     def __init__(self, breed_type: BreedType) -> None:
