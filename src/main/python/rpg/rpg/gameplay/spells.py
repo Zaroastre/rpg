@@ -4,11 +4,12 @@ from enum import Enum
 from threading import Thread
 from time import sleep
 
-from rpg.breeds import Breed
 from rpg.gamedesign.character_system import AbstractCharacter
-from rpg.gamedesign.progression_system import Rank
-from rpg.resources import RessourceType
 from rpg.gamedesign.interval_system import Range
+from rpg.gamedesign.progression_system import Rank
+from rpg.gameplay.breeds import Breed
+from rpg.gameplay.powers import PowerType
+
 
 class SpellTypeValue:
     def __init__(self, name: str) -> None:

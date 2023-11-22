@@ -1,8 +1,8 @@
 from random import randint
 
-from rpg.breeds import Breed, BreedType, BreedFactory
+from rpg.gameplay.breeds import Breed, BreedType, BreedFactory
 from rpg.characters import Character, Enemy
-from rpg.classes import Class, ClassType, ClassFactory
+from rpg.gameplay.classes import Class, ClassType, ClassFactory
 
 
 class GameGenerator:

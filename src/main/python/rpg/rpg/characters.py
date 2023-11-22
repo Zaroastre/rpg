@@ -3,8 +3,8 @@ from math import sqrt
 import pygame
 
 import rpg.constants
-from rpg.breeds import Breed
-from rpg.classes import Class
+from rpg.gameplay.breeds import Breed
+from rpg.gameplay.classes import Class
 from rpg.gameapi import Draw, InputEventHandler
 from rpg.math.geometry import Geometry, Position
 from rpg.geolocation import Moveable, WindRose

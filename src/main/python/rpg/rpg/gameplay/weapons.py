@@ -1,4 +1,6 @@
 from enum import Enum
+from rpg.objects import Object
+
 
 class WeaponTypeValue:
     def __init__(self, name: str) -> None:
@@ -24,6 +26,6 @@ class WeaponType(Enum):
     WAND: WeaponTypeValue = WeaponTypeValue("WAND")
     
 
-class Weapon:
+class Weapon(Object):
     def __init__(self) -> None:
-        pass
+        super().__init__(None)

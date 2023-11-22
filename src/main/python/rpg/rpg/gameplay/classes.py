@@ -1,39 +1,45 @@
 from abc import ABC
 from enum import Enum
 
-from rpg.resources import Resource, Mana, Energy, Qi, Rage, Rune, RessourceType
-from rpg.talents import TalentsTree, TalentsBook, TalentsBookFactory
-from rpg.spells import SpellType, Spell, SpellsBook, SpellBuilder
+from rpg.gameplay.powers import Power, Mana, Energy, Chi, Rage, Rune, PowerType
+from rpg.gameplay.talents import TalentsTree, TalentsBook, TalentsBookFactory
+from rpg.gameplay.spells import SpellType, Spell, SpellsBook, SpellBuilder
 from rpg.gamedesign.progression_system import Rank
 from rpg.gamedesign.interval_system import Range
+from rpg.utils import Color
 
 class ClassTypeValue:
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, color: Color) -> None:
         self.__name: str = name
+        self.__color: Color = color
         
     @property
     def name(self) -> str:
         return self.__name
+    @property
+    def color(self) -> tuple[int, int, int, int]:
+        return self.__color.to_tuple()
 
 
 class ClassType(Enum):
-    DEMONIST: ClassTypeValue = ClassTypeValue("DEMONIST")
-    MAGE: ClassTypeValue = ClassTypeValue("MAGE")
-    PRIEST: ClassTypeValue = ClassTypeValue("PRIEST")
-    MONK: ClassTypeValue = ClassTypeValue("MONK")
-    HUNTER: ClassTypeValue = ClassTypeValue("HUNTER")
-    THIEFT: ClassTypeValue = ClassTypeValue("THIEFT")
-    PALADIN: ClassTypeValue = ClassTypeValue("PALADIN")
-    WARRIOR: ClassTypeValue = ClassTypeValue("WARRIOR")
-    SHAMAN: ClassTypeValue = ClassTypeValue("SHAMAN")
-    DRUID: ClassTypeValue = ClassTypeValue("DRUID")
-    DEMON_HUNTER: ClassTypeValue = ClassTypeValue("DEMON_HUNTER")
-    DEATH_KNIGHT: ClassTypeValue = ClassTypeValue("DEATH_KNIGHT")
+    DEMONIST: ClassTypeValue = ClassTypeValue("DEMONIST", Color(135,136,238))
+    MAGE: ClassTypeValue = ClassTypeValue("MAGE", Color(63,199,235))
+    PRIEST: ClassTypeValue = ClassTypeValue("PRIEST", Color(255,255,255))
+    MONK: ClassTypeValue = ClassTypeValue("MONK", Color(0,255,152))
+    HUNTER: ClassTypeValue = ClassTypeValue("HUNTER", Color(170,211,114))
+    ROGUE: ClassTypeValue = ClassTypeValue("ROGUE", Color(255,244,104))
+    PALADIN: ClassTypeValue = ClassTypeValue("PALADIN", Color(244,140,186))
+    WARRIOR: ClassTypeValue = ClassTypeValue("WARRIOR", Color(198,155,109))
+    SHAMAN: ClassTypeValue = ClassTypeValue("SHAMAN", Color(0,112,22))
+    DRUID: ClassTypeValue = ClassTypeValue("DRUID", Color(255,124,10))
+    DEMON_HUNTER: ClassTypeValue = ClassTypeValue("DEMON_HUNTER", Color(163,48,201))
+    DEATH_KNIGHT: ClassTypeValue = ClassTypeValue("DEATH_KNIGHT", Color(196,30,58))
+    # EVOKER: ClassTypeValue = ClassTypeValue("EVOKER", Color(51,147,127))
 
 class Class(ABC):
-    def __init__(self, class_type: ClassType, resource: Resource, talents_book: TalentsBook) -> None:
+    def __init__(self, class_type: ClassType, resource: Power, talents_book: TalentsBook) -> None:
         self.__class_type: ClassType = class_type
-        self.__resource: Resource = resource
+        self.__resource: Power = resource
         self.__talents_book: TalentsBook = talents_book
         self.__spells_book: SpellsBook = SpellsBook()
     
@@ -45,7 +51,7 @@ class Class(ABC):
         return self.__class_type
     
     @property
-    def resource(self) -> Resource:
+    def resource(self) -> Power:
         return self.__resource
 
     @property
@@ -187,7 +193,7 @@ class DemonHunter(Class):
       
 class Rogue(Class):
     def __init__(self) -> None:
-        super().__init__(ClassType.THIEFT, Energy(), TalentsBookFactory.rogue())
+        super().__init__(ClassType.ROGUE, Energy(), TalentsBookFactory.rogue())
         self.spells_book.learn(
             SpellBuilder("Eviscerate")
                 .description("Heals a friendly target for instant_damage.minimum to instant_damage.maximum.")
@@ -215,7 +221,7 @@ class Rogue(Class):
        
 class Monk(Class):
     def __init__(self) -> None:
-        super().__init__(ClassType.MONK, Qi(), TalentsBookFactory.monk())
+        super().__init__(ClassType.MONK, Chi(), TalentsBookFactory.monk())
           
 class Warrior(Class):
     def __init__(self) -> None:
@@ -261,7 +267,7 @@ class ClassFactory:
                 character_class = Priest()
             case ClassType.DEMONIST:
                 character_class = Demonist()
-            case ClassType.THIEFT:
+            case ClassType.ROGUE:
                 character_class = Rogue()
                 
         return character_class

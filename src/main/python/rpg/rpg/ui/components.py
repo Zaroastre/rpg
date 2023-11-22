@@ -4,7 +4,7 @@ import pygame
 
 from rpg.math.geometry import Position
 from rpg.characters import Character, Enemy
-from rpg.teams import Group
+from rpg.gameplay.teams import Group
 from rpg.gameapi import InputEventHandler, Draw
 
 import rpg.constants
@@ -152,9 +152,9 @@ class EnemyComponent(CharacterComponent):
         super().__init__(enemy)
 
     def draw(self, master: pygame.Surface):
-        pygame.draw.circle(master, pygame.Color(150,0,0), (self._character.get_position().x,self._character.get_position().y), self._character.threat.level, 2)
-        if (self._character.zone_center is not None):
-            pygame.draw.circle(master, pygame.Color(255, 0, 255), (self._character.zone_center.x,self._character.zone_center.y), self._character.zone_radius, 1)
+        # pygame.draw.circle(master, pygame.Color(150,0,0), (self._character.get_position().x,self._character.get_position().y), self._character.threat.level, 2)
+        # if (self._character.zone_center is not None):
+        #     pygame.draw.circle(master, pygame.Color(255, 0, 255), (self._character.zone_center.x,self._character.zone_center.y), self._character.zone_radius, 1)
         self._texture.fill(pygame.Color(0,0,0,0))
         point_color: pygame.Color
         if (self.is_selected()):

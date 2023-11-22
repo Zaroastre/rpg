@@ -5,10 +5,12 @@ from rpg.characters import Character, Enemy
 from rpg.gamedesign.interval_system import Range
 from rpg.gamengine import GameGenerator
 from rpg.math.geometry import Geometry
-from rpg.spells import Spell
-from rpg.teams import Group
+from rpg.gameplay.spells import Spell
+from rpg.gameplay.teams import Group
 from rpg.ui.components import CharacterComponent, EnemyComponent
 from rpg.ui.graphics import ActionPanel, ExperiencePanel, GroupPanel, SpellDetailPopup
+from rpg.configuration import Configuration
+from rpg.gameplay.player import Player
 
 pygame.init()
 pygame.joystick.init()
@@ -20,9 +22,13 @@ class App:
     def __init__(self) -> None:
         print("Starting application...")
         print("Creating window...")
-        # self.screen: pygame.Surface = pygame.display.set_mode((rpg.constants.WINDOW_WIDTH, rpg.constants.WINDOW_HEIGHT))
-        self.screen: pygame.Surface = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        pygame.display.set_caption("World Of Warcraft")
+        self.__configuration: Configuration = Configuration()
+        self.screen: pygame.Surface
+        if (self.__configuration.fullscreen):
+            self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        else:
+            self.screen = pygame.display.set_mode((self.__configuration.window_width, self.__configuration.window_height))
+        pygame.display.set_caption("World Of Nemesys")
         self.clock: pygame.time.Clock = pygame.time.Clock()
         self.is_running: bool = True
         self.__action_panel: ActionPanel = ActionPanel(rpg.constants.ACTION_PANEL_WIDTH, rpg.constants.ACTION_PANEL_HEIGHT, rpg.constants.ACTION_PANEL_POSITION)
@@ -31,12 +37,12 @@ class App:
         self.__enemies: Group = Group(max_capacity=100)
         self.__group_of_the_player: Group = Group(max_capacity=5)
         self.__group_panel: GroupPanel = GroupPanel(group=self.__group_of_the_player, width=rpg.constants.GROUP_PANEL_WIDTH, height=rpg.constants.GROUP_PANEL_HEIGHT, position=rpg.constants.GROUP_PANEL_POSITION)
-        self.__played_character: Character = None
         self.__heroes_components: list[CharacterComponent] = []
         self.__vilains_components: list[EnemyComponent] = []
         self.__joystick: pygame.joystick.Joystick = None
         self.__spell_detail_popup: SpellDetailPopup = None
-        # self.__initialize_events_listeners()
+        self.__initialize_events_listeners()
+        self.__player: Player = Player()
     
     def __initialize_events_listeners(self):
         self.__action_panel.on_spell_slot_hover(self.__handle_on_spell_slot_hover)
@@ -45,7 +51,8 @@ class App:
         self.__action_panel.on_spell_slot_leave(self.__handle_on_spell_slot_leave)
     
     def __handle_on_spell_slot_hover(self, spell: Spell):
-        self.__spell_detail_popup = SpellDetailPopup(spell, self.__played_character.character_class, rpg.constants.SPELL_POPUP_WIDTH, rpg.constants.SPELL_POPUP_HEIGHT, rpg.constants.SPELL_POPUP_POSITION)
+        if (spell is not None):
+            self.__spell_detail_popup = SpellDetailPopup(spell, self.__player.character.character_class, rpg.constants.SPELL_POPUP_WIDTH, rpg.constants.SPELL_POPUP_HEIGHT, rpg.constants.SPELL_POPUP_POSITION)
     
     def __handle_on_spell_slot_press(self):
         if (self.__spell_detail_popup is not None):
@@ -86,7 +93,7 @@ class App:
         player.level.experience.gain(50)
         player.threat.increase(20.0)
         self.__group_of_the_player.add_member(player)
-        self.__played_character = player
+        self.__player.set_character(player)
         self.__heroes_components.append(CharacterComponent(player))
     
     def __prevent_character_to_disapear_from_scene(self, character: Character):
@@ -107,16 +114,16 @@ class App:
             for other in others:
                 if friend.is_touching(other):
                     friend.avoid_collision_with_other(other)
-            if friend.is_touching(self.__played_character):
-                friend.avoid_collision_with_other(self.__played_character)
+            if friend.is_touching(self.__player.character):
+                friend.avoid_collision_with_other(self.__player.character)
             else:
-                friend.follow(self.__played_character)
+                friend.follow(self.__player.character)
             self.__prevent_character_to_disapear_from_scene(friend)
 
     def __move_enemy_to_the_default_observation_position(self, enemy: Enemy):
         
         # if (attacking_enemy is None):
-        #     self.__played_character.is_in_fight_mode = False
+        #     self.__player.character.is_in_fight_mode = False
         
         if Geometry.compute_distance(enemy.get_position(), enemy.zone_center) > 1:
             # Calculer le vecteur directionnel vers la position initiale
@@ -145,7 +152,7 @@ class App:
             self.__available_friends.remove_member(member)
 
     def __recruit_member_if_is_touching(self, member: Character):
-        if (member.is_touching(self.__played_character)):
+        if (member.is_touching(self.__player.character)):
             self.__recruit_member(member)
 
     def __draw_hud(self, master: pygame.Surface):
@@ -196,19 +203,20 @@ class App:
             for component in self.__vilains_components:
                 component.handle(None)
         
-        self.__played_character = [character for character in self.__group_of_the_player.members if character.is_selected()][0]
-        self.__action_panel.set_character(self.__played_character)
+        self.__player.set_character([character for character in self.__group_of_the_player.members if character.is_selected()][0])
+        self.__action_panel.set_character(self.__player.character)
+        self.__action_panel.set_spells_wheel(self.__player.spells_wheel)
         self.__initialize_events_listeners()
-        self.__experience_panel.set_character(self.__played_character)
-        if (self.__played_character.is_moving):
+        self.__experience_panel.set_character(self.__player.character)
+        if (self.__player.character.is_moving):
             for member in self.__available_friends.members:
                 self.__recruit_member_if_is_touching(member)
 
         self.__handle_interaction_and_moves_for_friends(self.__group_of_the_player)
 
         for enemy in self.__enemies.members:
-            if (enemy.is_feel_threatened(self.__played_character)):
-                self.__prepare_enemy_to_fight(enemy, self.__played_character)
+            if (enemy.is_feel_threatened(self.__player.character)):
+                self.__prepare_enemy_to_fight(enemy, self.__player.character)
             else:
                 self.__move_enemy_to_the_default_observation_position(enemy)
 
@@ -228,7 +236,7 @@ class App:
             self.__handle()
             self.__draw()
             pygame.display.flip()
-            self.clock.tick(rpg.constants.FRAMES_PER_SECOND)
+            self.clock.tick(self.__configuration.frames_per_second)
         pygame.quit()
 
     @staticmethod

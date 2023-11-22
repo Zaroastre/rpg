@@ -1,0 +1,38 @@
+{
+    "group": {
+        "width": 300,
+        "height": 600,
+        "position": {
+            "x": 10,
+            "y": 10
+        },
+        "member": {
+            "width": 300,
+            "height": 40,
+            "avatar": {
+                "width": 40,
+                "height": 40
+            },
+            "life_bar": {
+                "width": 40,
+                "height": 40
+            },
+            "resource_bar": {
+                "width": 40,
+                "height": 40
+            },
+            "threat_bar": {
+                "width": 40,
+                "height": 40
+            }
+        }
+    },
+    "action":  {
+        "width": 960,
+        "height": 600,
+        "position": {
+            "x": 10,
+            "y": 10
+        }
+    }
+}
