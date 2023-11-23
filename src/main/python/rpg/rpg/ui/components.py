@@ -2,10 +2,32 @@ from math import sqrt
 
 import pygame
 import rpg.constants
-from rpg.characters import Character, Enemy
+from rpg.characters import Character, Enemy, Projectil
 from rpg.gameapi import Draw, InputEventHandler
 from rpg.gameplay.teams import Group
+from rpg.math.geometry import Geometry, Position
 
+
+class ProjectilComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
+    HEALTH_COLOR: pygame.Color = pygame.Color(0, 200, 0)
+    DAMAGE_COLOR: pygame.Color = pygame.Color(200, 0, 0)
+    def __init__(self, projectil: Projectil) -> None:
+        pygame.sprite.Sprite.__init__(self)
+        self.__projectil: Projectil = projectil
+        self.__rect: pygame.Rect = pygame.Rect(0,0,0,0)
+
+    @property
+    def rect(self) -> pygame.Rect:
+        return self.__rect
+    @property
+    def projectil(self) -> Projectil:
+        return self.__projectil
+
+    def handle(self, event: pygame.event.Event):
+        self.__projectil.to_position = Geometry.compute_new_point_using_speed(self.__projectil.from_position, self.__projectil.to_position, self.__projectil.move_speed)
+    
+    def draw(self, master: pygame.Surface):
+        self.__rect = pygame.draw.circle(master, ProjectilComponent.HEALTH_COLOR if not self.__projectil.is_damage else ProjectilComponent.DAMAGE_COLOR, (self.__projectil.to_position.x, self.__projectil.to_position.y), self.__projectil.radius)
 
 class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
     MENACE_AREA_COLOR: pygame.Color = pygame.Color(255, 255, 0, a=100)
@@ -27,6 +49,7 @@ class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
         self.__font_color: pygame.Color = pygame.Color(255, 255, 255)
         self._title: pygame.Surface = self.__font.render(
             self._character.name[0], True, self.__font_color)
+        self.__projectils_components: list[ProjectilComponent] = []
     
     def is_selected(self) -> bool:
         return self.__is_selected
@@ -37,6 +60,13 @@ class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
     def unselect(self):
         self.__is_selected = False
 
+    @property
+    def character(self) -> Character:
+        return self._character
+
+    @property
+    def projectils(self) -> list[ProjectilComponent]:
+        return self.__projectils_components
 
     @property
     def hitbox(self) -> pygame.Rect:
@@ -107,9 +137,10 @@ class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
            
     def __handle_attack_ations(self, event: pygame.event.Event):
         if (event.type == pygame.KEYDOWN and event.key == pygame.K_x) or (event.type == pygame.JOYBUTTONDOWN and event.button == 2):
-            # new_projectil: Projectil = Projectil(True, 10.0, 5.0, self.previous_position.copy(), self.get_position().copy(), 5)
-            # self.trigged_projectils.append(new_projectil)
-            pass
+            self._character.attack()
+            trigged_projectil: Projectil = self._character.trigged_projectils[-1]
+            self.__projectils_components.append(ProjectilComponent(trigged_projectil))
+        
         self.__handle_detect_aoe_position(event)
     
 
@@ -123,11 +154,15 @@ class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
             if self._character.is_selected():
                 self.__handle_attack_ations(event)
         
-        for projectil in self._character.trigged_projectils:
-            projectil.handle(event)
-            if (projectil.to_position.x < 0 or projectil.to_position.x > rpg.constants.WINDOW_WIDTH) or (projectil.to_position.y < 0 or projectil.to_position.y > rpg.constants.WINDOW_HEIGHT):
-                self._character.trigged_projectils.remove(projectil)
-                del projectil
+        for component in self.__projectils_components:
+            component.handle(event)
+            if (component.projectil.to_position.x < 0 or component.projectil.to_position.x > rpg.constants.WINDOW_WIDTH) or (component.projectil.to_position.y < 0 or component.projectil.to_position.y > rpg.constants.WINDOW_HEIGHT):
+                self._character.trigged_projectils.remove(component.projectil)
+                # del component.projectil
+                self.__projectils_components.remove(component)
+                del component
+            else:
+                pass
 
     def draw(self, master: pygame.Surface):
         pygame.draw.circle(master, CharacterComponent.MENACE_AREA_COLOR, (self._character.get_position().x,self._character.get_position().y), self._character.threat.level, 2)
@@ -139,11 +174,15 @@ class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
         self.__hitbox = master.blit(self._texture, (self._character.get_position().x-self._character.radius, self._character.get_position().y-self._character.radius))
         master.blit(self._title, (self._character.get_position().x-(self._character.radius/2), self._character.get_position().y-(self._character.radius/2)))
         for projectil in self._character.trigged_projectils:
-            projectil.draw(master)
+            projectil_component: ProjectilComponent = ProjectilComponent(projectil)
+            projectil_component.draw(master)
 
 class EnemyComponent(CharacterComponent):
     def __init__(self, enemy: Enemy) -> None:
         super().__init__(enemy)
+    @property
+    def rect(self) -> pygame.Rect:
+        return self._hitbox
 
     def draw(self, master: pygame.Surface):
         # pygame.draw.circle(master, pygame.Color(150,0,0), (self._character.get_position().x,self._character.get_position().y), self._character.threat.level, 2)

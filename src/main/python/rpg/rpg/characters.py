@@ -10,6 +10,7 @@ from rpg.math.geometry import Geometry, Position
 from rpg.geolocation import Moveable, WindRose
 from rpg.gamedesign.progression_system import Level
 from rpg.gameplay.genders import Gender
+from rpg.gameplay.storages import Storage
 
 pygame.init()
 
@@ -34,24 +35,22 @@ class Threat:
     def is_felling_threating(self) -> bool:
         return self.__level > 0
 
-class Projectil(pygame.sprite.Sprite, InputEventHandler, Draw):
-    HEALTH_COLOR: pygame.Color = pygame.Color(0, 200, 0)
-    DAMAGE_COLOR: pygame.Color = pygame.Color(200, 0, 0)
+class Projectil:
     def __init__(self, is_damage: bool, value: float, move_speed: float, from_position: Position, to_position: Position, radius: float) -> None:
-        pygame.sprite.Sprite.__init__(self)
         self.from_position: Position = from_position
         self.to_position: Position = to_position
         self.__move_speed: float = move_speed
         self.__is_damage: bool = is_damage
         self.radius: float = radius
         self._texture = pygame.Surface([self.radius*2, self.radius*2], pygame.SRCALPHA)
+    @property
+    def is_damage(self) -> bool:
+        return self.__is_damage
     
-    def handle(self, event: pygame.event.Event):
-        self.to_position = Geometry.compute_new_point_using_speed(self.from_position, self.to_position, self.__move_speed)
+    @property
+    def move_speed(self) -> float:
+        return self.__move_speed
     
-    def draw(self, master: pygame.Surface):
-        pygame.draw.circle(master, Projectil.HEALTH_COLOR if not self.__is_damage else Projectil.DAMAGE_COLOR, (self.to_position.x, self.to_position.y), self.radius)
-
 class HitBox:
     def __init__(self, top_left: Position, width: int, height: int) -> None:
         self.width: int = width
@@ -113,6 +112,7 @@ class Character(Moveable):
         self.previous_position: Position = Position(0, 0)
         self.__is_selected: bool = False
         self.is_moving: bool = False
+        self.__bags: list[Storage] = []
 
     @property
     def name(self) -> str:
@@ -199,6 +199,10 @@ class Character(Moveable):
             if (distance < min_distance):
                 is_in_contact = True
             # is_in_contact = self.__hitbox.is_touching(other.hitbox)
+        # if (isinstance(other, Projectil)):
+        #     if (self.get_position().x-self.radius <= other.to_position.x <= self.get_position().x+self.radius):
+        #         if (self.get_position().y-self.radius <= other.to_position.y <= self.get_position().y+self.radius):
+        #             is_in_contact = True
         return is_in_contact
 
     def is_feel_threatened(self, target) -> bool:
@@ -247,6 +251,9 @@ class Character(Moveable):
     def unselect(self):
         self.__is_selected = False
 
+    def attack(self):
+        new_projectil: Projectil = Projectil(True, 10.0, 5.0, self.previous_position.copy(), self.get_position().copy(), 5)
+        self.trigged_projectils.append(new_projectil)
 
 class Enemy(Character):
     def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender) -> None:

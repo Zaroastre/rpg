@@ -1,17 +1,11 @@
 import pygame
 
 import rpg.constants
-from rpg.characters import Character, Enemy
-from rpg.gamedesign.interval_system import Range
-from rpg.gamengine import GameGenerator
-from rpg.math.geometry import Geometry
-from rpg.gameplay.spells import Spell
-from rpg.gameplay.teams import Group
-from rpg.ui.components import CharacterComponent, EnemyComponent
-from rpg.ui.graphics import ActionPanel, ExperiencePanel, GroupPanel, SpellDetailPopup
+from rpg.characters import Character
 from rpg.configuration import Configuration
 from rpg.gameplay.player import Player
 from rpg.gamelevel.scenes import Scene, MainMenuScene, CharacterCreationScreen, GameScene
+from rpg.gamedesign.backup_system import GameLoader
 
 pygame.init()
 pygame.joystick.init()
@@ -38,6 +32,7 @@ class App:
         self.__scene.set_event_listener_on_continue_game(self.__replace_scene_by_continue_game_scene)
         self.__joystick: pygame.joystick.Joystick = None
         self.__player_characters: list[Character] = []
+        self.__game_loader: GameLoader = GameLoader()
         
     def __replace_scene_by_create_new_game_scene(self):
         self.__scene = CharacterCreationScreen(width=self.__window.get_width(), height=self.__window.get_height(), player=self.__player)
@@ -45,8 +40,12 @@ class App:
         self.__scene.set_event_listener_on_back(self.__replace_scene_by_main_menu_scene)
     
     def __replace_scene_by_game_scene(self, friends: list[Character]):
-        self.__player_characters = friends
-        self.__player.set_character(friends[0])
+        if (len(friends) > 0):
+            self.__player_characters = friends
+            self.__player.set_character(friends[0])
+            for member in friends:
+                self.__player.group.add_member(member)
+            self.__game_loader.save(self.__player)
         self.__replace_scene_by_continue_game_scene()
     
     def __replace_scene_by_main_menu_scene(self):

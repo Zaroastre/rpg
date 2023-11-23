@@ -815,6 +815,18 @@ class GameScene(Scene):
         for component in self.__vilains_components:
             component.draw(master)
 
+    def __handle_projectif_hit(self):
+        for friend in self.__heroes_components:
+            for projectil in friend.projectils:
+                for vilain in self.__vilains_components:
+                    if (vilain.rect.colliderect(projectil.rect)):
+                    # if (vilain.character.is_touching(projectil)):
+                        vilain.character.breed.life.die()
+                        if (projectil in friend.character.trigged_projectils):
+                            friend.character.trigged_projectils.remove(projectil)
+                        if (vilain in self.__vilains_components):
+                            self.__vilains_components.remove(vilain)
+
     def handle(self, event: pygame.event.Event):
         if (event is not None):
             # HANDLE YOUR GAME HERE
@@ -822,6 +834,8 @@ class GameScene(Scene):
                 component.handle(event)
             for component in self.__vilains_components:
                 component.handle(event)
+            self.__handle_projectif_hit()
+                            
             # self.__available_friends.handle(event)
             self.__group_panel.handle(event)
             self.__action_panel.handle(event)

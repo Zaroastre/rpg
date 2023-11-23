@@ -1,13 +1,13 @@
 from rpg.gamedesign.spells_system import SpellsWheel
 from rpg.characters import Character
 from rpg.gameplay.spells import Spell
-from rpg.gameplay.storages import Storage
+from rpg.gameplay.teams import Group
 
 class Player:
     def __init__(self) -> None:
         self.__character: Character = None
         self.__spells_wheel: SpellsWheel = SpellsWheel(4, 4)
-        self.__bags: list[Storage] = []
+        self.__group: Group = Group(5)
     
     @property
     def character(self)-> Character:
@@ -16,6 +16,11 @@ class Player:
     @property
     def spells_wheel(self)-> SpellsWheel:
         return self.__spells_wheel
+    
+    @property
+    def group(self)-> Group:
+        return self.__group
+    
 
     def __update_spells_wheel(self):
         self.__spells_wheel.reset()
