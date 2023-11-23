@@ -819,8 +819,8 @@ class GameScene(Scene):
         for friend in self.__heroes_components:
             for projectil in friend.projectils:
                 for vilain in self.__vilains_components:
-                    if (vilain.rect.colliderect(projectil.rect)):
-                    # if (vilain.character.is_touching(projectil)):
+                    # if (vilain.rect.colliderect(projectil.rect)):
+                    if (vilain.character.is_touching(projectil.projectil)):
                         vilain.character.breed.life.die()
                         if (projectil in friend.character.trigged_projectils):
                             friend.character.trigged_projectils.remove(projectil)
@@ -834,7 +834,6 @@ class GameScene(Scene):
                 component.handle(event)
             for component in self.__vilains_components:
                 component.handle(event)
-            self.__handle_projectif_hit()
                             
             # self.__available_friends.handle(event)
             self.__group_panel.handle(event)
@@ -843,6 +842,7 @@ class GameScene(Scene):
             if (self.__spell_detail_popup is not None):
                 self.__spell_detail_popup.handle(event)
         else:
+            self.__handle_projectif_hit()
             # self.__available_friends.handle(None)
             self.__group_panel.handle(None)
             self.__action_panel.handle(None)

@@ -199,10 +199,10 @@ class Character(Moveable):
             if (distance < min_distance):
                 is_in_contact = True
             # is_in_contact = self.__hitbox.is_touching(other.hitbox)
-        # if (isinstance(other, Projectil)):
-        #     if (self.get_position().x-self.radius <= other.to_position.x <= self.get_position().x+self.radius):
-        #         if (self.get_position().y-self.radius <= other.to_position.y <= self.get_position().y+self.radius):
-        #             is_in_contact = True
+        elif (isinstance(other, Projectil)):
+            if (self.get_position().x-self.radius <= other.to_position.x <= self.get_position().x+self.radius):
+                if (self.get_position().y-self.radius <= other.to_position.y <= self.get_position().y+self.radius):
+                    is_in_contact = True
         return is_in_contact
 
     def is_feel_threatened(self, target) -> bool:
@@ -252,7 +252,7 @@ class Character(Moveable):
         self.__is_selected = False
 
     def attack(self):
-        new_projectil: Projectil = Projectil(True, 10.0, 5.0, self.previous_position.copy(), self.get_position().copy(), 5)
+        new_projectil: Projectil = Projectil(True, 10.0, 10.0, self.previous_position.copy(), self.get_position().copy(), 5)
         self.trigged_projectils.append(new_projectil)
 
 class Enemy(Character):
