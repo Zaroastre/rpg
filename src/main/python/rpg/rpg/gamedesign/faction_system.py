@@ -13,6 +13,6 @@ class FactionValue:
         return self.__color.to_tuple()
 
 class Faction(Enum):
-    HORDE: FactionValue = FactionValue("HORDE")
-    ALLIANCE: FactionValue = FactionValue("ALLIANCE")
-    NEUTRAL: FactionValue = FactionValue("NEUTRAL")
+    ALLIANCE: FactionValue = FactionValue("ALLIANCE", None)
+    HORDE: FactionValue = FactionValue("HORDE", None)
+    NEUTRAL: FactionValue = FactionValue("NEUTRAL", None)

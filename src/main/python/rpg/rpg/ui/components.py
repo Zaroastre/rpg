@@ -1,13 +1,11 @@
 from math import sqrt
 
 import pygame
-
-from rpg.math.geometry import Position
-from rpg.characters import Character, Enemy
-from rpg.gameplay.teams import Group
-from rpg.gameapi import InputEventHandler, Draw
-
 import rpg.constants
+from rpg.characters import Character, Enemy
+from rpg.gameapi import Draw, InputEventHandler
+from rpg.gameplay.teams import Group
+
 
 class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
     MENACE_AREA_COLOR: pygame.Color = pygame.Color(255, 255, 0, a=100)
@@ -23,6 +21,7 @@ class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
         self._texture = pygame.Surface([self._character.radius*2, self._character.radius*2], pygame.SRCALPHA)
         self.__hitbox: pygame.Rect = None
         self.__font_size: int = 20
+        self.__texture_color: pygame.Color = self._character.character_class.class_type.value.color
         self.__font: pygame.font.Font = pygame.font.Font(
             None, self.__font_size)
         self.__font_color: pygame.Color = pygame.Color(255, 255, 255)
@@ -135,13 +134,8 @@ class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
         if (self._character.zone_center is not None):
             pygame.draw.circle(master, CharacterComponent.ZONING_AREA_COLOR, (self._character.zone_center.x,self._character.zone_center.y), self._character.zone_radius, 1)
         self._texture.fill(pygame.Color(0,0,0,0))
-        point_color: pygame.Color
-        if (self.is_selected()):
-            point_color = pygame.Color(50,150,50)
-        else:
-            point_color = pygame.Color(0,150,250)
         self.__hitbox = pygame.draw.circle(
-            self._texture, point_color, (self._character.radius, self._character.radius), self._character.radius)
+            self._texture, self.__texture_color, (self._character.radius, self._character.radius), self._character.radius)
         self.__hitbox = master.blit(self._texture, (self._character.get_position().x-self._character.radius, self._character.get_position().y-self._character.radius))
         master.blit(self._title, (self._character.get_position().x-(self._character.radius/2), self._character.get_position().y-(self._character.radius/2)))
         for projectil in self._character.trigged_projectils:

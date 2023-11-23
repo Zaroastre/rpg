@@ -9,6 +9,7 @@ from rpg.gameapi import Draw, InputEventHandler
 from rpg.math.geometry import Geometry, Position
 from rpg.geolocation import Moveable, WindRose
 from rpg.gamedesign.progression_system import Level
+from rpg.gameplay.genders import Gender
 
 pygame.init()
 
@@ -86,7 +87,7 @@ class HitBox:
 
 
 class Character(Moveable):
-    def __init__(self, name: str, breed: Breed, character_class: Class) -> None:
+    def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender) -> None:
         self.__is_moving: bool = False
         self.__move_speed: int = 2.5
         self.__is_going_to_the_left: bool = False
@@ -94,6 +95,7 @@ class Character(Moveable):
         self.__is_going_to_the_right: bool = False
         self.__is_going_to_the_top: bool = False
         self.__radius: float = 10.0
+        self.__gender: Gender = gender
         self.__level: Level = Level(1, 100)
         self.__can_be_moved: bool = True
         self.zone_center: Position = None
@@ -247,7 +249,7 @@ class Character(Moveable):
 
 
 class Enemy(Character):
-    def __init__(self, name: str, breed: Breed, character_class: Class) -> None:
-        super().__init__(name, breed, character_class)
+    def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender) -> None:
+        super().__init__(name, breed, character_class, gender)
     
     

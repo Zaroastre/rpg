@@ -227,6 +227,9 @@ class MemberPanel(InputEventHandler, Draw):
         self.__pseudo_label: pygame.Surface = self.__font.render(
             self.__member.name, True, self.__font_color)
         
+        self.__level_label: pygame.Surface = self.__font.render(
+            str(self.__member.level.value), True, self.__font_color)
+        
         life_gauge_position: Position = Position(self.__avatar_picture_radius*2,self.__pseudo_label.get_height())
         power_gauge_position: Position = Position(self.__avatar_picture_radius*2, life_gauge_position.y+30)
         threat_gauge_position: Position = Position(self.__avatar_picture_radius*2, power_gauge_position.y+15)
@@ -251,7 +254,8 @@ class MemberPanel(InputEventHandler, Draw):
 
     def draw(self, master: pygame.Surface):
         self.__texture.fill(pygame.Color(20,20,20))
-        self.__texture.blit(self.__pseudo_label, (self.__avatar_picture_radius*2, 0))
+        self.__texture.blit(self.__pseudo_label, (self.height, 0))
+        self.__texture.blit(self.__level_label, (self.__width-(self.__level_label.get_width()), 0))
 
         self.__avatar.draw(self.__texture)
         self.__fight_mode_led.draw(self.__texture)
