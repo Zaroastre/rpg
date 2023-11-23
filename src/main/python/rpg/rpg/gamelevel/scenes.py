@@ -54,17 +54,12 @@ class MainMenuScene(Scene):
         self.__background_color: pygame.Color = pygame.Color(0, 0, 0)
         self.__buttons: list[pygame.Rect] = []
         self.__button_border_size: int = 5
-        self.__button_texture: pygame.Surface = pygame.Surface((200, 50))
-        self.__button_border_texture: pygame.Surface = self.__button_texture.copy()
-        self.__button_background_texture: pygame.Surface = pygame.Surface((self.__button_texture.get_width()-(self.__button_border_size*2), self.__button_texture.get_height()-(self.__button_border_size*2)))
         self.__button_font_size: int = 22
         self.__button_font: pygame.font.Font = pygame.font.Font(None, self.__button_font_size)
         self.__button_font_color: pygame.Color = pygame.Color(255, 255, 255)
         self.__button_border_color: pygame.Color = pygame.Color(255, 0, 0)
         self.__unselected_button_background_color: pygame.Color = pygame.Color(0, 0, 0)
         self.__selected_button_background_color: pygame.Color = self.__button_border_color
-        self.__button_margin_height: int = 20
-        self.__button_margin_width: int = 100
         self.__selected_option: str = list(self.__options.keys())[0]
         self.__on_continue_game_event_listener: callable = None
         self.__on_create_new_game_event_listener: callable = None
@@ -155,22 +150,35 @@ class MainMenuScene(Scene):
         self._background_texture.fill(self.__background_color)
         
         self.__buttons.clear()
-        position: Position = Position(self.__button_margin_width, self.__button_margin_height)
-        for option in self.__options.keys():
-            self.__button_border_texture.fill(self.__button_border_color)
-            if (option == self.__selected_option):
-                self.__button_background_texture.fill(self.__selected_button_background_color)
+        buttons_texts: list[str] = list(self.__options.keys())
+        button_space_height: int = 20
+        
+        button_width: int = 200
+        button_height: int = 50
+        buttons_panel: pygame.Surface = pygame.Surface((button_width, ((button_height * len(buttons_texts)) + button_space_height * (len(buttons_texts)-1))))
+        # position: Position = Position(self.__button_margin_width, self.__button_margin_height)
+        button_position_y: int = 0
+        button_border_size: int = 5
+        for text in buttons_texts:
+            button: pygame.Surface = pygame.Surface((button_width, button_height))
+            button_border: pygame.Surface = button.copy()
+            button_background: pygame.Surface = pygame.Surface((button_width - (button_border_size*2), button_height - (button_border_size*2)))
+            if (text == self.__selected_option):
+                button_background.fill(self.__selected_button_background_color)
             else:
-                self.__button_background_texture.fill(self.__unselected_button_background_color)
-            label: pygame.Surface = self.__button_font.render(option.capitalize(), True, self.__button_font_color)
-            label_position_x: int = (self.__button_background_texture.get_width()/2)-(label.get_width()/2)
-            label_position_y: int = (self.__button_background_texture.get_height()/2)-(label.get_height()/2)
-            self.__button_background_texture.blit(label, (label_position_x, label_position_y))
-            self.__button_border_texture.blit(self.__button_background_texture, (self.__button_border_size, self.__button_border_size))
-            button: pygame.Rect = self.__button_texture.blit(self.__button_border_texture, (0,0))
-            position.y += button.height + self.__button_margin_height
-            button: pygame.Rect = self._background_texture.blit(self.__button_texture, (position.x, position.y))
-            self.__buttons.append(button)
+                button_background.fill(self.__unselected_button_background_color)
+            label: pygame.Surface = self.__button_font.render(text.title(), True, self.__button_font_color)
+            label_position_x: int = (button_background.get_width()/2)-(label.get_width()/2)
+            label_position_y: int = (button_background.get_height()/2)-(label.get_height()/2)
+            button_background.blit(label, (label_position_x, label_position_y))
+            button_border.fill(self.__button_border_color)
+            button_border.blit(button_background, (self.__button_border_size, self.__button_border_size))
+            button.blit(button_border, (0,0))
+            # buttons_panel.blit(self.__button_texture, (0, 0))
+            buttons_panel.blit(button, (0, button_position_y))
+            button_position_y += (button_height + button_space_height)
+            
+        self._background_texture.blit(buttons_panel, ((self.width/2)-(buttons_panel.get_width()/2), (self.height/2)-(buttons_panel.get_height()/2)))
         super().draw(master)
 
 class PauseMenuScene(Scene):
@@ -191,14 +199,6 @@ class CharacterCreationScreen(Scene):
     __NAME_KEY: str = "name"
     def __init__(self, width: int, height: int, player: Player) -> None:
         super().__init__(width, height, player)
-        
-        self.__background_color: pygame.Color = pygame.Color(0, 0, 0)
-        self.__buttons: list[pygame.Rect] = []
-        self.__selected_button_border_size: int = 5
-        self.__unselected_button_border_size: int = 2
-        self.__button_texture: pygame.Surface = pygame.Surface((200, 50))
-        self.__button_border_texture: pygame.Surface = self.__button_texture.copy()
-        self.__button_background_texture: pygame.Surface = pygame.Surface((self.__button_texture.get_width()-(self.__unselected_button_border_size*2), self.__button_texture.get_height()-(self.__unselected_button_border_size*2)))
         self.__button_font_size: int = 22
         self.__button_character_selector_font_size: int = 50
         self.__button_font: pygame.font.Font = pygame.font.Font(None, self.__button_font_size)
@@ -207,8 +207,6 @@ class CharacterCreationScreen(Scene):
         self.__button_border_color: pygame.Color = pygame.Color(255, 0, 0)
         self.__unselected_button_background_color: pygame.Color = pygame.Color(0, 0, 0)
         self.__selected_button_background_color: pygame.Color = self.__button_border_color
-        self.__button_margin_height: int = 20
-        self.__button_margin_width: int = 100
         self.__maximum_character: int = 5
         self.__characters_configurations: list[dict[str, object]] = []
         for _ in range(self.__maximum_character):
