@@ -18,9 +18,41 @@ class Experience:
         self.__current = 0
             
 class Level:
-    def __init__(self, level: int, maximum_experience: int) -> None:
+    def __init__(self, level: int) -> None:
         self.__value: int = level
-        self.__experience: Experience = Experience(maximum=maximum_experience)
+        self.__experience: Experience = Experience(maximum=self.__compute_maximul_required_experience())
+    
+    def __compute_maximul_required_experience(self) -> int:
+        return int(((8*self.__value) + self.__difference()) * self.__mxp() * self.__reduction_factor())
+        
+    def __difference(self) -> int:
+        diff: int = 0
+        if (self.__value <= 10):
+            diff = 0
+        elif (self.__value <= 20):
+            diff = 1
+        elif (self.__value <= 30):
+            diff = 3
+        elif (self.__value <= 40):
+            diff = 6
+        else:
+            diff = 5*(self.__value-30)
+        return diff
+    
+    def __reduction_factor(self) -> float:
+        factor: float = 1.0
+        if (self.__value <= 10):
+            factor = 1.0
+        elif (self.__value <= 30):
+            factor = (1-(self.__value-10)/100)
+        elif (self.__value <= 50):
+            factor = 0.82
+        else:
+            factor = 1.0
+        return factor
+    
+    def __mxp(self):
+        return 45 + (5*self.__value)
     
     @property
     def value(self) -> int:
@@ -43,6 +75,7 @@ class Level:
             if (self.__experience.current >= self.__experience.maximum):
                 delta: int = self.__experience.current - self.__experience.maximum
                 self.up()
+                self.__experience = Experience(maximum=self.__compute_maximul_required_experience())
                 self.__experience.gain(delta)
 
 class Rank:

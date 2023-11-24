@@ -54,6 +54,10 @@ class App:
         self.__scene.set_event_listener_on_continue_game(self.__replace_scene_by_continue_game_scene)
 
     def __replace_scene_by_continue_game_scene(self):
+        player: Player = self.__game_loader.load()
+        self.__player = player
+        for member in player.group.members:
+            self.__player_characters.append(member)
         self.__scene = GameScene(width=self.__window.get_width(), height=self.__window.get_height(), player=self.__player)
         self.__scene.set_friends_group(self.__player_characters)
         

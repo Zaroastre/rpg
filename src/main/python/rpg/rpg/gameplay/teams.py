@@ -7,6 +7,14 @@ class Team(ABC):
         self._leader: Character = leader
         self._max_capacity: int = max_capacity
     
+    @property
+    def leader(self) -> Character:
+        return self._leader
+
+    @property
+    def capacity(self) -> int:
+        return self._max_capacity
+
 class Group(Team):
     def __init__(self, max_capacity: int, leader: Character=None) -> None:
         super().__init__(leader, max_capacity=max_capacity)
@@ -20,6 +28,8 @@ class Group(Team):
 
     def add_member(self, new_member: Character):
         if (len(self.__members) < self._max_capacity):
+            if (len(self.__members) == 0):
+                self._leader = new_member
             self.__members.append(new_member)
 
     def is_full(self) -> bool:
@@ -28,6 +38,10 @@ class Group(Team):
     def remove_member(self, member_to_remove: Character):
         if (member_to_remove in self.__members):
             self.__members.remove(member_to_remove)
+            if (self._leader == member_to_remove):
+                self._leader = None
+            if (len(self.__members) > 0):
+                self._leader = self.__members[0]
 
 
 class Raid(Team):

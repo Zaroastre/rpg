@@ -1,4 +1,5 @@
-from math import sqrt
+from math import sqrt, pi, cos, sin
+from random import uniform
 
 import pygame
 
@@ -10,7 +11,11 @@ from rpg.math.geometry import Geometry, Position
 from rpg.geolocation import Moveable, WindRose
 from rpg.gamedesign.progression_system import Level
 from rpg.gameplay.genders import Gender
+from rpg.gamedesign.faction_system import Faction
 from rpg.gameplay.storages import Storage
+from rpg.gamedesign.interval_system import Range
+from rpg.gameplay.attack_strategy import AttackStategyChooser, AttackStategy
+from rpg.gameplay.weapons import Weapon
 
 pygame.init()
 
@@ -86,7 +91,7 @@ class HitBox:
 
 
 class Character(Moveable):
-    def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender) -> None:
+    def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender, faction: Faction) -> None:
         self.__is_moving: bool = False
         self.__move_speed: int = 2.5
         self.__is_going_to_the_left: bool = False
@@ -95,7 +100,8 @@ class Character(Moveable):
         self.__is_going_to_the_top: bool = False
         self.__radius: float = 10.0
         self.__gender: Gender = gender
-        self.__level: Level = Level(1, 100)
+        self.__faction: Faction = faction
+        self.__level: Level = Level(1)
         self.__can_be_moved: bool = True
         self.zone_center: Position = None
         self.zone_radius: float = 0.0
@@ -112,8 +118,21 @@ class Character(Moveable):
         self.previous_position: Position = Position(0, 0)
         self.__is_selected: bool = False
         self.is_moving: bool = False
-        self.__bags: list[Storage] = []
-
+        self.__storages: list[Storage] = []
+        self.target: Character = None
+        for _ in range(4):
+            self.__storages.append(None)
+        self.__attack_strategy_chooser: AttackStategyChooser = AttackStategyChooser(self.__breed.breed_type, self.__class, self.__level, self.__class.right_hand_weapon)
+    
+    @property
+    def gender(self) -> Gender:
+        return self.__gender
+    @property
+    def faction(self) -> Faction:
+        return self.__faction
+    @property
+    def storages(self) -> list[Storage]:
+        return self.__storages.copy()
     @property
     def name(self) -> str:
         return self.__name
@@ -149,6 +168,9 @@ class Character(Moveable):
 
     def get_position(self) -> Position:
         return self.__position
+    
+    def set_position(self, new_position: Position):
+        self.__position = new_position
     
     def move(self, speed: float, orientation: WindRose):
         if (self.__orientation is not orientation):
@@ -198,7 +220,6 @@ class Character(Moveable):
             min_distance: float = (self.radius * 2)
             if (distance < min_distance):
                 is_in_contact = True
-            # is_in_contact = self.__hitbox.is_touching(other.hitbox)
         elif (isinstance(other, Projectil)):
             if (self.get_position().x-self.radius <= other.to_position.x <= self.get_position().x+self.radius):
                 if (self.get_position().y-self.radius <= other.to_position.y <= self.get_position().y+self.radius):
@@ -251,12 +272,69 @@ class Character(Moveable):
     def unselect(self):
         self.__is_selected = False
 
-    def attack(self):
-        new_projectil: Projectil = Projectil(True, 10.0, 10.0, self.previous_position.copy(), self.get_position().copy(), 5)
-        self.trigged_projectils.append(new_projectil)
+    def attack(self, target=None):
+        if (target is not None and isinstance(target, Character)):
+            attack_strategy: AttackStategy = self.__attack_strategy_chooser.choose_best_attack_strategy(target.breed.breed_type, target.character_class, target.level, target.character_class.right_hand_weapon)
+            attack_strategy.execute(target)
+        else:
+            new_projectil: Projectil = Projectil(True, 10.0, 10.0, self.previous_position.copy(), self.get_position().copy(), 5)
+            self.trigged_projectils.append(new_projectil)
+            if (target is not None and isinstance(target, Character)):
+                new_projectil.to_position = target.get_position().copy()
+            
 
 class Enemy(Character):
-    def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender) -> None:
-        super().__init__(name, breed, character_class, gender)
+    def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender, faction: Faction) -> None:
+        super().__init__(name, breed, character_class, gender, faction)
+        self.__default_position: Position = self.get_position()
+        self.patrol_angle: float = 0.0
+        self.__patrol_destination: Position = None
+        self.__is_patrolling: bool = False
     
+    def set_default_position(self, position: Position):
+        self.__default_position = position.copy()
+        self.get_position().x = position.x
+        self.get_position().y = position.y
+        self.get_position().z = position.z
+        self.zone_center = self.__default_position.copy()
     
+    @property
+    def patrol_destination(self) -> Position:
+        return self.__patrol_destination
+    @property
+    def is_patrolling(self) -> bool:
+        return self.__is_patrolling
+    
+    def generate_patrol_path(self):
+        self.patrol_angle = uniform(0, 2 * pi)
+        distance = uniform(0, self.zone_radius)
+
+        new_x = self.zone_center.x + distance * cos(self.patrol_angle)
+        new_y = self.zone_center.y + distance * sin(self.patrol_angle)
+
+        # # Se déplacer progressivement vers la nouvelle position
+        # direction_x = new_x - self.get_position().x
+        # direction_y = new_y - self.get_position().y
+        # direction_length = sqrt(direction_x ** 2 + direction_y ** 2)
+
+        # # Normaliser la direction
+        # if direction_length != 0:
+        #     direction_x /= direction_length
+        #     direction_y /= direction_length
+        self.__patrol_destination = Position(new_x, new_y)
+    
+    def patrol(self):
+        self.__is_patrolling = True
+    
+    def stop_patrolling(self):
+        self.__is_patrolling = False
+        
+    def is_arrived_to_patrol_destination(self) -> bool:
+        return Position.are_equivalent(self.get_position(), self.__patrol_destination, 1)
+    
+    def is_arrived_to_default_position(self) -> bool:
+        return Position.are_equivalent(self.get_position(), self.__default_position, 1)
+    
+    @property
+    def default_position(self) -> Position:
+        return self.__default_position.copy()

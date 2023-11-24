@@ -6,6 +6,7 @@ from rpg.gameapi import Draw, InputEventHandler
 from rpg.math.geometry import Position
 from rpg.gameplay.spells import Spell
 from rpg.gameplay.teams import Group
+from rpg.gameplay.storages import Storage
 from rpg.ui.components import CharacterComponent, GroupComponent
 from rpg.gamedesign.spells_system import SpellsSet, SpellsWheel
 
@@ -350,7 +351,7 @@ class SpellWheelPanel(InputEventHandler, Draw):
         self.__font_size: int = 22
         self.__font: pygame.font.Font = pygame.font.Font(
             None, self.__font_size)
-        self.__select_font_color: pygame.Color = pygame.Color(255, 255, 255)
+        self.__select_font_color: pygame.Color = pygame.Color(0, 255, 0)
         self.__unselected_font_color: pygame.Color = pygame.Color(150, 150, 150)
 
     def handle(self, event: pygame.event.Event):
@@ -439,6 +440,62 @@ class SpellSlot(InputEventHandler, Draw):
             self.__texture.blit(self.__title, (0, 0))
         self.__hitbox = master.blit(self.__texture, (self.__position.x, self.__position.y))
 
+class StorageSlot(InputEventHandler, Draw):
+    def __init__(self, storage: Storage, width: int, height: int, position: Position) -> None:
+        self.__storage: Storage = storage
+        self.__texture: pygame.Surface = pygame.Surface([width, height], pygame.SRCALPHA)
+        self.__position: Position = position
+        self.__font_size: int = 22
+        self.__hitbox: pygame.Rect = None
+        self.__font: pygame.font.Font = pygame.font.Font(
+            None, self.__font_size)
+        self.__font_color: pygame.Color = pygame.Color(0, 0, 0)
+        self.__storage_color: pygame.Color = pygame.Color(225, 225, 225)
+        self.__empty_color: pygame.Color = pygame.Color(100, 100, 100)
+        self.__title: pygame.Surface = None
+        if (self.__storage is not None):
+            self.__font.render(
+                self.__storage.name, True, self.__font_color)
+            
+        self.__on_hover_event_listener = None
+        self.__on_press_event_listener = None
+        self.__on_release_event_listener = None
+        self.__on_leave_event_listener = None
+        self.__is_mouse_hover: bool = False
+    
+    def on_hover(self, callback):
+        self.__on_hover_event_listener = callback
+    def on_press(self, callback):
+        self.__on_press_event_listener = callback
+    def on_release(self, callback):
+        self.__on_release_event_listener = callback
+    def on_leave(self, callback):
+        self.__on_leave_event_listener = callback
+    
+    def handle(self, event: pygame.event.Event):
+        if (event is not None):
+            if (event.type == pygame.MOUSEMOTION):
+                if (self.__hitbox is not None):
+                    new_mouse_position: tuple[int, int] = pygame.mouse.get_pos()
+                    is_hover = self.__hitbox.collidepoint(new_mouse_position)
+                    if (is_hover and not self.__is_mouse_hover):
+                        if (self.__on_hover_event_listener is not None):
+                            self.__on_hover_event_listener(self.__storage)
+                    elif (not is_hover and self.__is_mouse_hover):
+                        if (self.__on_leave_event_listener is not None):
+                            self.__on_leave_event_listener()
+                    self.__is_mouse_hover = is_hover
+            
+    def draw(self, master: pygame.Surface):
+        if (self.__storage is None):
+            self.__texture.fill(self.__empty_color)
+        else:
+            self.__texture.fill(self.__storage_color)
+        if (self.__title is not None):
+            self.__texture.blit(self.__title, (0, 0))
+        self.__hitbox = master.blit(self.__texture, (self.__position.x, self.__position.y))
+
+
 class ActionPanel(InputEventHandler, Draw):
     def __init__(self, width: int, height: int, position: Position) -> None:
         self.__character: Character = None
@@ -447,6 +504,7 @@ class ActionPanel(InputEventHandler, Draw):
         self.__spells_panels: list[SpellPanel] = []
         self.__spells_wheel: SpellsWheel = SpellsWheel(4, 4)
         self.__spells_slots: list[SpellSlot] = []
+        self.__storages_slots: list[StorageSlot] = []
         self.__spell_wheel_panel: SpellWheelPanel = SpellWheelPanel(self.__spells_wheel, 15, height, Position(0,0))
     
     def on_spell_slot_hover(self, callback):
@@ -462,6 +520,20 @@ class ActionPanel(InputEventHandler, Draw):
         for slot in self.__spells_slots:
             slot.on_leave(callback)
     
+    
+    def on_storage_slot_hover(self, callback):
+        for slot in self.__storages_slots:
+            slot.on_hover(callback)
+    def on_storage_slot_press(self, callback):
+        for slot in self.__storages_slots:
+            slot.on_press(callback)
+    def on_storage_slot_release(self, callback):
+        for slot in self.__storages_slots:
+            slot.on_release(callback)
+    def on_storage_slot_leave(self, callback):
+        for slot in self.__storages_slots:
+            slot.on_leave(callback)
+    
     def __update_spells_slots(self):
         position: Position = Position(5+15, 5)
         spell_panel_side_size: int = self.__texture.get_height()-10
@@ -473,11 +545,22 @@ class ActionPanel(InputEventHandler, Draw):
             position = position.copy()
             position.x += spell_panel_side_size+10
 
+    def __update_storages_slots(self):
+        storage_panel_side_size: int = self.__texture.get_height()-10
+        position: Position = Position((self.__texture.get_width()-(self.__texture.get_height()*(len(self.__character.storages)))), 5)
+        self.__storages_slots.clear()
+        for storage in self.__character.storages:
+            slot: StorageSlot = StorageSlot(storage, storage_panel_side_size, storage_panel_side_size, position)
+            self.__storages_slots.append(slot)
+            position = position.copy()
+            position.x += storage_panel_side_size+10
+            
     def set_character(self, character: Character):
         if (character is not None):
             if (character is not self.__character):
                 self.__character = character
                 self.__update_spells_slots()
+                self.__update_storages_slots()
 
     def set_spells_wheel(self, spells_wheel: SpellsWheel):
         if (spells_wheel is not None):
@@ -489,11 +572,15 @@ class ActionPanel(InputEventHandler, Draw):
         self.__spell_wheel_panel.handle(event)
         for slot in self.__spells_slots:
             slot.handle(event)
+        for slot in self.__storages_slots:
+            slot.handle(event)
     
     def draw(self, master: pygame.Surface):
         self.__texture.fill(pygame.Color(50,50,50))
         self.__spell_wheel_panel.draw(self.__texture)
         for slot in self.__spells_slots:
+            slot.draw(self.__texture)
+        for slot in self.__storages_slots:
             slot.draw(self.__texture)
         master.blit(self.__texture, (self.__position.x, self.__position.y))
 
@@ -511,7 +598,9 @@ class ExperiencePanel(InputEventHandler, Draw):
                 
     def handle(self, event: pygame.event.Event):
         if (self.__character is not None):
-            self.__current_experience_bar = pygame.Surface(((self.__character.level.experience.current*self.__experience_bar.get_width())/100, 10))
+            width: int = (self.__character.level.experience.current*self.__experience_bar.get_width())/self.__character.level.experience.maximum
+            height: int = 10
+            self.__current_experience_bar = pygame.Surface((width, height))
     
     def draw(self, master: pygame.Surface):
         self.__experience_bar.fill(pygame.Color(0,0,100))

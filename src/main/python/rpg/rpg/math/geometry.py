@@ -31,6 +31,17 @@ class Position:
     def __ne__(self, __o: object) -> bool:
         return not self.__eq__(__o)
 
+    @staticmethod
+    def are_equivalent(first, second, error_threshold: int=0) -> bool:
+        if (first is None or not isinstance(first, Position)):
+            raise ValueError()
+        if (second is None or not isinstance(second, Position)):
+            raise ValueError()
+        result: bool = False
+        if (second.x-error_threshold <= first.x and first.x <= second.x+error_threshold):
+            if (second.y-error_threshold <= first.y and first.y <= second.y+error_threshold):
+                result = True
+        return result
 
 class Geometry:
     """Utilitary class that can be used to computes usefull algorythm for geometry computation.

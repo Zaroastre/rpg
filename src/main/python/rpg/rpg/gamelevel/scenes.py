@@ -1,8 +1,10 @@
 from abc import ABC
+from math import cos, radians, sin, pi, sqrt
+from random import uniform
 
 import pygame
 import rpg.constants
-from rpg.characters import Character, Enemy
+from rpg.characters import Character, Enemy, Projectil
 from rpg.configuration import Configuration
 from rpg.gameapi import Draw, InputEventHandler
 from rpg.gamedesign.interval_system import Range
@@ -11,7 +13,7 @@ from rpg.gameplay.player import Player
 from rpg.gameplay.spells import Spell
 from rpg.gameplay.teams import Group
 from rpg.math.geometry import Geometry, Position
-from rpg.ui.components import CharacterComponent, EnemyComponent
+from rpg.ui.components import CharacterComponent, EnemyComponent, ProjectilComponent
 from rpg.ui.graphics import (ActionPanel, ExperiencePanel, GroupPanel,
                              SpellDetailPopup)
 from rpg.gameplay.genders import Gender
@@ -19,6 +21,7 @@ from rpg.gameplay.breeds import BreedType, BreedFactory
 from rpg.gameplay.classes import ClassType, ClassFactory
 from rpg.gamedesign.faction_system import Faction
 from rpg.gamengine import GameGenerator
+from rpg.gamedesign.difficulty_system import Difficulty
 
 
 class Scene(InputEventHandler, Draw):
@@ -439,19 +442,19 @@ class CharacterCreationScreen(Scene):
                     for configuration in self.__characters_configurations:
                         if (configuration is not None):
                             name: str = configuration.get(CharacterCreationScreen.__NAME_KEY)
-                            faction: str = configuration.get(CharacterCreationScreen.__FACTION_KEY)
-                            breed: str = configuration.get(CharacterCreationScreen.__BREED_KEY)
-                            gender: str = configuration.get(CharacterCreationScreen.__GENDER_KEY)
-                            character_class: str = configuration.get(CharacterCreationScreen.__CLASS_KEY)
+                            faction: Faction = configuration.get(CharacterCreationScreen.__FACTION_KEY)
+                            breed: BreedType = configuration.get(CharacterCreationScreen.__BREED_KEY)
+                            gender: Gender = configuration.get(CharacterCreationScreen.__GENDER_KEY)
+                            character_class: ClassType = configuration.get(CharacterCreationScreen.__CLASS_KEY)
                             
                             if (faction is not None):
                                 if (breed is not None):
                                     if (gender is not None):
                                         if (character_class is not None):
                                             if (name is None):
-                                                name = GameGenerator.generate_random_name()
+                                                name = GameGenerator.generate_random_name(gender)
                                             
-                                            character: Character = GameGenerator.create_friend(name, BreedFactory.create(breed), ClassFactory.create(character_class), gender)
+                                            character: Character = GameGenerator.create_friend(name, BreedFactory.create(breed), ClassFactory.create(character_class), gender, faction)
                                             characters.append(character)
                     if (len(characters) > 0):
                         if (self.__on_play_event_listener is not None):
@@ -600,7 +603,7 @@ class CharacterCreationScreen(Scene):
             button_background: pygame.Surface = pygame.Surface((button.get_width()-(button_border_size*2), button.get_height()-(button_border_size*2)))
             if (index != self.__hover_slot_index):
                 if (self.__characters_configurations[index] is None):
-                    label: pygame.Surface = self.__button_character_selector_font.render("+", True, self.__button_font_color)
+                    label: pygame.Surface = self.__button_font.render("0/1", True, self.__button_font_color)
                     label_position_x: int = (button_background.get_width()/2)-(label.get_width()/2)
                     label_position_y: int = (button_background.get_height()/2)-(label.get_height()/2)
                     button_background.blit(label, (label_position_x, label_position_y))
@@ -610,7 +613,7 @@ class CharacterCreationScreen(Scene):
                 if (self.__is_selecting_slot):
                     button_background.fill(pygame.Color(255,0,0))
                 if (self.__characters_configurations[index] is None):
-                    label: pygame.Surface = self.__button_character_selector_font.render("+", True, self.__button_font_color)
+                    label: pygame.Surface = self.__button_font.render("1/1", True, self.__button_font_color)
                     label_position_x: int = (button_background.get_width()/2)-(label.get_width()/2)
                     label_position_y: int = (button_background.get_height()/2)-(label.get_height()/2)
                     button_background.blit(label, (label_position_x, label_position_y))
@@ -669,35 +672,34 @@ class CharacterCreationScreen(Scene):
 class GameScene(Scene):
     def __init__(self, width: int, height: int, player: Player) -> None:
         super().__init__(width, height, player)
+        
         self.__action_panel: ActionPanel = ActionPanel(rpg.constants.ACTION_PANEL_WIDTH, rpg.constants.ACTION_PANEL_HEIGHT, rpg.constants.ACTION_PANEL_POSITION)
         self.__experience_panel: ExperiencePanel = ExperiencePanel(rpg.constants.EXPERIENCE_PANEL_WIDTH, rpg.constants.EXPERIENCE_PANEL_HEIGHT, rpg.constants.EXPERIENCE_PANEL_POSITION)
-        self.__available_friends: Group = Group(max_capacity=10)
-        self.__enemies: Group = Group(max_capacity=100)
-        self.__group_of_the_player: Group = Group(max_capacity=5)
-        self.__group_panel: GroupPanel = GroupPanel(group=self.__group_of_the_player, width=rpg.constants.GROUP_PANEL_WIDTH, height=rpg.constants.GROUP_PANEL_HEIGHT, position=rpg.constants.GROUP_PANEL_POSITION)
-        self.__heroes_components: list[CharacterComponent] = []
-        self.__vilains_components: list[EnemyComponent] = []
+        self.__friends_group: Group = Group(max_capacity=5)
+        self.__group_panel: GroupPanel = GroupPanel(group=self.__friends_group, width=rpg.constants.GROUP_PANEL_WIDTH, height=rpg.constants.GROUP_PANEL_HEIGHT, position=rpg.constants.GROUP_PANEL_POSITION)
+        
+        self.__friends_sprites: list[CharacterComponent] = []
+        self.__enemies_sprites: list[EnemyComponent] = []
+        
         self.__spell_detail_popup: SpellDetailPopup = None
         
-        # self.__generate_player_character()
-        # self.__generate_friends()
         self.__generate_enemies()
         self.__initialize_events_listeners()
 
     def set_friends_group(self, friends: list[Character]):
-        player: Character = friends[0]
-        player.get_position().x = Range(0, rpg.constants.WINDOW_WIDTH).random()
-        player.get_position().y = Range(0, rpg.constants.WINDOW_HEIGHT).random()
-        player.select()
-        player.level.experience.gain(50)
-        player.threat.increase(20.0)
-        self.__group_of_the_player.add_member(player)
-        self.player.set_character(player)
-        self.__heroes_components.append(CharacterComponent(player))
-        for friend in friends:
-            if (friend is not player):
-                self.__group_of_the_player.add_member(friend)
-                self.__heroes_components.append(CharacterComponent(friend))
+        if (len(friends) > 0):
+            player: Character = friends[0]
+            player.get_position().x = Range(0, rpg.constants.WINDOW_WIDTH).random()
+            player.get_position().y = Range(0, rpg.constants.WINDOW_HEIGHT).random()
+            player.select()
+            player.threat.increase(20.0)
+            self.__friends_group.add_member(player)
+            self.player.set_character(player)
+            self.__friends_sprites.append(CharacterComponent(player))
+            for friend in friends:
+                if (friend is not player):
+                    self.__friends_group.add_member(friend)
+                    self.__friends_sprites.append(CharacterComponent(friend))
 
     def __initialize_events_listeners(self):
         self.__action_panel.on_spell_slot_hover(self.__handle_on_spell_slot_hover)
@@ -719,26 +721,17 @@ class GameScene(Scene):
 
     def __handle_on_spell_slot_leave(self):
         self.__spell_detail_popup = None
-        
-    def __generate_friends(self):
-        for _ in range(Range(4,10).random()):
-            friend: Character = GameGenerator.generate_random_player()
-            friend.get_position().x = Range(0, rpg.constants.WINDOW_WIDTH).random()
-            friend.get_position().y = Range(0, rpg.constants.WINDOW_HEIGHT).random()
-            friend.threat.increase(20)
-            self.__available_friends.add_member(friend)
-            self.__heroes_components.append(CharacterComponent(friend))
-        
+
     def __generate_enemies(self):
         for _ in range(Range(100, 100).random()):
             enemy: Enemy = GameGenerator.generate_random_enemy()
             enemy.threat.increase(100.0)
             enemy.zone_radius = 200
-            enemy.get_position().x = Range(0, rpg.constants.WINDOW_WIDTH).random()
-            enemy.get_position().y = Range(0, rpg.constants.WINDOW_HEIGHT).random()
-            enemy.zone_center = enemy.get_position().copy()
-            self.__enemies.add_member(enemy)
-            self.__vilains_components.append(EnemyComponent(enemy))
+            enemy.set_default_position(Position(Range(0, rpg.constants.WINDOW_WIDTH).random(), Range(0, rpg.constants.WINDOW_HEIGHT).random()))
+            level: int = Range(1, 20).random()
+            while (enemy.level.value < level):
+                enemy.level.up()
+            self.__enemies_sprites.append(EnemyComponent(enemy))
 
     def __prevent_character_to_disapear_from_scene(self, character: Character):
         if (character.get_position().x < (rpg.constants.GROUP_PANEL_WIDTH + rpg.constants.GROUP_PANEL_POSITION.x)):
@@ -750,11 +743,10 @@ class GameScene(Scene):
         if (character.get_position().y > self.height):
             character.get_position().y = self.height
 
-    def __handle_interaction_and_moves_for_friends(self, group: Group):
-        for friend in group.members:
-            others: list[Character] = [other for other in group.members if other is not friend]
-            others += self.__available_friends.members
-            others += self.__enemies.members
+    def __handle_interaction_and_moves_for_friends(self):
+        for friend in self.__friends_group.members:
+            others: list[Character] = [other for other in self.__friends_group.members if other is not friend]
+            others += [other.character for other in self.__enemies_sprites]
             for other in others:
                 if friend.is_touching(other):
                     friend.avoid_collision_with_other(other)
@@ -765,10 +757,7 @@ class GameScene(Scene):
             self.__prevent_character_to_disapear_from_scene(friend)
 
     def __move_enemy_to_the_default_observation_position(self, enemy: Enemy):
-        
-        # if (attacking_enemy is None):
-        #     self.__player.character.is_in_fight_mode = False
-        
+        enemy.is_in_fight_mode = False
         if Geometry.compute_distance(enemy.get_position(), enemy.zone_center) > 1:
             # Calculer le vecteur directionnel vers la position initiale
             direction_x = enemy.zone_center.x - enemy.get_position().x
@@ -781,8 +770,25 @@ class GameScene(Scene):
                 direction_y /= direction_length
 
             # Déplacer progressivement l'ennemi vers sa position initiale
-            enemy.get_position().x += direction_x * rpg.constants.RETURN_SPEED
-            enemy.get_position().y += direction_y * rpg.constants.RETURN_SPEED
+            enemy.get_position().x += direction_x * enemy.move_speed
+            enemy.get_position().y += direction_y * enemy.move_speed
+
+    def __move_enemy_to_the_patrol_position(self, enemy: Enemy):
+        enemy.is_in_fight_mode = False
+        if (Geometry.compute_distance(enemy.get_position(), enemy.patrol_destination) > 1):
+            # Calculer le vecteur directionnel vers la position initiale
+            direction_x = enemy.patrol_destination.x - enemy.get_position().x
+            direction_y = enemy.patrol_destination.y - enemy.get_position().y
+            direction_length = Geometry.compute_distance(enemy.get_position(), enemy.patrol_destination)
+
+            # Normaliser le vecteur directionnel
+            if direction_length != 0:
+                direction_x /= direction_length
+                direction_y /= direction_length
+
+            # Déplacer progressivement l'ennemi vers sa destination de patrouillage
+            enemy.get_position().x += (direction_x * (enemy.move_speed/2))
+            enemy.get_position().y += (direction_y * (enemy.move_speed/2))
 
     def __prepare_enemy_to_fight(self, enemy: Enemy, target: Character):
         target.is_in_fight_mode = True
@@ -791,9 +797,8 @@ class GameScene(Scene):
             enemy.follow(target)
 
     def __recruit_member(self, member: Character):
-        if (not self.__group_of_the_player.is_full()):
-            self.__group_of_the_player.add_member(member)
-            self.__available_friends.remove_member(member)
+        if (not self.__friends_group.is_full()):
+            self.__friends_group.add_member(member)
 
     def __recruit_member_if_is_touching(self, member: Character):
         if (member.is_touching(self.player.character)):
@@ -807,35 +812,75 @@ class GameScene(Scene):
             self.__spell_detail_popup.draw(master)
 
     def __draw_scene(self, master: pygame.Surface):
-        # RENDER YOUR GAME HERE
-        # self.__enemies.draw(self.screen)
-        # self.__available_friends.draw(self.screen)
-        for component in self.__heroes_components:
-            component.draw(master)
-        for component in self.__vilains_components:
-            component.draw(master)
+        for hero_sprite in self.__friends_sprites:
+            hero_sprite.draw(master)
+        for vilain_sprite in self.__enemies_sprites:
+            vilain_sprite.draw(master)
 
     def __handle_projectif_hit(self):
-        for friend in self.__heroes_components:
-            for projectil in friend.projectils:
-                for vilain in self.__vilains_components:
-                    # if (vilain.rect.colliderect(projectil.rect)):
-                    if (vilain.character.is_touching(projectil.projectil)):
-                        vilain.character.breed.life.die()
-                        if (projectil in friend.character.trigged_projectils):
-                            friend.character.trigged_projectils.remove(projectil)
-                        if (vilain in self.__vilains_components):
-                            self.__vilains_components.remove(vilain)
+        for friend_sprite in self.__friends_sprites:
+            for projectil_sprite in friend_sprite.projectils:
+                for vilain_sprite in self.__enemies_sprites:
+                    if (vilain_sprite.character.is_touching(projectil_sprite.projectil)):
+                        vilain_sprite.character.breed.life.die()
+                        if (projectil_sprite.projectil in friend_sprite.character.trigged_projectils):
+                            friend_sprite.character.trigged_projectils.remove(projectil_sprite.projectil)
+                            friend_sprite.projectils.remove(projectil_sprite)
+                        if (vilain_sprite in self.__enemies_sprites):
+                            self.__enemies_sprites.remove(vilain_sprite)
+                        win_experience: int = (vilain_sprite.character.level.value*5) + 45
+                        friend_sprite.character.level.gain(win_experience)
+
+    def __handle_enemy_actions(self, enemy_sprite: EnemyComponent):
+        threated_distances: dict[Character, float] = {}
+        for friend in self.__friends_group.members:
+            if (enemy_sprite.character.is_feel_threatened(friend)):
+                threated_distances[friend] = Geometry.compute_distance(friend.get_position(), enemy_sprite.character.get_position())
+        most_threatening_friend: Character = None
+        if (threated_distances):
+            min_distance_friend = min(threated_distances, key=threated_distances.get)
+            most_threatening_friend = min(threated_distances, key=threated_distances.get)
+
+        if (most_threatening_friend is not None):
+            if (enemy_sprite.character.is_patrolling):
+                enemy_sprite.character.stop_patrolling()
+            if (not most_threatening_friend.is_in_fight_mode):
+                most_threatening_friend.is_in_fight_mode = True
+            self.__prepare_enemy_to_fight(enemy_sprite.character, most_threatening_friend)
+            if (enemy_sprite.character.is_touching(most_threatening_friend)):
+                enemy_sprite.character.attack(most_threatening_friend)
+                if (len(enemy_sprite.character.trigged_projectils) > 0):
+                    projectil: Projectil = enemy_sprite.character.trigged_projectils[-1]
+                    projectil.to_position = most_threatening_friend.get_position().copy()
+                    projectil_sprite: ProjectilComponent = ProjectilComponent(projectil)
+                    enemy_sprite.projectils.append(projectil_sprite)
+                
+        else:
+            enemy_sprite.projectils.clear()
+            enemy_sprite.character.trigged_projectils.clear()
+            if (not enemy_sprite.character.is_patrolling):
+                if (not enemy_sprite.character.is_arrived_to_default_position()):
+                    self.__move_enemy_to_the_default_observation_position(enemy_sprite.character)
+                else:
+                    enemy_sprite.character.generate_patrol_path()
+                    enemy_sprite.character.patrol()
+            else:                            
+                if (not enemy_sprite.character.is_arrived_to_patrol_destination()):
+                    self.__move_enemy_to_the_patrol_position(enemy_sprite.character)
+                else:
+                    enemy_sprite.character.generate_patrol_path()
 
     def handle(self, event: pygame.event.Event):
         if (event is not None):
             # HANDLE YOUR GAME HERE
-            for component in self.__heroes_components:
-                component.handle(event)
-            for component in self.__vilains_components:
-                component.handle(event)
+            for hero_sprite in self.__friends_sprites:
+                hero_sprite.handle(event)
+            for vilain_sprite in self.__enemies_sprites:
+                vilain_sprite.handle(event)
+                difficulty: Difficulty = Difficulty.compute(self.player.character.level, vilain_sprite.character.level)
+                vilain_sprite.set_difficulty_color(difficulty.value.color.to_tuple())
                             
-            # self.__available_friends.handle(event)
+            # self.__friends_group.handle(event)
             self.__group_panel.handle(event)
             self.__action_panel.handle(event)
             self.__experience_panel.handle(event)
@@ -843,33 +888,32 @@ class GameScene(Scene):
                 self.__spell_detail_popup.handle(event)
         else:
             self.__handle_projectif_hit()
-            # self.__available_friends.handle(None)
+            # self.__friends_group.handle(None)
             self.__group_panel.handle(None)
             self.__action_panel.handle(None)
             self.__experience_panel.handle(None)
             if (self.__spell_detail_popup is not None):
                 self.__spell_detail_popup.handle(None)
-            for component in self.__heroes_components:
+            for component in self.__friends_sprites:
                 component.handle(None)
-            for component in self.__vilains_components:
+                
+            for component in self.__enemies_sprites:
                 component.handle(None)
         
-        self.player.set_character([character for character in self.__group_of_the_player.members if character.is_selected()][0])
+        self.player.set_character([character for character in self.__friends_group.members if character.is_selected()][0])
         self.__action_panel.set_character(self.player.character)
         self.__action_panel.set_spells_wheel(self.player.spells_wheel)
         self.__initialize_events_listeners()
         self.__experience_panel.set_character(self.player.character)
         if (self.player.character.is_moving):
-            for member in self.__available_friends.members:
+            for member in self.__friends_group.members:
                 self.__recruit_member_if_is_touching(member)
 
-        self.__handle_interaction_and_moves_for_friends(self.__group_of_the_player)
+        self.__handle_interaction_and_moves_for_friends()
 
-        for enemy in self.__enemies.members:
-            if (enemy.is_feel_threatened(self.player.character)):
-                self.__prepare_enemy_to_fight(enemy, self.player.character)
-            else:
-                self.__move_enemy_to_the_default_observation_position(enemy)
+        self.player.character.is_in_fight_mode = False
+        for vilain_sprite in self.__enemies_sprites:
+            self.__handle_enemy_actions(vilain_sprite)
 
     def draw(self, master: pygame.Surface):
         self.__draw_scene(master)

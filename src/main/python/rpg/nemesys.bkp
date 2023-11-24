@@ -1,1 +1,47 @@
-{"0": {"breed": "BLOOD_ELF", "class": "DEMONIST", "level": 1, "experience": 0}}
+{
+    "0": {
+        "name": "Jxalo",
+        "gender": "MAN",
+        "faction": "HORDE",
+        "breed": "BLOOD_ELF",
+        "class": "PALADIN",
+        "level": 1,
+        "experience": 0
+    },
+    "1": {
+        "name": "Hextankxion",
+        "gender": "MAN",
+        "faction": "HORDE",
+        "breed": "UNDEAD",
+        "class": "WARRIOR",
+        "level": 1,
+        "experience": 0
+    },
+    "2": {
+        "name": "Eryma",
+        "gender": "WOMAN",
+        "faction": "HORDE",
+        "breed": "BLOOD_ELF",
+        "class": "PRIEST",
+        "level": 1,
+        "experience": 0
+    },
+    "3": {
+        "name": "Valichnya",
+        "gender": "WOMAN",
+        "faction": "HORDE",
+        "breed": "UNDEAD",
+        "class": "DEMONIST",
+        "level": 1,
+        "experience": 0
+    },
+    "4": {
+        "name": "Plogojouish",
+        "gender": "MAN",
+        "faction": "HORDE",
+        "breed": "TROLL",
+        "class": "SHAMAN",
+        "level": 1,
+        "experience": 0
+    }
+}

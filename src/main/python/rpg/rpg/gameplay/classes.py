@@ -2,6 +2,7 @@ from abc import ABC
 from enum import Enum
 
 from rpg.gameplay.powers import Power, Mana, Energy, Chi, Rage, Rune, PowerType
+from rpg.gameplay.weapons import Weapon, WeaponType, WeaponFactory
 from rpg.gameplay.talents import TalentsTree, TalentsBook, TalentsBookFactory
 from rpg.gameplay.spells import SpellType, Spell, SpellsBook, SpellBuilder
 from rpg.gamedesign.progression_system import Rank
@@ -42,7 +43,27 @@ class Class(ABC):
         self.__resource: Power = resource
         self.__talents_book: TalentsBook = talents_book
         self.__spells_book: SpellsBook = SpellsBook()
+        self._left_hand_supported_weapons: list[WeaponType] = []
+        self._right_hand_supported_weapons: list[WeaponType] = []
+        self.__left_hand_weapon: Weapon = None
+        self.__right_hand_weapon: Weapon = None
+    @property
+    def allowed_weapons(self) -> list[WeaponType]:
+        return list(self._left_hand_supported_weapons + self._right_hand_supported_weapons)
     
+    @property
+    def left_hand_allowed_weapons(self) -> list[WeaponType]:
+        return self._left_hand_supported_weapons.copy()
+    @property
+    def right_hand_allowed_weapons(self) -> list[WeaponType]:
+        return self._right_hand_supported_weapons.copy()
+    @property
+    def left_hand_weapon(self) -> Weapon:
+        return self.__left_hand_weapon
+    
+    @property
+    def right_hand_weapon(self) -> Weapon:
+        return self.__right_hand_weapon
     @property
     def spells_book(self) -> SpellsBook:
         return self.__spells_book
@@ -61,6 +82,13 @@ class Class(ABC):
 class Paladin(Class):
     def __init__(self) -> None:
         super().__init__(ClassType.PALADIN, Mana(), TalentsBookFactory.paladin())
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_MACE)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_SWORD)
+        self._right_hand_supported_weapons.append(WeaponType.POLEARM)
         self.spells_book.learn(
             SpellBuilder("Holy Light")
                 .description("Heals a friendly target for instant_health.minimum to instant_health.maximum.")
@@ -70,10 +98,16 @@ class Paladin(Class):
                 .cooldown(1.5)
                 .instant_health(Range(39, 47))
                 .build())
+        self.__right_hand_weapon = WeaponFactory.one_hand_mace()
 
 class Demonist(Class):
     def __init__(self) -> None:
         super().__init__(ClassType.DEMONIST, Mana(), TalentsBookFactory.demonist())
+        self._right_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._right_hand_supported_weapons.append(WeaponType.STICK)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._left_hand_supported_weapons.append(WeaponType.WAND)
 
         self.spells_book.learn(
             SpellBuilder("Shadow Bolt")
@@ -94,10 +128,16 @@ class Demonist(Class):
                 .instant_damage(Range(8, 8))
                 .periodic_damage(Range(1,2), 15.0)
                 .build())
+        self.__right_hand_weapon = WeaponFactory.stick()
 
 class Mage(Class):
     def __init__(self) -> None:
         super().__init__(ClassType.MAGE, Mana(), TalentsBookFactory.mage())
+        self._right_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._right_hand_supported_weapons.append(WeaponType.STICK)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._left_hand_supported_weapons.append(WeaponType.WAND)
         self.spells_book.learn(
             SpellBuilder("Fireball")
                 .description("Sends a shadowy bolt at the enemy, causing instant_damage.minimum to instant_damage.maximum Shadow damage.")
@@ -107,10 +147,16 @@ class Mage(Class):
                 .cooldown(1.5)
                 .instant_damage(Range(16, 25))
                 .build())
+        self.__right_hand_weapon = WeaponFactory.stick()
         
 class Priest(Class):
     def __init__(self) -> None:
         super().__init__(ClassType.PRIEST, Mana(), TalentsBookFactory.priest())
+        self._right_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._right_hand_supported_weapons.append(WeaponType.STICK)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._left_hand_supported_weapons.append(WeaponType.WAND)
         self.spells_book.learn(
             SpellBuilder("Lesser Heal")
                 .description("Heal your target for instant_health.minimum to instant_health.maximum.")
@@ -130,10 +176,23 @@ class Priest(Class):
                 .cooldown(1.5)
                 .instant_damage(Range(46, 56))
                 .build())
+        self.__right_hand_weapon = WeaponFactory.stick()
 
 class Hunter(Class):
     def __init__(self) -> None:
         super().__init__(ClassType.HUNTER, Mana(), TalentsBookFactory.hunter())
+        self._right_hand_supported_weapons.append(WeaponType.POLEARM)
+        self._right_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._left_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_SWORD)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.BOW)
+        self._right_hand_supported_weapons.append(WeaponType.GUN)
+        self._right_hand_supported_weapons.append(WeaponType.CROSSBOW)
         self.spells_book.learn(
             SpellBuilder("Raptor Strike")
                 .description("A strong attack that increases melee damage by 5.")
@@ -142,10 +201,19 @@ class Hunter(Class):
                 .cooldown(6.0)
                 .instant_damage(Range(46, 56))
                 .build())
+        self.__right_hand_weapon = WeaponFactory.two_hands_axe()
 
 class Shaman(Class):
     def __init__(self) -> None:
         super().__init__(ClassType.SHAMAN, Mana(), TalentsBookFactory.shaman())
+        self._right_hand_supported_weapons.append(WeaponType.POLEARM)
+        self._right_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._left_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.STICK)
         self.spells_book.learn(
             SpellBuilder("Lightning Bolt")
                 .description("Casts a bolt of lightning at the target for instant_health.minimum to instant_health.maximum Nature damage.")
@@ -164,10 +232,18 @@ class Shaman(Class):
                 .cooldown(1.5)
                 .instant_health(Range(36, 47))
                 .build())
+        self.__right_hand_weapon = WeaponFactory.one_hand_axe()
         
 class Druid(Class):
     def __init__(self) -> None:
         super().__init__(ClassType.DRUID, Mana(), TalentsBookFactory.druid())
+        self._right_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._right_hand_supported_weapons.append(WeaponType.POLEARM)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_MACE)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.STICK)
         self.spells_book.learn(
             SpellBuilder("Wrath")
                 .description("Causes instant_damage.minimum to instant_damage.maximum Nature damage to the target")
@@ -186,14 +262,37 @@ class Druid(Class):
                 .cooldown(1.5)
                 .instant_health(Range(40, 55))
                 .build())
+        self.__right_hand_weapon = WeaponFactory.stick()
         
 class DemonHunter(Class):
     def __init__(self) -> None:
         super().__init__(ClassType.DEMON_HUNTER, Rune(), TalentsBookFactory.demon_hunter())
+        self._right_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
+        self._right_hand_supported_weapons.append(WeaponType.POLEARM)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_MACE)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_SWORD)
+        self._left_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
+        self.__right_hand_weapon = WeaponFactory.dagger()
+        self.__left_hand_weapon = WeaponFactory.dagger()
       
 class Rogue(Class):
     def __init__(self) -> None:
         super().__init__(ClassType.ROGUE, Energy(), TalentsBookFactory.rogue())
+        self._right_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
+        self._left_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
         self.spells_book.learn(
             SpellBuilder("Eviscerate")
                 .description("Heals a friendly target for instant_damage.minimum to instant_damage.maximum.")
@@ -219,13 +318,35 @@ class Rogue(Class):
                 .cooldown(10.0)
                 .build())
        
+        self.__right_hand_weapon = WeaponFactory.dagger()
+        self.__left_hand_weapon = WeaponFactory.dagger()
 class Monk(Class):
     def __init__(self) -> None:
         super().__init__(ClassType.MONK, Chi(), TalentsBookFactory.monk())
+        self._right_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._left_hand_supported_weapons.append(WeaponType.DAGGER)
+        self._right_hand_supported_weapons.append(WeaponType.STICK)
+        self.__right_hand_weapon = WeaponFactory.wand()
           
 class Warrior(Class):
     def __init__(self) -> None:
         super().__init__(ClassType.WARRIOR, Rage(), TalentsBookFactory.warrior())
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
+        self._right_hand_supported_weapons.append(WeaponType.POLEARM)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_MACE)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_SWORD)
+        
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
+        self._left_hand_supported_weapons.append(WeaponType.POLEARM)
+        self._left_hand_supported_weapons.append(WeaponType.TWO_HANDS_MACE)
+        self._left_hand_supported_weapons.append(WeaponType.TWO_HANDS_AXE)
+        self._left_hand_supported_weapons.append(WeaponType.TWO_HANDS_SWORD)
+        
         self.spells_book.learn(
             SpellBuilder("Heroic Strike")
                 .description("A strong attack that increases melee damage by instant_damage.maximum and causes a high amount of threat.")
@@ -233,11 +354,25 @@ class Warrior(Class):
                 .resource_usage(15)
                 .instant_damage(Range(11, 11))
                 .build())
+        self.__right_hand_weapon = WeaponFactory.two_hands_sword()
         
 class DeathKnight(Class):
     def __init__(self) -> None:
         super().__init__(ClassType.DEATH_KNIGHT, Rune(), TalentsBookFactory.death_knight())
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
+        self._right_hand_supported_weapons.append(WeaponType.POLEARM)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_MACE)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_AXE)
+        self._right_hand_supported_weapons.append(WeaponType.TWO_HANDS_SWORD)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
+        self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
 
+        self.__right_hand_weapon = WeaponFactory.one_hand_sword()
+        self.__left_hand_weapon = WeaponFactory.one_hand_sword()
+        
 class ClassFactory:
     @staticmethod
     def create(class_type: ClassType) -> Class:

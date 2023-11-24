@@ -119,7 +119,8 @@ class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
 
     def __handle_detect_aoe_position(self, event: pygame.event.Event):
         if (event.type == pygame.MOUSEMOTION):
-            print("AOE with Mouse")
+            # print("AOE with Mouse")
+            pass
         else:
             if (event.type == pygame.JOYAXISMOTION and event.axis == 2 and event.value < 0.003906369212927641):
                 print("AOE with JOY" + str(event.value))
@@ -180,24 +181,25 @@ class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
 class EnemyComponent(CharacterComponent):
     def __init__(self, enemy: Enemy) -> None:
         super().__init__(enemy)
+        self.__dificulty_color: pygame.Color = pygame.Color(255,150,0)
     @property
-    def rect(self) -> pygame.Rect:
-        return self._hitbox
-
+    def character(self) -> Enemy:
+        return super().character
     def draw(self, master: pygame.Surface):
         # pygame.draw.circle(master, pygame.Color(150,0,0), (self._character.get_position().x,self._character.get_position().y), self._character.threat.level, 2)
         # if (self._character.zone_center is not None):
         #     pygame.draw.circle(master, pygame.Color(255, 0, 255), (self._character.zone_center.x,self._character.zone_center.y), self._character.zone_radius, 1)
         self._texture.fill(pygame.Color(0,0,0,0))
-        point_color: pygame.Color
-        if (self.is_selected()):
-            point_color = pygame.Color(50,150,50)
-        else:
-            point_color = pygame.Color(255,150,0)
         self._hitbox = pygame.draw.circle(
-            self._texture, point_color, (self._character.radius, self._character.radius), self._character.radius)
+            self._texture, self.__dificulty_color, (self._character.radius, self._character.radius), self._character.radius)
         self._hitbox = master.blit(self._texture, (self._character.get_position().x-self._character.radius, self._character.get_position().y-self._character.radius))
         # master.blit(self._title, (self.get_position().x+self._radius*2, self.get_position().y-(self._radius/2)))
+        for projectil in self._character.trigged_projectils:
+            projectil_component: ProjectilComponent = ProjectilComponent(projectil)
+            projectil_component.draw(master)
+    def set_difficulty_color(self, color: pygame.Color):
+        self.__dificulty_color = color
+        
 
 class GroupComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
     def __init__(self, group: Group) -> None:
