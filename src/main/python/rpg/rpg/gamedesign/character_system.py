@@ -1,15 +1,22 @@
+from threading import Thread
+from time import sleep
+
 from rpg.concurent import synchonized
+from rpg.gamedesign.faction_system import Faction
+from rpg.gamedesign.progression_system import Level
+from rpg.gamedesign.threat_system import Threat
+from rpg.gameplay.attributes import Attribute
 from rpg.gameplay.breeds import Breed, BreedFactory
 from rpg.gameplay.classes import Class, ClassFactory
-from rpg.gamedesign.progression_system import Level
 from rpg.gameplay.genders import Gender
-from rpg.gamedesign.faction_system import Faction
-from rpg.gamedesign.threat_system import Threat
+from rpg.geolocation import Moveable, WindRose
+from rpg.math.geometry import Position
+
 
 class Life:
     def __init__(self, maximum: int, left: int = None) -> None:
         self.__maximum: int = maximum
-        self.__current: int = left if left is not None else max
+        self.__current: int = left if left is not None else maximum
         self.__boost: list[int] = []
         
     @property
@@ -52,15 +59,15 @@ class Life:
 
 class FormOfLife:
     def __init__(self) -> None:
-        self.__life: Life = Life(100, 100)
+        self._life: Life = Life(100, 100)
     
     @property
     def life(self) -> Life:
-        return self.__life
+        return self._life
 
-class BaseCharacter(FormOfLife):
+class BaseCharacter(FormOfLife, Moveable):
     def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender, faction: Faction) -> None:
-        super().__init__()
+        FormOfLife.__init__(self)
         self.__name: str = name
         self.__gender: Gender = gender
         self.__faction: Faction = faction
@@ -68,7 +75,34 @@ class BaseCharacter(FormOfLife):
         self.__breed: Breed = breed
         self.__class: Class = character_class
         self.__threat: Threat = Threat()
+        maximum_life: int = self.__breed.get_attribute(Attribute.STAMANIA) + self.__class.get_attribute(Attribute.STAMANIA)
+        self._life = Life(maximum_life*10)
+        self.__attack_speed: float = 2.6
+        self.is_in_fight_mode: bool = False
+        self.__move_speed: int = 2.5
+        self.__can_be_moved: bool = True
+        self.__position: Position = Position(0,0)
+        self.__orientation: WindRose = WindRose.EAST
+        self.previous_position: Position = Position(0, 0)
+        self.is_moving: bool = False
+        self.__level.set_on_level_up_event_listener(self.__on_level_up_handler)
+        self.__health_regeneration: HealthRegenerationThread = HealthRegenerationThread(self)
+        self.__power_regeneration: PowerRegenerationThread = PowerRegenerationThread(self)
+        self.__health_regeneration.start()
+        # self.__power_regeneration.start()
+    def __on_level_up_handler(self):
+        maximum_life: int = self.__breed.get_attribute(Attribute.STAMANIA) + self.__class.get_attribute(Attribute.STAMANIA)
+        self._life = Life((maximum_life*10)*self.level.value)
+
+    def get_attribute(self, attribute: Attribute) -> int:
+        value: int = 0
+        value += self.__breed.get_attribute(attribute)
+        value += self.__class.get_attribute(attribute)
+        return value
     
+    @property
+    def attack_speed(self) -> float:
+        return self.__attack_speed
     @property
     def gender(self) -> Gender:
         return self.__gender
@@ -91,6 +125,42 @@ class BaseCharacter(FormOfLife):
     def threat(self) -> Threat:
         return self.__threat
     
+    @property
+    def move_speed(self) -> int:
+        return self.__move_speed
+    @property
+    def can_be_moved(self) -> bool:
+        return self.__can_be_moved
+    def get_orientation(self) -> WindRose:
+        return self.__orientation
+
+    def get_position(self) -> Position:
+        return self.__position
+    
+    def set_position(self, new_position: Position):
+        self.__position = new_position
+    
+    def move(self, speed: float, orientation: WindRose):
+        if (self.__orientation is not orientation):
+            self.__orientation = orientation
+        # Impl not finished
+    
+    def move_foreward(self, speed: float):
+        pass
+    
+    def move_backward(self, speed: float):
+        pass
+    
+    def turn_around(self):
+        self.__orientation = WindRose.opposite(self.__orientation)
+    
+    def turn_left(self):
+        self.__orientation = WindRose.compute_following_direction_counterclockwise(self.__orientation)
+    
+    def turn_right(self):
+        self.__orientation = WindRose.compute_following_direction_clockwise(self.__orientation)
+    
+    
     def copy(self):
         name: str = self.__name
         gender: Gender = [value for value in list(Gender) if value == self.__gender][0]
@@ -103,3 +173,38 @@ class BaseCharacter(FormOfLife):
             the_copy.level.up()
         the_copy.level.gain(self.__level.experience.current)
         return the_copy
+
+class HealthRegenerationThread(Thread):
+    def __init__(self, character: BaseCharacter) -> None:
+        super().__init__()
+        self.__character: BaseCharacter = character
+        self.__must_regenerate: bool = False
+        print("..s")
+    
+    def run(self) -> None:
+        self.__must_regenerate = True
+        while (self.__must_regenerate):
+            if (self.__character.life.current < self.__character.life.maximum):
+                if (not self.__character.is_in_fight_mode):
+                    points: int = int((5 * self.__character.life.maximum)/100)
+                    self.__character.life.heal(points)
+            sleep(2)
+
+class PowerRegenerationThread(Thread):
+    def __init__(self, character: BaseCharacter) -> None:
+        super().__init__()
+        self.__character: BaseCharacter = character
+        self.__must_regenerate: bool = False
+    
+    def run(self) -> None:
+        self.__must_regenerate = True
+        while (self.__must_regenerate):
+            if (self.__character.character_class.resource.current < self.__character.character_class.resource.maximum):
+                if (not self.__character.is_in_fight_mode):
+                    points: int = self.__character.get_attribute(Attribute.SPIRIT)
+                    self.__character.character_class.resource.gain(points)   
+                    sleep(2)
+                else:
+                    points: int = int((5 * self.__character.character_class.resource.maximum)/100)
+                    self.__character.character_class.resource.gain(points)
+                    sleep(5)

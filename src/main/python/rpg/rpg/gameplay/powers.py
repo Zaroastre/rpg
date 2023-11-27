@@ -41,6 +41,16 @@ class Power(ABC):
         self.__boost: list[int] = []
         self.__type: PowerType = resource_type
 
+    def gain(self, points: int):
+        self.__current += points
+        if (self.__current > self.__maximum):
+            self.__current = self.__maximum
+            
+    def loose(self, points: int):
+        self.__current -= points
+        if (self.__current < 0):
+            self.__current = 0
+
     @property
     def maximum(self) -> int:
         return self.__maximum

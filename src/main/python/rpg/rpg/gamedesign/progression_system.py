@@ -21,6 +21,10 @@ class Level:
     def __init__(self, level: int) -> None:
         self.__value: int = level
         self.__experience: Experience = Experience(maximum=self.__compute_maximul_required_experience())
+        self.__on_level_up: callable = None
+
+    def set_on_level_up_event_listener(self, callback: callable):
+        self.__on_level_up = callback
     
     def __compute_maximul_required_experience(self) -> int:
         return int(((8*self.__value) + self.__difference()) * self.__mxp() * self.__reduction_factor())
@@ -65,6 +69,8 @@ class Level:
     def up(self):
         self.__value += 1
         self.__reset_current_experience()
+        if (self.__on_level_up is not None):
+            self.__on_level_up()
     
     def __reset_current_experience(self):
         self.__experience.reset_current_experience()

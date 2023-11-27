@@ -36,8 +36,8 @@ class Projectil:
     def move_speed(self) -> float:
         return self.__move_speed
     @property
-    def color(self) -> tuple[int, int, int, int]:
-        return self.__color.to_tuple()
+    def color(self) -> Color:
+        return self.__color
 
 
 class SpellTypeValue:
@@ -87,6 +87,12 @@ class Spell(ABC):
         self.__periodic_damage: Range = periodic_damage
         self.__effect_duration: float = effect_duration
         self.__color: Color = color
+    @property
+    def instant_damage(self) -> Range:
+        return self.__instant_damage
+    @property
+    def instant_health(self) -> Range:
+        return self.__instant_health
     @property
     def effect_duration(self) -> float:
         return self.__effect_duration
@@ -154,18 +160,21 @@ class Spell(ABC):
     def spell_type(self) -> SpellType:
         return self.__spell_type
     @property
-    def color(self) -> tuple[int, int, int, int]:
-        return self.__color.to_tuple()
+    def color(self) -> Color:
+        return self.__color
     def can_be_casted(self) -> bool:
-        now: float = datetime.now().timestamp()
-        return (self.__last_cast_timestamp + self.__cooldown) <= now
+        now: int = self.__now_in_milliseconds()
+        return (self.__last_cast_timestamp + (self.__cooldown/10)) <= now
     
     def _update_last_cast_timestamp(self):
-        self.__last_cast_timestamp = datetime.now().timestamp()
-        
-    @abstractmethod
+        self.__last_cast_timestamp = self.__now_in_milliseconds()
+    
+    def __now_in_milliseconds(self) -> int:
+       return int(datetime.now().timestamp() * 1000)
+   
     def cast(self) -> Projectil:
-        raise NotImplementedError()
+        self._update_last_cast_timestamp()
+        return None
 
 # class TemporalSpell(Thread):
 #     def __init__(self, interval_in_milliseconds: int, points: int, duration_in_milliseconds: int) -> None:
@@ -226,24 +235,28 @@ class DamageSpell(Spell):
     def __init__(self, name: str, description: str, rank: Rank, resource_usage: int, incantation_duration: float, cooldown: float, instant_damage: Range, periodic_damage: Range, instant_health: Range, periodic_health: Range, effect_duration: float, spell_color: Color) -> None:
         super().__init__(name, description, rank, SpellType.DAMAGE, resource_usage, incantation_duration, cooldown, instant_damage, periodic_damage, instant_health, periodic_health, effect_duration, spell_color)
 
-    def cast(self):
-        pass
+    def cast(self) -> Projectil:
+        super().cast()
+        projectil: Projectil = Projectil(True, self.instant_damage.random(), False, 10.0, None, None, 5, self.color)
+        return projectil
 
 class GuardianSpell(Spell):
     def __init__(self, name: str, description: str, rank: Rank, resource_usage: int, incantation_duration: float, cooldown: float, instant_damage: Range, periodic_damage: Range, instant_health: Range, periodic_health: Range, effect_duration: float, spell_color: Color) -> None:
         super().__init__(name, description, rank, SpellType.HEALTH_OVER_TIME, resource_usage, incantation_duration, cooldown, instant_damage, periodic_damage, instant_health, periodic_health, effect_duration, spell_color)
-    def cast(self):
-        pass
+    def cast(self) -> Projectil:
+        super().cast()
 class HealthSpell(Spell):
     def __init__(self, name: str, description: str, rank: Rank, resource_usage: int, incantation_duration: float, cooldown: float, instant_damage: Range, periodic_damage: Range, instant_health: Range, periodic_health: Range, effect_duration: float, spell_color: Color) -> None:
         super().__init__(name, description, rank, SpellType.HEALTH, resource_usage, incantation_duration, cooldown, instant_damage, periodic_damage, instant_health, periodic_health, effect_duration, spell_color)
-    def cast(self):
-        pass
+    def cast(self) -> Projectil:
+        super().cast()
+        projectil: Projectil = Projectil(False, self.instant_health.random(), False, 10.0, None, None, 5, self.color)
+        return projectil
 class InfectSpell(Spell):
     def __init__(self, name: str, description: str, rank: Rank, resource_usage: int, incantation_duration: float, cooldown: float, instant_damage: Range, periodic_damage: Range, instant_health: Range, periodic_health: Range, effect_duration: float, spell_color: Color) -> None:
         super().__init__(name, description, rank, SpellType.DAMAGE_OVER_TIME, resource_usage, incantation_duration, cooldown, instant_damage, periodic_damage, instant_health, periodic_health, effect_duration, spell_color)
-    def cast(self):
-        pass
+    def cast(self) -> Projectil:
+        super().cast()
 class SpellBuilder:
     def __init__(self, name: str) -> None:
         self.__name: str = name

@@ -1,64 +1,105 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 from rpg.gameplay.breeds import BreedType
 from rpg.gameplay.classes import ClassType, Class
 from rpg.gamedesign.progression_system import Level
-from rpg.gameplay.spells import Spell, SpellType
+from rpg.gameplay.spells import Spell, SpellType, Projectil
 from rpg.gameplay.weapons import Weapon
 from rpg.gamedesign.character_system import BaseCharacter
+from rpg.gameplay.attributes import Attribute
 
 class Attack(ABC):
     @abstractmethod
     def attack(self) -> None:
         raise NotImplementedError()
 
+class AttackStategyType(Enum):
+    SPEEL=1,
+    WEAPON_TECHNIC=2,
+    WEAPON=3,
+    UNARMED=4
+
 class AttackStategy:
+    def __init__(self, attack_strategy_type: AttackStategyType, attacker: BaseCharacter) -> None:
+        self.__attacker: BaseCharacter = attacker
+        self.__attack_strategy_type: AttackStategyType = attack_strategy_type
+    @property
+    def attacker(self) -> BaseCharacter:
+        return self.__attacker
+    @property
+    def attack_strategy_type(self) -> AttackStategyType:
+        return self.__attack_strategy_type
+
     @abstractmethod
     def execute(self, target: BaseCharacter) -> None:
         raise NotImplementedError()
 
 class UnarmedAttackStategy(AttackStategy):
-    def __init__(self) -> None:
-        pass
+    def __init__(self, attacker: BaseCharacter) -> None:
+        super().__init__(AttackStategyType.UNARMED, attacker)
     def execute(self, target: BaseCharacter) -> None:
-        pass
+        strength: int = self.attacker.character_class.get_attribute(Attribute.STRENGTH)
+        if (strength == 0):
+            strength = 1
+        target.life.loose(strength)
 
 class WeaponAttackStrategy(AttackStategy):
-    def __init__(self, right_weapon: Weapon, left_weapon: Weapon) -> None:
-        self.__right_weapon: Weapon = right_weapon
-        self.__left_weapon: Weapon = left_weapon
+    def __init__(self, attacker: BaseCharacter) -> None:
+        super().__init__(AttackStategyType.WEAPON, attacker)
         
     def execute(self, target: BaseCharacter) -> None:
-        self.__right_weapon.damage(target)
-        if self.__left_weapon is not None:
-            self.__left_weapon.damage(target)
+        right_damage: int = 0
+        left_damage: int = 0
+        if (self.attacker.character_class.right_hand_weapon is not None):
+            right_damage = self.attacker.character_class.right_hand_weapon.damage()
+        if (self.attacker.character_class.left_hand_weapon is not None):
+            left_damage = self.attacker.character_class.left_hand_weapon.damage()
+
+        if (right_damage > 0):
+            target.life.loose(right_damage)
+        if (left_damage > 0):
+            target.life.loose(left_damage)
 
 class RangedWeaponAttackStrategy(AttackStategy):
-    def __init__(self, weapon: Weapon) -> None:
-        self.__weapon: Weapon = weapon
+    def __init__(self, attacker: BaseCharacter) -> None:
+        super().__init__(AttackStategyType.WEAPON, attacker)
     
     def execute(self, target: BaseCharacter) -> None:
-        self.__weapon.damage(target)
+        if (self.attacker.character_class.right_hand_weapon is not None):
+            self.attacker.character_class.right_hand_weapon.damage()
 
 class InstantDamageSpellAttackStrategy(AttackStategy):
-    def __init__(self, spell: Spell) -> None:
+    def __init__(self, attacker: BaseCharacter, spell: Spell) -> None:
+        super().__init__(AttackStategyType.SPEEL, attacker)
         self.__spell: Spell = spell
-    
+    @property
+    def spell(self) -> Spell:
+        return self.__spell
     def execute(self, target: BaseCharacter) -> None:
-        self.__spell.cast()
+        if (self.__spell.can_be_casted()):
+            casted_projectil: Projectil = self.__spell.cast()
+            casted_projectil.from_position = self.attacker.get_position().copy()
+            casted_projectil.to_position = target.get_position().copy()
+            self.attacker.character_class.trigged_projectils.append(casted_projectil)
+            target.life.loose(casted_projectil.payload)
 
 class PeriodicDamageSpellAttackStrategy(AttackStategy):
-    def __init__(self, spell: Spell) -> None:
+    def __init__(self, attacker: BaseCharacter, spell: Spell) -> None:
+        super().__init__(AttackStategyType.SPEEL, attacker)
         self.__spell: Spell = spell
-    
+    @property
+    def spell(self) -> Spell:
+        return self.__spell
     def execute(self, target: BaseCharacter) -> None:
+        print("PERIODIC_DAMAGE")
         self.__spell.cast(target)
 
 class AttackStategyChooser:
     def __init__(self, attacker: BaseCharacter) -> None:
-        self.__attacker: BaseCharacter = attacker.copy()
+        self.__attacker: BaseCharacter = attacker
 
     def __choose_default_strategy_for_spells_casters(self, target: BaseCharacter) -> AttackStategy:
-        strategy: AttackStategy = UnarmedAttackStategy()
+        strategy: AttackStategy = UnarmedAttackStategy(self.__attacker)
         damages_spells: list[Spell] = self.__attacker.character_class.spells_book.damages_spells
         infect_spells: list[Spell] = self.__attacker.character_class.spells_book.infect_spells
         
@@ -91,16 +132,21 @@ class AttackStategyChooser:
             if (len(selected_spells) > 0):
                 less_mana_usage_spell: Spell = sorted(selected_spells, key=lambda spell: spell.resource_usage, reverse=False)[0]
                 if (less_mana_usage_spell.spell_type == SpellType.DAMAGE):
-                    strategy = InstantDamageSpellAttackStrategy(less_mana_usage_spell)
+                    strategy = InstantDamageSpellAttackStrategy(target, less_mana_usage_spell)
                 elif (less_mana_usage_spell.spell_type == SpellType.DAMAGE_OVER_TIME):
-                    strategy = PeriodicDamageSpellAttackStrategy(less_mana_usage_spell)
+                    strategy = PeriodicDamageSpellAttackStrategy(target, less_mana_usage_spell)
         else:
             if (self.__attacker.character_class.right_hand_weapon is not None):
                 strategy = WeaponAttackStrategy(self.__attacker.character_class.right_hand_weapon)
         return strategy
 
     def __choose_default_strategy_for_melee_attackers(self, target: BaseCharacter) -> AttackStategy:
-        strategy: AttackStategy = UnarmedAttackStategy()
+        strategy: AttackStategy = UnarmedAttackStategy(self.__attacker)
+        if (self.__attacker.character_class.right_hand_weapon is not None):
+            pass
+        if (self.__attacker.character_class.left_hand_weapon is not None):
+            if (self.__attacker.character_class.left_hand_weapon.stuff_part_type):
+                pass
         damages_spells: list[Spell] = self.__attacker.character_class.spells_book.damages_spells
         infect_spells: list[Spell] = self.__attacker.character_class.spells_book.infect_spells
         
@@ -133,12 +179,12 @@ class AttackStategyChooser:
             if (len(selected_spells) > 0):
                 less_mana_usage_spell: Spell = sorted(selected_spells, key=lambda spell: spell.resource_usage, reverse=False)[0]
                 if (less_mana_usage_spell.spell_type == SpellType.DAMAGE):
-                    strategy = InstantDamageSpellAttackStrategy(less_mana_usage_spell)
+                    strategy = InstantDamageSpellAttackStrategy(target, less_mana_usage_spell)
                 elif (less_mana_usage_spell.spell_type == SpellType.DAMAGE_OVER_TIME):
-                    strategy = PeriodicDamageSpellAttackStrategy(less_mana_usage_spell)
+                    strategy = PeriodicDamageSpellAttackStrategy(target, less_mana_usage_spell)
         else:
             if (self.__attacker.character_class.right_hand_weapon is not None):
-                strategy = WeaponAttackStrategy(self.__attacker.character_class.right_hand_weapon, self.__attacker.character_class.left_hand_weapon)
+                strategy = WeaponAttackStrategy(self.__attacker)
         return strategy
 
     def __choose_strategy_for_mage(self, target: BaseCharacter) -> AttackStategy:
@@ -146,20 +192,18 @@ class AttackStategyChooser:
     def __choose_strategy_for_priest(self, target: BaseCharacter) -> AttackStategy:
         return self.__choose_default_strategy_for_spells_casters(target)
     def __choose_strategy_for_demonist(self, target: BaseCharacter) -> AttackStategy:
-        print("Choosing for demonists")
         return self.__choose_default_strategy_for_spells_casters(target)
-    
     def __choose_strategy_for_shaman(self, target: BaseCharacter) -> AttackStategy:
-        strategy: AttackStategy = UnarmedAttackStategy()
+        strategy: AttackStategy = UnarmedAttackStategy(self.__attacker)
         return strategy
     def __choose_strategy_for_druid(self, target: BaseCharacter) -> AttackStategy:
-        strategy: AttackStategy = UnarmedAttackStategy()
+        strategy: AttackStategy = UnarmedAttackStategy(self.__attacker)
         return strategy
     def __choose_strategy_for_paladin(self, target: BaseCharacter) -> AttackStategy:
-        strategy: AttackStategy = UnarmedAttackStategy()
+        strategy: AttackStategy = UnarmedAttackStategy(self.__attacker)
         return strategy
     def __choose_strategy_for_hunter(self, target: BaseCharacter) -> AttackStategy:
-        strategy: AttackStategy = UnarmedAttackStategy()
+        strategy: AttackStategy = UnarmedAttackStategy(self.__attacker)
         return strategy
     def __choose_strategy_for_monk(self, target: BaseCharacter) -> AttackStategy:
         return self.__choose_default_strategy_for_melee_attackers(target)
@@ -173,8 +217,8 @@ class AttackStategyChooser:
         return self.__choose_default_strategy_for_melee_attackers(target)
 
     def choose_best_attack_strategy(self, target: BaseCharacter) -> AttackStategy:
-        target: BaseCharacter = target.copy()
-        strategy: AttackStategy = UnarmedAttackStategy()
+        target: BaseCharacter = target
+        strategy: AttackStategy = UnarmedAttackStategy(self.__attacker)
         match (self.__attacker.character_class.class_type):
             case ClassType.MAGE:
                 strategy = self.__choose_strategy_for_mage(target)

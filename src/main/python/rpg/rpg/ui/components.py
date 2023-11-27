@@ -92,7 +92,7 @@ class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
         self._character.is_moving = self.__is_going_to_the_bottom or self.__is_going_to_the_left or self.__is_going_to_the_right or self.__is_going_to_the_top
         
         
-    def __handle_apply_moves(self):
+    def __move_player(self):
         if (self._character.previous_position != self._character.get_position()):
             self._character.previous_position = self._character.get_position().copy()
         is_moving_in_diagonal = (self.__is_going_to_the_left or self.__is_going_to_the_right) and \
@@ -137,36 +137,50 @@ class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
                 print("AOE with JOY" + str(event.value))
            
     def __handle_attack_ations(self, event: pygame.event.Event):
-        if (event.type == pygame.KEYDOWN and event.key == pygame.K_x) or (event.type == pygame.JOYBUTTONDOWN and event.button == 2):
+        if (event.type == pygame.KEYDOWN and event.key == pygame.K_1) or (event.type == pygame.JOYBUTTONDOWN and event.button == 2):
             self._character.attack()
             trigged_projectil: Projectil = self._character.trigged_projectils[-1]
             self.__projectils_components.append(ProjectilComponent(trigged_projectil))
-        
+        elif (event.type == pygame.KEYDOWN and event.key == pygame.K_2) or (event.type == pygame.JOYBUTTONDOWN and event.button == 3):
+            self._character.attack()
+            trigged_projectil: Projectil = self._character.trigged_projectils[-1]
+            self.__projectils_components.append(ProjectilComponent(trigged_projectil))
         self.__handle_detect_aoe_position(event)
     
+    def __freeze_player_on_place(self):
+        self.__is_going_to_the_bottom = False
+        self.__is_going_to_the_top = False
+        self.__is_going_to_the_left = False
+        self.__is_going_to_the_right = False
+        self.character.is_moving = False
+
+    def __prevent_projectil_to_disapear_from_screen(self, projectil_sprite: ProjectilComponent):
+        if (projectil_sprite.projectil.to_position.x < 0 or projectil_sprite.projectil.to_position.x > rpg.constants.WINDOW_WIDTH) or (projectil_sprite.projectil.to_position.y < 0 or projectil_sprite.projectil.to_position.y > rpg.constants.WINDOW_HEIGHT):
+            self._character.trigged_projectils.remove(projectil_sprite.projectil)
+            # del projectil_sprite.projectil
+            self.__projectils_components.remove(projectil_sprite)
+            del projectil_sprite
 
     def handle(self, event: pygame.event.Event):
         if event is not None:
             if self._character.is_selected():
-                self.__handle_detect_moves_direction(event)
-                    
-        self.__handle_apply_moves()
+                if (self.character.life.is_alive()):
+                    self.__handle_detect_moves_direction(event)
+                else:
+                    self.__freeze_player_on_place()
+        if (self.character.life.is_alive()):
+            self.__move_player()
         if event is not None:
-            if self._character.is_selected():
-                self.__handle_attack_ations(event)
+            if self.character.is_selected():
+                if (self.character.life.is_alive()):
+                    self.__handle_attack_ations(event)
         
-        for component in self.__projectils_components:
-            component.handle(event)
-            if (component.projectil.to_position.x < 0 or component.projectil.to_position.x > rpg.constants.WINDOW_WIDTH) or (component.projectil.to_position.y < 0 or component.projectil.to_position.y > rpg.constants.WINDOW_HEIGHT):
-                self._character.trigged_projectils.remove(component.projectil)
-                # del component.projectil
-                self.__projectils_components.remove(component)
-                del component
-            else:
-                pass
+        for projectil_sprite in self.__projectils_components:
+            projectil_sprite.handle(event)
+            self.__prevent_projectil_to_disapear_from_screen(projectil_sprite)
 
     def draw(self, master: pygame.Surface):
-        pygame.draw.circle(master, CharacterComponent.MENACE_AREA_COLOR, (self._character.get_position().x,self._character.get_position().y), self._character.threat.level, 2)
+        # pygame.draw.circle(master, CharacterComponent.MENACE_AREA_COLOR, (self._character.get_position().x,self._character.get_position().y), self._character.threat.level, 2)
         if (self._character.zone_center is not None):
             pygame.draw.circle(master, CharacterComponent.ZONING_AREA_COLOR, (self._character.zone_center.x,self._character.zone_center.y), self._character.zone_radius, 1)
         self._texture.fill(pygame.Color(0,0,0,0))
@@ -186,17 +200,21 @@ class EnemyComponent(CharacterComponent):
     def character(self) -> Enemy:
         return super().character
     def draw(self, master: pygame.Surface):
-        pygame.draw.circle(master, pygame.Color(150,0,0), (self._character.get_position().x,self._character.get_position().y), self._character.threat.level, 2)
-        # if (self._character.zone_center is not None):
-        #     pygame.draw.circle(master, pygame.Color(255, 0, 255), (self._character.zone_center.x,self._character.zone_center.y), self._character.zone_radius, 1)
+        pygame.draw.circle(master, self.character.character_class.class_type.value.color, (self._character.get_position().x,self._character.get_position().y), self._character.aggro_area_radius, 2)
         self._texture.fill(pygame.Color(0,0,0,0))
         self._hitbox = pygame.draw.circle(
             self._texture, self.__dificulty_color, (self._character.radius, self._character.radius), self._character.radius)
         self._hitbox = master.blit(self._texture, (self._character.get_position().x-self._character.radius, self._character.get_position().y-self._character.radius))
-        # master.blit(self._title, (self.get_position().x+self._radius*2, self.get_position().y-(self._radius/2)))
+        lifebar: pygame.Surface = pygame.Surface((50, 10))
+        lifebar.fill(pygame.Color(100,0,0))
+        lifeleft: pygame.Surface = pygame.Surface((((self.character.life.current *lifebar.get_width())/self.character.life.maximum), lifebar.get_height()))
+        lifeleft.fill(pygame.Color(255,0,0))
+        lifebar.blit(lifeleft, (0,0))
+        master.blit(lifebar, (self.character.get_position().x-(lifebar.get_width()/2), self.character.get_position().y+self.character.radius+lifebar.get_height()))
         for projectil in self._character.trigged_projectils:
             projectil_component: ProjectilComponent = ProjectilComponent(projectil)
             projectil_component.draw(master)
+
     def set_difficulty_color(self, color: pygame.Color):
         self.__dificulty_color = color
         
@@ -226,6 +244,16 @@ class GroupComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
                     index = len(self.group.members)-1
                 else:
                     index -= 1
+            if (event.type == pygame.KEYDOWN and event.key == pygame.K_F1):
+                index=0
+            elif (event.type == pygame.KEYDOWN and event.key == pygame.K_F2):
+                index=1
+            elif (event.type == pygame.KEYDOWN and event.key == pygame.K_F3):
+                index=2
+            elif (event.type == pygame.KEYDOWN and event.key == pygame.K_F4):
+                index=3
+            elif (event.type == pygame.KEYDOWN and event.key == pygame.K_F5):
+                index=4
             previous_selected_member.unselect()
             self.group.members[index].select()
 

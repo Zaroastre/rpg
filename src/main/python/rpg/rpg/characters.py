@@ -11,7 +11,7 @@ from rpg.gamedesign.faction_system import Faction
 from rpg.math.geometry import Geometry, Position
 from rpg.geolocation import Moveable, WindRose
 from rpg.gameplay.storages import Storage
-from rpg.gameplay.attack_strategy import AttackStategyChooser, AttackStategy
+from rpg.gameplay.attack_strategy import AttackStategyChooser, AttackStategy, UnarmedAttackStategy
 from rpg.gamedesign.character_system import BaseCharacter
 from rpg.gameplay.spells import Projectil
 from rpg.utils import Color
@@ -52,31 +52,23 @@ class HitBox:
         return is_in_contact
 
 
-class Character(BaseCharacter, Moveable):
+class Character(BaseCharacter):
     def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender, faction: Faction) -> None:
         BaseCharacter.__init__(self, name, breed, character_class, gender, faction)
-        self.__is_moving: bool = False
-        self.__move_speed: int = 2.5
-        
+
         self.__radius: float = 10.0
-        self.__can_be_moved: bool = True
         self.zone_center: Position = None
         self.zone_radius: float = 0.0
+        self._aggro_area_radius: float = 0.0
 
-        self.__position: Position = Position(0,0)
-        self.__hitbox: HitBox = HitBox(self.__position, self.__radius,self.__radius)
-        self.is_in_fight_mode: bool = False
+        # self.__hitbox: HitBox = HitBox(self.__position, self.__radius,self.__radius)
         self.__trigged_projectils: list[Projectil] = []
-        self.__orientation: WindRose = WindRose.EAST
-        self.__position: Position = Position(0, 0)
-        self.previous_position: Position = Position(0, 0)
         self.__is_selected: bool = False
-        self.is_moving: bool = False
         self.__storages: list[Storage] = []
         self.target: Character = None
+        self.__attack_strategy: AttackStategy = UnarmedAttackStategy(self)
         for _ in range(4):
             self.__storages.append(None)
-        self.__attack_strategy_chooser: AttackStategyChooser = AttackStategyChooser(self)
     
     @property
     def storages(self) -> list[Storage]:
@@ -84,46 +76,21 @@ class Character(BaseCharacter, Moveable):
     @property
     def radius(self) -> float:
         return self.__radius
-    @property
-    def move_speed(self) -> int:
-        return self.__move_speed
-    @property
-    def can_be_moved(self) -> bool:
-        return self.__can_be_moved
-    @property
-    def hitbox(self) -> HitBox:
-        return self.__hitbox
+    # @property
+    # def hitbox(self) -> HitBox:
+    #     return self.__hitbox
     @property
     def trigged_projectils(self) -> list[Projectil]:
         return self.__trigged_projectils
-    def get_orientation(self) -> WindRose:
-        return self.__orientation
-
-    def get_position(self) -> Position:
-        return self.__position
     
-    def set_position(self, new_position: Position):
-        self.__position = new_position
+    @property
+    def aggro_area_radius(self) -> float:
+        return self._aggro_area_radius
     
-    def move(self, speed: float, orientation: WindRose):
-        if (self.__orientation is not orientation):
-            self.__orientation = orientation
-        # Impl not finished
-    
-    def move_foreward(self, speed: float):
-        pass
-    
-    def move_backward(self, speed: float):
-        pass
-    
-    def turn_around(self):
-        self.__orientation = WindRose.opposite(self.__orientation)
-    
-    def turn_left(self):
-        self.__orientation = WindRose.compute_following_direction_counterclockwise(self.__orientation)
-    
-    def turn_right(self):
-        self.__orientation = WindRose.compute_following_direction_clockwise(self.__orientation)
+    def set_attack_strategy(self, strategy: AttackStategy):
+        if (strategy is None):
+            raise ValueError()
+        self.__attack_strategy = strategy
     
     def follow(self, target):
         if (isinstance(target, Character)):
@@ -164,7 +131,7 @@ class Character(BaseCharacter, Moveable):
         if (isinstance(target, Character)):
             distance_between_enemy_and_target = Geometry.compute_distance(target.get_position(), self.get_position())
             if (distance_between_enemy_and_target >= 0):
-                is_real_threat = distance_between_enemy_and_target <= self.threat.level
+                is_real_threat = distance_between_enemy_and_target <= self.aggro_area_radius
             
         return is_real_threat
 
@@ -207,16 +174,16 @@ class Character(BaseCharacter, Moveable):
     def unselect(self):
         self.__is_selected = False
 
-    def attack(self, target=None):
+    def attack(self, target=None) -> int:
+        generated_threat: int = 1
         if (target is not None and isinstance(target, Character)):
-            attack_strategy: AttackStategy = self.__attack_strategy_chooser.choose_best_attack_strategy(target)
-            attack_strategy.execute(target)
+            self.__attack_strategy.execute(target)
         else:
-            new_projectil: Projectil = Projectil(True, 10, False, 10.0, self.previous_position.copy(), self.get_position().copy(), 5, Color(255,0,255))
+            new_projectil: Projectil = Projectil(True, 10, False, 10.0, self.previous_position.copy(), self.get_position().copy(), 5, self.character_class.class_type.value.color)
             self.trigged_projectils.append(new_projectil)
             if (target is not None and isinstance(target, Character)):
                 new_projectil.to_position = target.get_position().copy()
-            
+        return generated_threat
 
 class Enemy(Character):
     def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender, faction: Faction) -> None:
@@ -225,6 +192,7 @@ class Enemy(Character):
         self.patrol_angle: float = 0.0
         self.__patrol_destination: Position = None
         self.__is_patrolling: bool = False
+        self._aggro_area_radius = 50
     
     def set_default_position(self, position: Position):
         self.__default_position = position.copy()

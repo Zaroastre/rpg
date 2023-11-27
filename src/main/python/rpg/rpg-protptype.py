@@ -4,8 +4,13 @@ import rpg.constants
 from rpg.characters import Character
 from rpg.configuration import Configuration
 from rpg.gameplay.player import Player
-from rpg.gamelevel.scenes import Scene, MainMenuScene, CharacterCreationScreen, GameScene
+from rpg.gamelevel.scenes.scenes import Scene
+from rpg.gamelevel.scenes.characters_creator_scene import CharacterCreationScreen
+from rpg.gamelevel.scenes.game_over_scene import GameOverScene
+from rpg.gamelevel.scenes.main_menu_scene import MainMenuScene
+from rpg.gamelevel.scenes.game_scene import GameScene
 from rpg.gamedesign.backup_system import GameLoader, GameSaverThread
+
 
 pygame.init()
 pygame.joystick.init()
@@ -62,7 +67,17 @@ class App:
             self.__player_characters.append(member)
         self.__scene = GameScene(width=self.__window.get_width(), height=self.__window.get_height(), player=self.__player)
         self.__scene.set_friends_group(self.__player_characters)
-        
+        self.__scene.set_event_listener_on_game_over(self.__replace_scene_by_game_over_scene)
+    
+    def __replace_scene_by_game_over_scene(self):
+        player: Player = self.__game_loader.load()
+        self.__player = player
+        self.__backup_thread.set_player(player)
+        self.__scene = GameOverScene(width=self.__window.get_width(), height=self.__window.get_height(), player=player)
+        self.__scene.set_event_listener_on_go_to_menu(self.__replace_scene_by_main_menu_scene)
+        self.__scene.set_event_listener_on_play_again(self.__replace_scene_by_continue_game_scene)
+
+    
     def __handle(self):
         events: list[pygame.event.Event] = pygame.event.get()
         if (len(events) > 0):

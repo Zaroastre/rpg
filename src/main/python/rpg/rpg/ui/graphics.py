@@ -264,6 +264,8 @@ class MemberPanel(InputEventHandler, Draw):
         self.__life_gauge.draw(self.__texture)
         self.__power_gauge.draw(self.__texture)
         self.__threat_gauge.draw(self.__texture)
+        if (self.__member.target is not None):
+            pygame.draw.line(master, pygame.Color(255,255,255), (self.__position.x+self.__texture.get_width(), self.__position.y+(self.__texture.get_height()/2)), (self.__member.target.get_position().x, self.__member.target.get_position().y))
         
         master.blit(self.__texture, (self.__position.x, self.__position.y))
 
@@ -623,16 +625,18 @@ class MessagePanel(InputEventHandler, Draw):
         self.__message_broker: MessageBroker = MessageBroker()
 
     def __retrieve_new_messages(self):
-        new_message: str = self.__message_broker.get_debug_message()
-        if (new_message is not None):
-            self.__messages.append(new_message)
-            if (len(self.__messages) > self.__maximum_lines):
-                self.__messages.pop(0)
+        new_messages: list[str] = self.__message_broker.get_debug_message()
+        if (new_messages is not None and len(new_messages) > 0):
+            for new_message in new_messages:
+                self.__messages.append(new_message)
+                if (len(self.__messages) > self.__maximum_lines):
+                    self.__messages.pop(0)
         new_message = self.__message_broker.get_system_message()
-        if (new_message is not None):
-            self.__messages.append(new_message)
-            if (len(self.__messages) > self.__maximum_lines):
-                self.__messages.pop(0)
+        if (new_messages is not None and len(new_messages) > 0):
+            for new_message in new_messages:
+                self.__messages.append(new_message)
+                if (len(self.__messages) > self.__maximum_lines):
+                    self.__messages.pop(0)
 
     def handle(self, event: pygame.event.Event):
         if (self.__total_characters_per_line == 0):

@@ -12,7 +12,7 @@ from time import sleep
 from datetime import datetime
 
 class GameLoader:
-    __BACKUP_FILE_NAME: str = "nemesys.bkp"
+    __BACKUP_FILE_NAME: str = "nemesys.backup.json"
     __BREED_ATTRIBUTE: str = "breed"
     __CLASS_ATTRIBUTE: str = "class"
     __GENDER_ATTRIBUTE: str = "gender"
@@ -97,25 +97,27 @@ class GameSaverThread(Thread):
         self.__is_running: bool = False
         self.__game_loader: GameLoader = game_loader
         self.__player: Player = player
-        self.__last_backup_time: int = 0
+        self.__last_backup_timestamp_in_milliseconds: int = 0
     
     def set_player(self, player: Player):
         self.__player = player
     
     def __now_in_milliseconds(self) -> int:
-       return int(datetime.now().timestamp() * 1000) 
+       return int(datetime.now().timestamp() * 1000)
     
     def run(self) -> None:
         self.__is_running = True
         while (self.__is_running):
             if (self.__player is not None):
-                if (self.__last_backup_time == 0):
+                if (self.__last_backup_timestamp_in_milliseconds == 0):
+                    print("Save1")
                     self.__game_loader.save(self.__player)
-                    self.__last_backup_time = self.__now_in_milliseconds()
+                    self.__last_backup_timestamp_in_milliseconds = self.__now_in_milliseconds()
                 else:
-                    if ((self.__last_backup_time + self.__backup_interval_in_seconds) >= self.__now_in_milliseconds()):
+                    if (((self.__now_in_milliseconds() - self.__last_backup_timestamp_in_milliseconds)/1000) >= (self.__backup_interval_in_seconds)):
+                        print("Save2")
                         self.__game_loader.save(self.__player)
-                        self.__last_backup_time = self.__now_in_milliseconds()
+                        self.__last_backup_timestamp_in_milliseconds = self.__now_in_milliseconds()
                         
                 sleep(0.1)
             else:

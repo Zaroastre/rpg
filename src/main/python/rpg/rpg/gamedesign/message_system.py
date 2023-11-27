@@ -44,26 +44,26 @@ class MessageBroker(metaclass=SingletonMeta):
         if (message is not None):
             self.__add_message(message, self.__system_messages)
             
-    def __get_message(self, messages: list[str]) -> str:
-        message: str = None
+    def __get_message(self, messages: list[str]) -> list[str]:
+        message_to_read: list[str] = []
         if (len(messages) > 0):
-            message = messages[0]
-            messages.remove(message)
-        return message
+            message_to_read = messages.copy()
+            messages.clear()
+        return message_to_read
     
-    def get_player_resource_message(self) -> str:
+    def get_player_resource_message(self) -> list[str]:
         return self.__get_message(self.__player_resource_messages)
-    def get_player_experiene_message(self) -> str:
+    def get_player_experiene_message(self) -> list[str]:
         return self.__get_message(self.__player_experience_messages)
-    def get_enemies_damages_message(self) -> str:
+    def get_enemies_damages_message(self) -> list[str]:
         return self.__get_message(self.__enemies_damages_messages)
-    def get_enemies_cures_message(self) -> str:
+    def get_enemies_cures_message(self) -> list[str]:
         return self.__get_message(self.__enemies_cures_messages)
-    def get_friends_damages_message(self) -> str:
+    def get_friends_damages_message(self) -> list[str]:
         return self.__get_message(self.__friends_damages_messages)
-    def get_friends_cures_message(self) -> str:
+    def get_friends_cures_message(self) -> list[str]:
         return self.__get_message(self.__friends_cures_messages)
-    def get_debug_message(self) -> str:
+    def get_debug_message(self) -> list[str]:
         return self.__get_message(self.__debug_messages)
-    def get_system_message(self) -> str:
+    def get_system_message(self) -> list[str]:
         return self.__get_message(self.__system_messages)
