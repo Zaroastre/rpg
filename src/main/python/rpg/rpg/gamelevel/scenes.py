@@ -1,5 +1,5 @@
 from abc import ABC
-from math import cos, radians, sin, pi, sqrt
+from math import cos, pi, radians, sin, sqrt
 from random import uniform
 
 import pygame
@@ -7,21 +7,23 @@ import rpg.constants
 from rpg.characters import Character, Enemy, Projectil
 from rpg.configuration import Configuration
 from rpg.gameapi import Draw, InputEventHandler
+from rpg.gamedesign.difficulty_system import Difficulty
+from rpg.gamedesign.faction_system import Faction
+from rpg.gamedesign.fight_system import Fight
 from rpg.gamedesign.interval_system import Range
+from rpg.gamedesign.message_system import MessageBroker
 from rpg.gamengine import GameGenerator
+from rpg.gameplay.breeds import BreedFactory, BreedType
+from rpg.gameplay.classes import ClassFactory, ClassType
+from rpg.gameplay.genders import Gender
 from rpg.gameplay.player import Player
 from rpg.gameplay.spells import Spell
 from rpg.gameplay.teams import Group
 from rpg.math.geometry import Geometry, Position
-from rpg.ui.components import CharacterComponent, EnemyComponent, ProjectilComponent
+from rpg.ui.components import (CharacterComponent, EnemyComponent,
+                               ProjectilComponent)
 from rpg.ui.graphics import (ActionPanel, ExperiencePanel, GroupPanel,
-                             SpellDetailPopup)
-from rpg.gameplay.genders import Gender
-from rpg.gameplay.breeds import BreedType, BreedFactory
-from rpg.gameplay.classes import ClassType, ClassFactory
-from rpg.gamedesign.faction_system import Faction
-from rpg.gamengine import GameGenerator
-from rpg.gamedesign.difficulty_system import Difficulty
+                             MessagePanel, SpellDetailPopup)
 
 
 class Scene(InputEventHandler, Draw):
@@ -677,14 +679,19 @@ class GameScene(Scene):
         self.__experience_panel: ExperiencePanel = ExperiencePanel(rpg.constants.EXPERIENCE_PANEL_WIDTH, rpg.constants.EXPERIENCE_PANEL_HEIGHT, rpg.constants.EXPERIENCE_PANEL_POSITION)
         self.__friends_group: Group = Group(max_capacity=5)
         self.__group_panel: GroupPanel = GroupPanel(group=self.__friends_group, width=rpg.constants.GROUP_PANEL_WIDTH, height=rpg.constants.GROUP_PANEL_HEIGHT, position=rpg.constants.GROUP_PANEL_POSITION)
-        
+        self.__message_panel: MessagePanel = MessagePanel(width=rpg.constants.MESSAGE_PANEL_WIDTH, height=rpg.constants.MESSAGE_PANEL_HEIGHT, position=rpg.constants.MESSAGE_PANEL_POSITION)
+
         self.__friends_sprites: list[CharacterComponent] = []
         self.__enemies_sprites: list[EnemyComponent] = []
         
         self.__spell_detail_popup: SpellDetailPopup = None
+        self.__message_broker: MessageBroker = MessageBroker()
+        
+        self.__fights: dict[Character, Fight] = {}
         
         self.__generate_enemies()
         self.__initialize_events_listeners()
+        
 
     def set_friends_group(self, friends: list[Character]):
         if (len(friends) > 0):
@@ -723,9 +730,9 @@ class GameScene(Scene):
         self.__spell_detail_popup = None
 
     def __generate_enemies(self):
-        for _ in range(Range(100, 100).random()):
+        for _ in range(Range(10, 10).random()):
             enemy: Enemy = GameGenerator.generate_random_enemy()
-            enemy.threat.increase(100.0)
+            enemy.threat.increase(50.0)
             enemy.zone_radius = 200
             enemy.set_default_position(Position(Range(0, rpg.constants.WINDOW_WIDTH).random(), Range(0, rpg.constants.WINDOW_HEIGHT).random()))
             level: int = Range(1, 20).random()
@@ -808,6 +815,7 @@ class GameScene(Scene):
         self.__group_panel.draw(master)
         self.__action_panel.draw(master)
         self.__experience_panel.draw(master)
+        self.__message_panel.draw(master)
         if (self.__spell_detail_popup is not None):
             self.__spell_detail_popup.draw(master)
 
@@ -822,31 +830,44 @@ class GameScene(Scene):
             for projectil_sprite in friend_sprite.projectils:
                 for vilain_sprite in self.__enemies_sprites:
                     if (vilain_sprite.character.is_touching(projectil_sprite.projectil)):
-                        vilain_sprite.character.breed.life.die()
+                        self.__message_broker.add_debug_message(f"[ENEMY] {vilain_sprite.character.name} was killed.")
+                        vilain_sprite.character.life.loose(projectil_sprite.projectil.payload)
                         if (projectil_sprite.projectil in friend_sprite.character.trigged_projectils):
                             friend_sprite.character.trigged_projectils.remove(projectil_sprite.projectil)
                             friend_sprite.projectils.remove(projectil_sprite)
-                        if (vilain_sprite in self.__enemies_sprites):
-                            self.__enemies_sprites.remove(vilain_sprite)
-                        win_experience: int = (vilain_sprite.character.level.value*5) + 45
-                        friend_sprite.character.level.gain(win_experience)
+                        if (vilain_sprite.character.life.is_dead()):
+                            if (vilain_sprite in self.__enemies_sprites):
+                                self.__enemies_sprites.remove(vilain_sprite)
+                            win_experience: int = (vilain_sprite.character.level.value*5) + 45
+                            friend_sprite.character.level.gain(win_experience)
+
+
 
     def __handle_enemy_actions(self, enemy_sprite: EnemyComponent):
         threated_distances: dict[Character, float] = {}
         for friend in self.__friends_group.members:
+            enemy_is_already_threatened: bool = enemy_sprite.character.threat.is_threatened
             if (enemy_sprite.character.is_feel_threatened(friend)):
+                if (not enemy_is_already_threatened):
+                    self.__message_broker.add_debug_message(f"Enemy {enemy_sprite.character.name} is feel threatened by {friend.name}.")
                 threated_distances[friend] = Geometry.compute_distance(friend.get_position(), enemy_sprite.character.get_position())
         most_threatening_friend: Character = None
         if (threated_distances):
-            min_distance_friend = min(threated_distances, key=threated_distances.get)
             most_threatening_friend = min(threated_distances, key=threated_distances.get)
 
         if (most_threatening_friend is not None):
+            new_fight: Fight = None
+            if (enemy_sprite.character not in list(self.__fights.keys())):
+                new_fight: Fight = Fight(enemy_sprite.character, most_threatening_friend)
+                self.__fights[enemy_sprite.character] = new_fight
             if (enemy_sprite.character.is_patrolling):
                 enemy_sprite.character.stop_patrolling()
             if (not most_threatening_friend.is_in_fight_mode):
                 most_threatening_friend.is_in_fight_mode = True
             self.__prepare_enemy_to_fight(enemy_sprite.character, most_threatening_friend)
+            if (new_fight is not None):
+                if (not new_fight.is_alive()):
+                    new_fight.start()
             if (enemy_sprite.character.is_touching(most_threatening_friend)):
                 enemy_sprite.character.attack(most_threatening_friend)
                 if (len(enemy_sprite.character.trigged_projectils) > 0):
@@ -856,12 +877,16 @@ class GameScene(Scene):
                     enemy_sprite.projectils.append(projectil_sprite)
                 
         else:
+            if (enemy_sprite.character in list(self.__fights.keys())):
+                existing_fight: Fight = self.__fights[enemy_sprite.character]
+                existing_fight.stop()
             enemy_sprite.projectils.clear()
             enemy_sprite.character.trigged_projectils.clear()
             if (not enemy_sprite.character.is_patrolling):
                 if (not enemy_sprite.character.is_arrived_to_default_position()):
                     self.__move_enemy_to_the_default_observation_position(enemy_sprite.character)
                 else:
+                    self.__message_broker.add_debug_message(f"[ENEMY] {enemy_sprite.character.name} start patrol.")
                     enemy_sprite.character.generate_patrol_path()
                     enemy_sprite.character.patrol()
             else:                            
@@ -886,6 +911,7 @@ class GameScene(Scene):
             self.__experience_panel.handle(event)
             if (self.__spell_detail_popup is not None):
                 self.__spell_detail_popup.handle(event)
+            self.__message_panel.handle(event)
         else:
             self.__handle_projectif_hit()
             # self.__friends_group.handle(None)
@@ -899,6 +925,7 @@ class GameScene(Scene):
                 
             for component in self.__enemies_sprites:
                 component.handle(None)
+            self.__message_panel.handle(None)
         
         self.player.set_character([character for character in self.__friends_group.members if character.is_selected()][0])
         self.__action_panel.set_character(self.player.character)

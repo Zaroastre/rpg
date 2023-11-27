@@ -9,6 +9,7 @@ from rpg.gameplay.teams import Group
 from rpg.gameplay.storages import Storage
 from rpg.ui.components import CharacterComponent, GroupComponent
 from rpg.gamedesign.spells_system import SpellsSet, SpellsWheel
+from rpg.gamedesign.message_system import MessageBroker
 
 class SpellDetailPopup(InputEventHandler, Draw):
     def __init__(self, spell: Spell, character_class: Class, width: int, height: int, position: Position) -> None:
@@ -72,14 +73,14 @@ class LifeGauge(InputEventHandler, Draw):
         self.__font: pygame.font.Font = pygame.font.Font(None, self.__font_size)
         self.__font_color: pygame.Color = pygame.Color(255, 255, 255)
         self.__percent_label: pygame.Surface = self.__font.render(
-            str((self.__character.breed.life.actual * 100) / self.__character.breed.life.maximum), True, self.__font_color)
-        self.__total_label: pygame.Surface = self.__font.render(str(self.__character.breed.life.actual if self.__character.breed.life.actual < 1000 else str(str(self.__character.breed.life.actual/1000)+"k")), True, self.__font_color)
+            str((self.__character.life.current * 100) / self.__character.life.maximum), True, self.__font_color)
+        self.__total_label: pygame.Surface = self.__font.render(str(self.__character.life.current if self.__character.life.current < 1000 else str(str(self.__character.life.current/1000)+"k")), True, self.__font_color)
 
 
     def handle(self, event: pygame.event.Event):
-        percent: float = round((self.__character.breed.life.actual * 100) / self.__character.breed.life.maximum, 2)
+        percent: float = round((self.__character.life.current * 100) / self.__character.life.maximum, 2)
         self.__percent_label = self.__font.render(f"{str(percent)}%", True, self.__font_color)
-        total: str = str(self.__character.breed.life.actual) if self.__character.breed.life.actual < 1000 else str(str(self.__character.breed.life.actual/1000)+"k")
+        total: str = str(self.__character.life.current) if self.__character.life.current < 1000 else str(str(self.__character.life.current/1000)+"k")
         self.__total_label = self.__font.render(total, True, self.__font_color)
         self.__current_value_texture = pygame.Surface((int((percent*self.__width)/100), self.__height))
     
@@ -445,8 +446,8 @@ class StorageSlot(InputEventHandler, Draw):
         self.__storage: Storage = storage
         self.__texture: pygame.Surface = pygame.Surface([width, height], pygame.SRCALPHA)
         self.__position: Position = position
-        self.__font_size: int = 22
         self.__hitbox: pygame.Rect = None
+        self.__font_size: int = 22
         self.__font: pygame.font.Font = pygame.font.Font(
             None, self.__font_size)
         self.__font_color: pygame.Color = pygame.Color(0, 0, 0)
@@ -607,3 +608,67 @@ class ExperiencePanel(InputEventHandler, Draw):
         self.__current_experience_bar.fill(pygame.Color(255,0,255))
         self.__experience_bar.blit(self.__current_experience_bar, (0,0))
         master.blit(self.__experience_bar, (self.__position.x, self.__position.y))
+
+class MessagePanel(InputEventHandler, Draw):
+    def __init__(self, width: int, height: int, position: Position) -> None:
+        self.__panel: pygame.Surface = pygame.Surface([width, height], pygame.SRCALPHA)
+        self.__position: Position = position
+        self.__messages: list[str] = []
+        self.__font_size: int = 20
+        self.__font: pygame.font.Font = pygame.font.Font(
+            None, self.__font_size)
+        self.__font_color: pygame.Color = pygame.Color(255, 255, 255)
+        self.__total_characters_per_line: int = 0
+        self.__maximum_lines: int = 0
+        self.__message_broker: MessageBroker = MessageBroker()
+
+    def __retrieve_new_messages(self):
+        new_message: str = self.__message_broker.get_debug_message()
+        if (new_message is not None):
+            self.__messages.append(new_message)
+            if (len(self.__messages) > self.__maximum_lines):
+                self.__messages.pop(0)
+        new_message = self.__message_broker.get_system_message()
+        if (new_message is not None):
+            self.__messages.append(new_message)
+            if (len(self.__messages) > self.__maximum_lines):
+                self.__messages.pop(0)
+
+    def handle(self, event: pygame.event.Event):
+        if (self.__total_characters_per_line == 0):
+            message: str = "Hello World from NEMESYS and this is a very long message for testing to display a long message on the panel"
+            label_text: pygame.Surface = pygame.Surface((0,0))
+            while (label_text.get_width() < self.__panel.get_width()):
+                label_text = self.__font.render(str(message[:self.__total_characters_per_line]), True, self.__font_color)
+                self.__total_characters_per_line += 1
+            self.__maximum_lines = int(self.__panel.get_height()/label_text.get_height())-1
+            self.__total_characters_per_line -= 1
+        self.__retrieve_new_messages()
+
+    def draw(self, master: pygame.Surface):
+        self.__panel.fill(pygame.Color(50,50,50))
+        lines: list[str] = []
+        max_lines: int = int(self.__panel.get_height()/self.__font_size)
+        for message in self.__messages:
+            line_size: int = 0
+            label_text: str = ""
+            for character in message:
+                if (len(label_text) == self.__total_characters_per_line):
+                    lines.append(label_text)
+                    label_text = ""
+                    line_size = 0
+                line_size += self.__font_size
+                label_text += character
+                if (len(lines) >= max_lines):
+                    lines.pop(0)
+        
+            lines.append(label_text)
+            label_text = ""
+            if (len(lines) > max_lines):
+                lines.pop(0)
+        line_position_y = 0
+        for line in lines:
+            self.__panel.blit(self.__font.render(line, True, self.__font_color), (0, line_position_y))
+            line_position_y += self.__font_size
+        
+        master.blit(self.__panel, (self.__position.x, self.__position.y))

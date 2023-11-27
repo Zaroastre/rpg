@@ -27,7 +27,7 @@ class ProjectilComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
         self.__projectil.to_position = Geometry.compute_new_point_using_speed(self.__projectil.from_position, self.__projectil.to_position, self.__projectil.move_speed)
     
     def draw(self, master: pygame.Surface):
-        self.__rect = pygame.draw.circle(master, ProjectilComponent.HEALTH_COLOR if not self.__projectil.is_damage else ProjectilComponent.DAMAGE_COLOR, (self.__projectil.to_position.x, self.__projectil.to_position.y), self.__projectil.radius)
+        self.__rect = pygame.draw.circle(master, self.__projectil.color, (self.__projectil.to_position.x, self.__projectil.to_position.y), self.__projectil.radius)
 
 class CharacterComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
     MENACE_AREA_COLOR: pygame.Color = pygame.Color(255, 255, 0, a=100)
@@ -186,7 +186,7 @@ class EnemyComponent(CharacterComponent):
     def character(self) -> Enemy:
         return super().character
     def draw(self, master: pygame.Surface):
-        # pygame.draw.circle(master, pygame.Color(150,0,0), (self._character.get_position().x,self._character.get_position().y), self._character.threat.level, 2)
+        pygame.draw.circle(master, pygame.Color(150,0,0), (self._character.get_position().x,self._character.get_position().y), self._character.threat.level, 2)
         # if (self._character.zone_center is not None):
         #     pygame.draw.circle(master, pygame.Color(255, 0, 255), (self._character.zone_center.x,self._character.zone_center.y), self._character.zone_radius, 1)
         self._texture.fill(pygame.Color(0,0,0,0))

@@ -1,8 +1,9 @@
 from enum import Enum
-from rpg.objects import Object
-from rpg.gamedesign.character_system import AbstractCharacter
+from random import randint, random
+
 from rpg.gamedesign.interval_system import Range
-from random import random, randint
+from rpg.gameplay.qualities import QualityType
+from rpg.gameplay.stuffs import Stuff, StuffPartType
 
 
 class WeaponTypeValue:
@@ -28,13 +29,15 @@ class WeaponType(Enum):
     CROSSBOW: WeaponTypeValue = WeaponTypeValue("CROSSBOW")
     GUN: WeaponTypeValue = WeaponTypeValue("GUN")
     WAND: WeaponTypeValue = WeaponTypeValue("WAND")
-    
 
-class Weapon(Object):
-    def __init__(self, weapon_type: WeaponType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(None)
+class Weapon(Stuff):
+    def __init__(self, name:str, description: str, weapon_type: WeaponType, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, stuff_part_type, description, quality)
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
         self.__weapon_type: WeaponType = weapon_type
         self.__damages: Range = damages
+        
         
     
     @property
@@ -45,59 +48,59 @@ class Weapon(Object):
         return self.__damages.random()
 
 class Dagger(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.DAGGER, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.DAGGER, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
 
 class OneHandAxe(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.ONE_HAND_AXE, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.ONE_HAND_AXE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
 
 class OneHandMace(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.ONE_HAND_MACE, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.ONE_HAND_MACE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
 
 class OneHandSword(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.ONE_HAND_SWORD, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.ONE_HAND_SWORD, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
 
 class TwoHandsAxe(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.TWO_HANDS_AXE, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.TWO_HANDS_AXE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
 
 class TwoHandsMace(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.TWO_HANDS_MACE, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.TWO_HANDS_MACE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
 
 class TwoHandsSword(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.TWO_HANDS_SWORD, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.TWO_HANDS_SWORD, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
         
 class Polearm(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.POLEARM, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.POLEARM, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
         
 class Stave(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.STAVE, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.STAVE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
         
 class Wand(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.WAND, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.WAND, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
 class Bow(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.BOW, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.BOW, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
         
 class CrossBow(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.CROSSBOW, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.CROSSBOW, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
 
 class Gun(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.GUN, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.GUN, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
 
 class Stick(Weapon):
-    def __init__(self, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(WeaponType.STICK, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
+        super().__init__(name, description, WeaponType.STICK, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
 
 
 class WeaponFactory:
@@ -119,123 +122,110 @@ class WeaponFactory:
         return speed
     
     @staticmethod
-    def dagger(weapon_level: int=1) -> Dagger:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.DAGGER, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.DAGGER)
-        return Dagger(weapon_level, damages, hit_chance, attack_speed)
+    def dagger(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> Dagger:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return Dagger(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
     @staticmethod
-    def one_hand_axe(weapon_level: int=1) -> OneHandAxe:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.ONE_HAND_AXE, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.ONE_HAND_AXE)
-        return OneHandAxe(weapon_level, damages, hit_chance, attack_speed)
+    def one_hand_axe(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> OneHandAxe:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return OneHandAxe(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
     @staticmethod
-    def one_hand_mace(weapon_level: int=1) -> OneHandMace:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.ONE_HAND_MACE, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.ONE_HAND_MACE)
-        return OneHandMace(weapon_level, damages, hit_chance, attack_speed)
+    def one_hand_mace(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> OneHandMace:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return OneHandMace(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
     @staticmethod
-    def one_hand_sword(weapon_level: int=1) -> OneHandSword:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.ONE_HAND_SWORD, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.ONE_HAND_SWORD)
-        return OneHandSword(weapon_level, damages, hit_chance, attack_speed)
+    def one_hand_sword(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> OneHandSword:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return OneHandSword(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
     @staticmethod
-    def two_hands_axe(weapon_level: int=1) -> TwoHandsAxe:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.TWO_HANDS_AXE, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.TWO_HANDS_AXE)
-        return TwoHandsAxe(weapon_level, damages, hit_chance, attack_speed)
+    def two_hands_axe(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> TwoHandsAxe:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return TwoHandsAxe(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
     @staticmethod
-    def two_hands_mace(weapon_level: int=1) -> TwoHandsMace:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.TWO_HANDS_MACE, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.TWO_HANDS_MACE)
-        return TwoHandsMace(weapon_level, damages, hit_chance, attack_speed)
+    def two_hands_mace(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> TwoHandsMace:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return TwoHandsMace(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
     @staticmethod
-    def two_hands_sword(weapon_level: int=1) -> TwoHandsSword:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.TWO_HANDS_SWORD, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.TWO_HANDS_SWORD)
-        return TwoHandsSword(weapon_level, damages, hit_chance, attack_speed)
+    def two_hands_sword(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> TwoHandsSword:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return TwoHandsSword(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
     @staticmethod
-    def stick(weapon_level: int=1) -> Stick:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.STICK, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.STICK)
-        return Stick(weapon_level, damages, hit_chance, attack_speed)
+    def stick(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> Stick:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return Stick(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
     @staticmethod
-    def polearm(weapon_level: int=1) -> Polearm:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.POLEARM, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.POLEARM)
-        return Polearm(weapon_level, damages, hit_chance, attack_speed)
+    def polearm(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> Polearm:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return Polearm(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
     @staticmethod
-    def wand(weapon_level: int=1) -> Wand:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.WAND, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.WAND)
-        return Wand(weapon_level, damages, hit_chance, attack_speed)
+    def wand(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> Wand:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return Wand(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
     @staticmethod
-    def stave(weapon_level: int=1) -> Stave:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.STAVE, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.STAVE)
-        return Stave(weapon_level, damages, hit_chance, attack_speed)
+    def stave(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> Stave:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return Stave(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
     @staticmethod
-    def bow(weapon_level: int=1) -> Bow:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.BOW, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.BOW)
-        return Bow(weapon_level, damages, hit_chance, attack_speed)
+    def bow(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> Bow:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return Bow(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
 
     @staticmethod
-    def crossbow(weapon_level: int=1) -> CrossBow:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.CROSSBOW, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.CROSSBOW)
-        return CrossBow(weapon_level, damages, hit_chance, attack_speed)
+    def crossbow(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> CrossBow:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return CrossBow(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
     @staticmethod
-    def gun(weapon_level: int=1) -> Gun:
-        damages: Range = WeaponFactory.__generate_damage_range(WeaponType.GUN, weapon_level)
-        hit_chance: float = WeaponFactory.__generate_hit_chance()
-        attack_speed: float = WeaponFactory.__generate_attak_speed(WeaponType.GUN)
-        return Gun(weapon_level, damages, hit_chance, attack_speed)
+    def gun(name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> Gun:
+        if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
+            raise ValueError()
+        return Gun(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
     
     @staticmethod
-    def create(weapon_type: WeaponType, weapon_level: int=1) -> Weapon:
-        weapon: Weapon = None
+    def create(weapon_type: WeaponType, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, weapon_level: int, damages: Range, hit_chance: float, attack_speed: float) -> Weapon:
         if (weapon_type is None):
+            raise ValueError()
+        if (stuff_part_type is None or stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
             raise ValueError()
         match weapon_type:
             case WeaponType.DAGGER:
-                weapon = WeaponFactory.dagger(weapon_level)
+                weapon = WeaponFactory.dagger(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
             case WeaponType.ONE_HAND_AXE:
-                weapon = WeaponFactory.one_hand_axe(weapon_level)
+                weapon = WeaponFactory.one_hand_axe(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
             case WeaponType.ONE_HAND_MACE:
-                weapon = WeaponFactory.one_hand_mace(weapon_level)
+                weapon = WeaponFactory.one_hand_mace(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
             case WeaponType.ONE_HAND_SWORD:
-                weapon = WeaponFactory.one_hand_sword(weapon_level)
+                weapon = WeaponFactory.one_hand_sword(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
             case WeaponType.TWO_HANDS_AXE:
-                weapon = WeaponFactory.two_hands_axe(weapon_level)
+                weapon = WeaponFactory.two_hands_axe(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
             case WeaponType.TWO_HANDS_MACE:
-                weapon = WeaponFactory.two_hands_mace(weapon_level)
+                weapon = WeaponFactory.two_hands_mace(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
             case WeaponType.TWO_HANDS_SWORD:
-                weapon = WeaponFactory.two_hands_sword(weapon_level)
+                weapon = WeaponFactory.two_hands_sword(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
             case WeaponType.STICK:
-                weapon = WeaponFactory.stick(weapon_level)
+                weapon = WeaponFactory.stick(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
             case WeaponType.WAND:
-                weapon = WeaponFactory.wand(weapon_level)
+                weapon = WeaponFactory.wand(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
             case WeaponType.POLEARM:
-                weapon = WeaponFactory.polearm(weapon_level)
+                weapon = WeaponFactory.polearm(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
             case WeaponType.STAVE:
-                weapon = WeaponFactory.stave(weapon_level)
+                weapon = WeaponFactory.stave(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
             case WeaponType.BOW:
-                weapon = WeaponFactory.bow(weapon_level)
+                weapon = WeaponFactory.bow(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
             case WeaponType.CROSSBOW:
-                weapon = WeaponFactory.crossbow(weapon_level)
+                weapon = WeaponFactory.crossbow(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
             case WeaponType.GUN:
-                weapon = WeaponFactory.gun(weapon_level)
+                weapon = WeaponFactory.gun(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance, attack_speed)
         return weapon

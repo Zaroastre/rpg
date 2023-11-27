@@ -4,11 +4,40 @@ from enum import Enum
 from threading import Thread
 from time import sleep
 
-from rpg.gamedesign.character_system import AbstractCharacter
 from rpg.gamedesign.interval_system import Range
 from rpg.gamedesign.progression_system import Rank
-from rpg.gameplay.breeds import Breed
-from rpg.gameplay.powers import PowerType
+from rpg.utils import Color
+from rpg.geolocation import Position
+
+
+class Projectil:
+    def __init__(self, is_damage: bool, payload: int, is_hit: bool, move_speed: float, from_position: Position, to_position: Position, radius: float, color: Color) -> None:
+        self.from_position: Position = from_position
+        self.to_position: Position = to_position
+        self.__move_speed: float = move_speed
+        self.__is_hit: bool = is_hit
+        self.__payload: int = payload
+        self.__is_damage: bool = is_damage
+        self.__radius: float = radius
+        self.__color: Color = color
+    @property
+    def is_damage(self) -> bool:
+        return self.__is_damage
+    @property
+    def payload(self) -> int:
+        return self.__payload
+    @property
+    def is_hit(self) -> bool:
+        return self.__is_hit
+    @property
+    def radius(self) -> float:
+        return self.__radius
+    @property
+    def move_speed(self) -> float:
+        return self.__move_speed
+    @property
+    def color(self) -> tuple[int, int, int, int]:
+        return self.__color.to_tuple()
 
 
 class SpellTypeValue:
@@ -35,13 +64,14 @@ class Spell(ABC):
             rank: Rank, 
             spell_type: SpellType,
             resource_usage: int,
-            incantation_duration: float, 
+            incantation_duration: float,
             cooldown: float,
             instant_damage: Range,
             periodic_damage: Range,
             instant_health: Range,
             periodic_health: Range,
-            effect_duration: float
+            effect_duration: float,
+            color: Color
             ) -> None:
         self.__name: str = name
         self.__description: str = description
@@ -56,6 +86,7 @@ class Spell(ABC):
         self.__periodic_health: Range = periodic_health
         self.__periodic_damage: Range = periodic_damage
         self.__effect_duration: float = effect_duration
+        self.__color: Color = color
     @property
     def effect_duration(self) -> float:
         return self.__effect_duration
@@ -86,7 +117,6 @@ class Spell(ABC):
     @property
     def name(self) -> str:
         return self.__name
-    
     @property
     def description(self) -> str:
         text: str = self.__description
@@ -103,15 +133,12 @@ class Spell(ABC):
             text = text.replace("periodic_damage.minimum", str(self.__periodic_damage.minimum))
             text = text.replace("periodic_damage.maximum", str(self.__periodic_damage.maximum))
         return text
-
     @property
     def rank(self) -> int:
         return self.__rank
-    
     @property
     def cooldown(self) -> float:
         return self.__cooldown
-    
     @property
     def incantation_duration(self) -> float:
         return self.__incantation_duration
@@ -126,7 +153,9 @@ class Spell(ABC):
     @property
     def spell_type(self) -> SpellType:
         return self.__spell_type
-    
+    @property
+    def color(self) -> tuple[int, int, int, int]:
+        return self.__color.to_tuple()
     def can_be_casted(self) -> bool:
         now: float = datetime.now().timestamp()
         return (self.__last_cast_timestamp + self.__cooldown) <= now
@@ -135,85 +164,85 @@ class Spell(ABC):
         self.__last_cast_timestamp = datetime.now().timestamp()
         
     @abstractmethod
-    def cast(self, target: AbstractCharacter):
+    def cast(self) -> Projectil:
         raise NotImplementedError()
 
-class TemporalSpell(Thread):
-    def __init__(self, interval_in_milliseconds: int, points: int, duration_in_milliseconds: int, targets: list[AbstractCharacter]) -> None:
-        super().__init__()
-        self.__interval_in_milliseconds: int = interval_in_milliseconds
-        self.__duration_in_milliseconds: int = duration_in_milliseconds
-        self.__points: int = points
-        self.__targets: list[AbstractCharacter] = targets
-        self.__is_processing: bool = False
-    @property
-    def interval_in_milliseconds(self) -> int:
-        return self.__interval_in_milliseconds
-    @property
-    def duration_in_milliseconds(self) -> int:
-        return self.__duration_in_milliseconds
-    @property
-    def points(self) -> int:
-        return self.__points
-    @property
-    def targets(self) -> list[AbstractCharacter]:
-        return self.__targets.copy()
-    @property
-    def is_processing(self) -> bool:
-        return self.__is_processing
+# class TemporalSpell(Thread):
+#     def __init__(self, interval_in_milliseconds: int, points: int, duration_in_milliseconds: int) -> None:
+#         super().__init__()
+#         self.__interval_in_milliseconds: int = interval_in_milliseconds
+#         self.__duration_in_milliseconds: int = duration_in_milliseconds
+#         self.__points: int = points
+#         # self.__targets: list[BaseCharacter] = targets
+#         self.__is_processing: bool = False
+#     @property
+#     def interval_in_milliseconds(self) -> int:
+#         return self.__interval_in_milliseconds
+#     @property
+#     def duration_in_milliseconds(self) -> int:
+#         return self.__duration_in_milliseconds
+#     @property
+#     def points(self) -> int:
+#         return self.__points
+#     # @property
+#     # def targets(self) -> list[BaseCharacter]:
+#     #     return self.__targets.copy()
+#     @property
+#     def is_processing(self) -> bool:
+#         return self.__is_processing
 
-    def cancel_effect(self) -> None:
-        self.__is_processing = False
+#     def cancel_effect(self) -> None:
+#         self.__is_processing = False
     
-    def run(self) -> None:
-        self.__is_processing = True
+#     def run(self) -> None:
+#         self.__is_processing = True
 
-class HealEffectTemporalSpell(TemporalSpell):
-    def __init__(self, interval_in_milliseconds: int, effect: int, duration_in_milliseconds: int, targets: list) -> None:
-        super().__init__(interval_in_milliseconds, effect, duration_in_milliseconds, targets)
+# class HealEffectTemporalSpell(TemporalSpell):
+#     def __init__(self, interval_in_milliseconds: int, effect: int, duration_in_milliseconds: int, targets: list) -> None:
+#         super().__init__(interval_in_milliseconds, effect, duration_in_milliseconds, targets)
         
-    def run(self) -> None:
-        super().run()
-        cast_datetime: float = datetime.now().timestamp()
-        while (self.is_processing and (datetime.now().timestamp() < (cast_datetime + self.duration_in_milliseconds))):
-            for target in self.targets:
-                target.life.heal(self.points)
-            sleep(self.interval_in_milliseconds)
+#     def run(self) -> None:
+#         super().run()
+#         cast_datetime: float = datetime.now().timestamp()
+#         while (self.is_processing and (datetime.now().timestamp() < (cast_datetime + self.duration_in_milliseconds))):
+#             for target in self.targets:
+#                 target.life.heal(self.points)
+#             sleep(self.interval_in_milliseconds)
             
-class DamageEffectTemporalSpell(TemporalSpell):
-    def __init__(self, interval_in_milliseconds: int, effect: int, duration_in_milliseconds: int, targets: list) -> None:
-        super().__init__(interval_in_milliseconds, effect, duration_in_milliseconds, targets)
+# class DamageEffectTemporalSpell(TemporalSpell):
+#     def __init__(self, interval_in_milliseconds: int, effect: int, duration_in_milliseconds: int, targets: list) -> None:
+#         super().__init__(interval_in_milliseconds, effect, duration_in_milliseconds, targets)
         
-    def run(self) -> None:
-        super().run()
-        cast_datetime: float = datetime.now().timestamp()
-        while (self.is_processing and (datetime.now().timestamp() < (cast_datetime + self.duration_in_milliseconds))):
-            for target in self.targets:
-                if (target.life.is_alive()):
-                    target.life.loose(self.points)
-            sleep(self.interval_in_milliseconds)
+#     def run(self) -> None:
+#         super().run()
+#         cast_datetime: float = datetime.now().timestamp()
+#         while (self.is_processing and (datetime.now().timestamp() < (cast_datetime + self.duration_in_milliseconds))):
+#             for target in self.targets:
+#                 if (target.life.is_alive()):
+#                     target.life.loose(self.points)
+#             sleep(self.interval_in_milliseconds)
 
 class DamageSpell(Spell):
-    def __init__(self, name: str, description: str, rank: Rank, resource_usage: int, incantation_duration: float, cooldown: float, instant_damage: Range, periodic_damage: Range, instant_health: Range, periodic_health: Range, effect_duration: float) -> None:
-        super().__init__(name, description, rank, SpellType.DAMAGE, resource_usage, incantation_duration, cooldown, instant_damage, periodic_damage, instant_health, periodic_health, effect_duration)
+    def __init__(self, name: str, description: str, rank: Rank, resource_usage: int, incantation_duration: float, cooldown: float, instant_damage: Range, periodic_damage: Range, instant_health: Range, periodic_health: Range, effect_duration: float, spell_color: Color) -> None:
+        super().__init__(name, description, rank, SpellType.DAMAGE, resource_usage, incantation_duration, cooldown, instant_damage, periodic_damage, instant_health, periodic_health, effect_duration, spell_color)
 
-    def cast(self, target: AbstractCharacter):
+    def cast(self):
         pass
 
 class GuardianSpell(Spell):
-    def __init__(self, name: str, description: str, rank: Rank, resource_usage: int, incantation_duration: float, cooldown: float, instant_damage: Range, periodic_damage: Range, instant_health: Range, periodic_health: Range, effect_duration: float) -> None:
-        super().__init__(name, description, rank, SpellType.HEALTH_OVER_TIME, resource_usage, incantation_duration, cooldown, instant_damage, periodic_damage, instant_health, periodic_health, effect_duration)
-    def cast(self, target: AbstractCharacter):
+    def __init__(self, name: str, description: str, rank: Rank, resource_usage: int, incantation_duration: float, cooldown: float, instant_damage: Range, periodic_damage: Range, instant_health: Range, periodic_health: Range, effect_duration: float, spell_color: Color) -> None:
+        super().__init__(name, description, rank, SpellType.HEALTH_OVER_TIME, resource_usage, incantation_duration, cooldown, instant_damage, periodic_damage, instant_health, periodic_health, effect_duration, spell_color)
+    def cast(self):
         pass
 class HealthSpell(Spell):
-    def __init__(self, name: str, description: str, rank: Rank, resource_usage: int, incantation_duration: float, cooldown: float, instant_damage: Range, periodic_damage: Range, instant_health: Range, periodic_health: Range, effect_duration: float) -> None:
-        super().__init__(name, description, rank, SpellType.HEALTH, resource_usage, incantation_duration, cooldown, instant_damage, periodic_damage, instant_health, periodic_health, effect_duration)
-    def cast(self, target: AbstractCharacter):
+    def __init__(self, name: str, description: str, rank: Rank, resource_usage: int, incantation_duration: float, cooldown: float, instant_damage: Range, periodic_damage: Range, instant_health: Range, periodic_health: Range, effect_duration: float, spell_color: Color) -> None:
+        super().__init__(name, description, rank, SpellType.HEALTH, resource_usage, incantation_duration, cooldown, instant_damage, periodic_damage, instant_health, periodic_health, effect_duration, spell_color)
+    def cast(self):
         pass
 class InfectSpell(Spell):
-    def __init__(self, name: str, description: str, rank: Rank, resource_usage: int, incantation_duration: float, cooldown: float, instant_damage: Range, periodic_damage: Range, instant_health: Range, periodic_health: Range, effect_duration: float) -> None:
-        super().__init__(name, description, rank, SpellType.DAMAGE_OVER_TIME, resource_usage, incantation_duration, cooldown, instant_damage, periodic_damage, instant_health, periodic_health, effect_duration)
-    def cast(self, target: AbstractCharacter):
+    def __init__(self, name: str, description: str, rank: Rank, resource_usage: int, incantation_duration: float, cooldown: float, instant_damage: Range, periodic_damage: Range, instant_health: Range, periodic_health: Range, effect_duration: float, spell_color: Color) -> None:
+        super().__init__(name, description, rank, SpellType.DAMAGE_OVER_TIME, resource_usage, incantation_duration, cooldown, instant_damage, periodic_damage, instant_health, periodic_health, effect_duration, spell_color)
+    def cast(self):
         pass
 class SpellBuilder:
     def __init__(self, name: str) -> None:
@@ -229,6 +258,7 @@ class SpellBuilder:
         self.__instant_damage: Range = None
         self.__periodic_health: Range = None
         self.__periodic_damage: Range = None
+        self.__spell_color: Color = None
     def description(self, description: str):
         self.__description = description
         return self
@@ -261,6 +291,9 @@ class SpellBuilder:
         self.__periodic_damage = total_points
         self.__effect_duration = duration
         return self
+    def spell_color(self, color: Color):
+        self.__spell_color = color
+        return self
     def build(self) -> Spell:
         spell: Spell = None
         if (self.__periodic_damage is not None):
@@ -275,7 +308,8 @@ class SpellBuilder:
                 self.__periodic_damage, 
                 self.__instant_health, 
                 self.__periodic_health,
-                self.__effect_duration
+                self.__effect_duration,
+                self.__spell_color
             )
         elif (self.__periodic_health is not None):
             spell = GuardianSpell(
@@ -289,7 +323,8 @@ class SpellBuilder:
                 self.__periodic_damage, 
                 self.__instant_health, 
                 self.__periodic_health,
-                self.__effect_duration
+                self.__effect_duration,
+                self.__spell_color
             )
         elif (self.__instant_damage is not None):
             spell = DamageSpell(
@@ -303,7 +338,8 @@ class SpellBuilder:
                 self.__periodic_damage, 
                 self.__instant_health, 
                 self.__periodic_health,
-                self.__effect_duration
+                self.__effect_duration,
+                self.__spell_color
             )
         elif (self.__instant_health is not None):
             spell = HealthSpell(
@@ -317,7 +353,8 @@ class SpellBuilder:
                 self.__periodic_damage, 
                 self.__instant_health, 
                 self.__periodic_health,
-                self.__effect_duration
+                self.__effect_duration,
+                self.__spell_color
             )
         return spell
 

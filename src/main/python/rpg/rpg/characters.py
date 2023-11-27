@@ -6,56 +6,18 @@ import pygame
 import rpg.constants
 from rpg.gameplay.breeds import Breed
 from rpg.gameplay.classes import Class
-from rpg.gameapi import Draw, InputEventHandler
-from rpg.math.geometry import Geometry, Position
-from rpg.geolocation import Moveable, WindRose
-from rpg.gamedesign.progression_system import Level
 from rpg.gameplay.genders import Gender
 from rpg.gamedesign.faction_system import Faction
+from rpg.math.geometry import Geometry, Position
+from rpg.geolocation import Moveable, WindRose
 from rpg.gameplay.storages import Storage
-from rpg.gamedesign.interval_system import Range
 from rpg.gameplay.attack_strategy import AttackStategyChooser, AttackStategy
-from rpg.gameplay.weapons import Weapon
+from rpg.gamedesign.character_system import BaseCharacter
+from rpg.gameplay.spells import Projectil
+from rpg.utils import Color
 
 pygame.init()
 
-class Threat:
-    def __init__(self, level: int = 0) -> None:
-        self.__level: int = level
-
-    @property
-    def level(self) -> int:
-        return self.__level
-    
-    def increase(self, points: int):
-        if (points is not None and points >= 0):
-            self.__level += points
-
-    def decrease(self, points: int):
-        if (points is not None and points >= 0):
-            self.__level -= points
-        if (self.__level < 0):
-            self.__level = 0
-            
-    def is_felling_threating(self) -> bool:
-        return self.__level > 0
-
-class Projectil:
-    def __init__(self, is_damage: bool, value: float, move_speed: float, from_position: Position, to_position: Position, radius: float) -> None:
-        self.from_position: Position = from_position
-        self.to_position: Position = to_position
-        self.__move_speed: float = move_speed
-        self.__is_damage: bool = is_damage
-        self.radius: float = radius
-        self._texture = pygame.Surface([self.radius*2, self.radius*2], pygame.SRCALPHA)
-    @property
-    def is_damage(self) -> bool:
-        return self.__is_damage
-    
-    @property
-    def move_speed(self) -> float:
-        return self.__move_speed
-    
 class HitBox:
     def __init__(self, top_left: Position, width: int, height: int) -> None:
         self.width: int = width
@@ -90,25 +52,17 @@ class HitBox:
         return is_in_contact
 
 
-class Character(Moveable):
+class Character(BaseCharacter, Moveable):
     def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender, faction: Faction) -> None:
+        BaseCharacter.__init__(self, name, breed, character_class, gender, faction)
         self.__is_moving: bool = False
         self.__move_speed: int = 2.5
-        self.__is_going_to_the_left: bool = False
-        self.__is_going_to_the_bottom: bool = False
-        self.__is_going_to_the_right: bool = False
-        self.__is_going_to_the_top: bool = False
+        
         self.__radius: float = 10.0
-        self.__gender: Gender = gender
-        self.__faction: Faction = faction
-        self.__level: Level = Level(1)
         self.__can_be_moved: bool = True
         self.zone_center: Position = None
         self.zone_radius: float = 0.0
-        self.__breed: Breed = breed
-        self.__class: Class = character_class
-        self.__threat: Threat = Threat()
-        self.__name: str = name
+
         self.__position: Position = Position(0,0)
         self.__hitbox: HitBox = HitBox(self.__position, self.__radius,self.__radius)
         self.is_in_fight_mode: bool = False
@@ -122,29 +76,11 @@ class Character(Moveable):
         self.target: Character = None
         for _ in range(4):
             self.__storages.append(None)
-        self.__attack_strategy_chooser: AttackStategyChooser = AttackStategyChooser(self.__breed.breed_type, self.__class, self.__level, self.__class.right_hand_weapon)
+        self.__attack_strategy_chooser: AttackStategyChooser = AttackStategyChooser(self)
     
-    @property
-    def gender(self) -> Gender:
-        return self.__gender
-    @property
-    def faction(self) -> Faction:
-        return self.__faction
     @property
     def storages(self) -> list[Storage]:
         return self.__storages.copy()
-    @property
-    def name(self) -> str:
-        return self.__name
-    @property
-    def breed(self) -> Breed:
-        return self.__breed
-    @property
-    def character_class(self) -> Class:
-        return self.__class
-    @property
-    def level(self) -> Level:
-        return self.__level
     @property
     def radius(self) -> float:
         return self.__radius
@@ -154,9 +90,6 @@ class Character(Moveable):
     @property
     def can_be_moved(self) -> bool:
         return self.__can_be_moved
-    @property
-    def threat(self) -> Threat:
-        return self.__threat
     @property
     def hitbox(self) -> HitBox:
         return self.__hitbox
@@ -230,7 +163,9 @@ class Character(Moveable):
         is_real_threat: bool = False
         if (isinstance(target, Character)):
             distance_between_enemy_and_target = Geometry.compute_distance(target.get_position(), self.get_position())
-            is_real_threat = distance_between_enemy_and_target <= self.__threat.level
+            if (distance_between_enemy_and_target >= 0):
+                is_real_threat = distance_between_enemy_and_target <= self.threat.level
+            
         return is_real_threat
 
     def avoid_collision_with_other(self, other):
@@ -274,10 +209,10 @@ class Character(Moveable):
 
     def attack(self, target=None):
         if (target is not None and isinstance(target, Character)):
-            attack_strategy: AttackStategy = self.__attack_strategy_chooser.choose_best_attack_strategy(target.breed.breed_type, target.character_class, target.level, target.character_class.right_hand_weapon)
+            attack_strategy: AttackStategy = self.__attack_strategy_chooser.choose_best_attack_strategy(target)
             attack_strategy.execute(target)
         else:
-            new_projectil: Projectil = Projectil(True, 10.0, 10.0, self.previous_position.copy(), self.get_position().copy(), 5)
+            new_projectil: Projectil = Projectil(True, 10, False, 10.0, self.previous_position.copy(), self.get_position().copy(), 5, Color(255,0,255))
             self.trigged_projectils.append(new_projectil)
             if (target is not None and isinstance(target, Character)):
                 new_projectil.to_position = target.get_position().copy()

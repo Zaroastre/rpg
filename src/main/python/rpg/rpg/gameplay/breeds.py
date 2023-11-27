@@ -1,13 +1,4 @@
-from abc import ABC
 from enum import Enum
-
-from rpg.geolocation import Moveable, WindRose, Position
-from rpg.gamedesign.character_system import AbstractCharacter
-
-
-class FormOfLife(AbstractCharacter):
-    def __init__(self) -> None:
-        super().__init__()
 
 class BreedTypeValue:
     def __init__(self, name: str) -> None:
@@ -32,7 +23,7 @@ class BreedType(Enum):
     TAUREN: BreedTypeValue = BreedTypeValue("TAUREN")
 
 
-class Breed(FormOfLife):
+class Breed:
     def __init__(self, breed_type: BreedType) -> None:
         super().__init__()
         self.__breed_type: BreedType = breed_type

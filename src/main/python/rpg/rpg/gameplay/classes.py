@@ -2,6 +2,8 @@ from abc import ABC
 from enum import Enum
 
 from rpg.gameplay.powers import Power, Mana, Energy, Chi, Rage, Rune, PowerType
+from rpg.gameplay.stuffs import StuffPartType
+from rpg.gameplay.qualities import QualityType
 from rpg.gameplay.weapons import Weapon, WeaponType, WeaponFactory
 from rpg.gameplay.talents import TalentsTree, TalentsBook, TalentsBookFactory
 from rpg.gameplay.spells import SpellType, Spell, SpellsBook, SpellBuilder
@@ -97,8 +99,9 @@ class Paladin(Class):
                 .incantation_duration(2.5)
                 .cooldown(1.5)
                 .instant_health(Range(39, 47))
+                .spell_color(Color(255,255,0))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.one_hand_mace()
+        self.__right_hand_weapon = WeaponFactory.one_hand_mace("Little Mace", "Little mace", StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
 
 class Demonist(Class):
     def __init__(self) -> None:
@@ -117,6 +120,7 @@ class Demonist(Class):
                 .incantation_duration(1.7)
                 .cooldown(1.5)
                 .instant_damage(Range(12, 16))
+                .spell_color(Color(100,0,255))
                 .build())
         self.spells_book.learn(
             SpellBuilder("Immolate")
@@ -127,8 +131,9 @@ class Demonist(Class):
                 .cooldown(1.5)
                 .instant_damage(Range(8, 8))
                 .periodic_damage(Range(1,2), 15.0)
+                .spell_color(Color(255,50,0))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.stick()
+        self.__right_hand_weapon = WeaponFactory.stick(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
 
 class Mage(Class):
     def __init__(self) -> None:
@@ -146,8 +151,19 @@ class Mage(Class):
                 .incantation_duration(1.5)
                 .cooldown(1.5)
                 .instant_damage(Range(16, 25))
+                .spell_color(Color(255,0,0))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.stick()
+        self.spells_book.learn(
+            SpellBuilder("Frostball")
+                .description("Sends a shadowy bolt at the enemy, causing instant_damage.minimum to instant_damage.maximum Shadow damage.")
+                .rank(Rank(70))
+                .resource_usage(30)
+                .incantation_duration(1.5)
+                .cooldown(1.5)
+                .instant_damage(Range(16, 25))
+                .spell_color(Color(0,0,255))
+                .build())
+        self.__right_hand_weapon = WeaponFactory.stick(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
         
 class Priest(Class):
     def __init__(self) -> None:
@@ -165,6 +181,7 @@ class Priest(Class):
                 .incantation_duration(1.5)
                 .cooldown(1.5)
                 .instant_health(Range(39, 47))
+                .spell_color(Color(255,255,200))
                 .build())
         
         self.spells_book.learn(
@@ -175,8 +192,9 @@ class Priest(Class):
                 .incantation_duration(1.5)
                 .cooldown(1.5)
                 .instant_damage(Range(46, 56))
+                .spell_color(Color(0,0,255))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.stick()
+        self.__right_hand_weapon = WeaponFactory.stick(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
 
 class Hunter(Class):
     def __init__(self) -> None:
@@ -201,7 +219,7 @@ class Hunter(Class):
                 .cooldown(6.0)
                 .instant_damage(Range(46, 56))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.two_hands_axe()
+        self.__right_hand_weapon = WeaponFactory.two_hands_axe(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
 
 class Shaman(Class):
     def __init__(self) -> None:
@@ -232,7 +250,7 @@ class Shaman(Class):
                 .cooldown(1.5)
                 .instant_health(Range(36, 47))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.one_hand_axe()
+        self.__right_hand_weapon = WeaponFactory.one_hand_axe(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
         
 class Druid(Class):
     def __init__(self) -> None:
@@ -262,7 +280,7 @@ class Druid(Class):
                 .cooldown(1.5)
                 .instant_health(Range(40, 55))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.stick()
+        self.__right_hand_weapon = WeaponFactory.stick(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
         
 class DemonHunter(Class):
     def __init__(self) -> None:
@@ -279,8 +297,8 @@ class DemonHunter(Class):
         self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
         self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
         self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
-        self.__right_hand_weapon = WeaponFactory.dagger()
-        self.__left_hand_weapon = WeaponFactory.dagger()
+        self.__right_hand_weapon = WeaponFactory.dagger(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
+        self.__left_hand_weapon = WeaponFactory.dagger(None, None, StuffPartType.LEFT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
       
 class Rogue(Class):
     def __init__(self) -> None:
@@ -318,15 +336,15 @@ class Rogue(Class):
                 .cooldown(10.0)
                 .build())
        
-        self.__right_hand_weapon = WeaponFactory.dagger()
-        self.__left_hand_weapon = WeaponFactory.dagger()
+        self.__right_hand_weapon = WeaponFactory.dagger(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
+        self.__left_hand_weapon = WeaponFactory.dagger(None, None, StuffPartType.LEFT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
 class Monk(Class):
     def __init__(self) -> None:
         super().__init__(ClassType.MONK, Chi(), TalentsBookFactory.monk())
         self._right_hand_supported_weapons.append(WeaponType.DAGGER)
         self._left_hand_supported_weapons.append(WeaponType.DAGGER)
         self._right_hand_supported_weapons.append(WeaponType.STICK)
-        self.__right_hand_weapon = WeaponFactory.wand()
+        self.__right_hand_weapon = WeaponFactory.wand(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
           
 class Warrior(Class):
     def __init__(self) -> None:
@@ -354,7 +372,7 @@ class Warrior(Class):
                 .resource_usage(15)
                 .instant_damage(Range(11, 11))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.two_hands_sword()
+        self.__right_hand_weapon = WeaponFactory.two_hands_sword(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
         
 class DeathKnight(Class):
     def __init__(self) -> None:
@@ -370,8 +388,8 @@ class DeathKnight(Class):
         self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
         self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
 
-        self.__right_hand_weapon = WeaponFactory.one_hand_sword()
-        self.__left_hand_weapon = WeaponFactory.one_hand_sword()
+        self.__right_hand_weapon = WeaponFactory.one_hand_sword(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
+        self.__left_hand_weapon = WeaponFactory.one_hand_sword(None, None, StuffPartType.LEFT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0, 0.5)
         
 class ClassFactory:
     @staticmethod

@@ -7,7 +7,9 @@ from rpg.gamedesign.faction_system import Faction
 from rpg.characters import Character
 from pathlib import Path
 from json import dumps, loads
-
+from threading import Thread
+from time import sleep
+from datetime import datetime
 
 class GameLoader:
     __BACKUP_FILE_NAME: str = "nemesys.bkp"
@@ -18,11 +20,22 @@ class GameLoader:
     __LEVEL_ATTRIBUTE: str = "level"
     __EXPERIENCE_ATTRIBUTE: str = "experience"
     __NAME_ATTRIBUTE: str = "name"
+    __POSITION_X_ATTRIBUTE: str = "position.x"
+    __POSITION_Y_ATTRIBUTE: str = "position.y"
+    __POSITION_Z_ATTRIBUTE: str = "position.z"
+    __LEFT_WEAPON_NAME_ATTRIBUTE: str = "left_weapon.name"
+    __LEFT_WEAPON_TYPE_ATTRIBUTE: str = "left_weapon.type"
+    __LEFT_WEAPON_LEVEL_ATTRIBUTE: str = "left_weapon.level"
+    __RIGHT_WEAPON_NAME_ATTRIBUTE: str = "right_weapon.name"
+    __RIGHT_WEAPON_TYPE_ATTRIBUTE: str = "right_weapon.type"
+    __RIGHT_WEAPON_LEVEL_ATTRIBUTE: str = "right_weapon.level"
     def __init__(self) -> None:
         pass
     
     def is_backup_exists(self) -> bool:
         return Path(GameLoader.__BACKUP_FILE_NAME).exists()
+    
+    
     
     def save(self, player: Player):
         with open(Path(GameLoader.__BACKUP_FILE_NAME), 'w', encoding="UTF-8") as file:
@@ -35,7 +48,10 @@ class GameLoader:
                 character[GameLoader.__BREED_ATTRIBUTE] = member.breed.breed_type.name
                 character[GameLoader.__CLASS_ATTRIBUTE] = member.character_class.class_type.name
                 character[GameLoader.__LEVEL_ATTRIBUTE] = member.level.value
-                character[GameLoader.__EXPERIENCE_ATTRIBUTE] = member.level.experience.current                
+                character[GameLoader.__EXPERIENCE_ATTRIBUTE] = member.level.experience.current
+                character[GameLoader.__POSITION_X_ATTRIBUTE] = member.get_position().x
+                character[GameLoader.__POSITION_Y_ATTRIBUTE] = member.get_position().y
+                character[GameLoader.__POSITION_Z_ATTRIBUTE] = member.get_position().z
                 backup[str(index)] = character
             json: dict = dumps(backup)
             file.write(str(json))
@@ -63,6 +79,9 @@ class GameLoader:
                 while (character.level.value < level):
                     character.level.up()
                 character.level.experience.gain(experience)
+                character.get_position().x = int(character_configuration.get(GameLoader.__POSITION_X_ATTRIBUTE))
+                character.get_position().y = int(character_configuration.get(GameLoader.__POSITION_Y_ATTRIBUTE))
+                character.get_position().z = int(character_configuration.get(GameLoader.__POSITION_Z_ATTRIBUTE))
                 if (player.character is None):
                     character.select()
                     player.set_character(character)
@@ -70,3 +89,37 @@ class GameLoader:
                 else:
                     player.group.add_member(character)
         return player
+
+class GameSaverThread(Thread):
+    def __init__(self, backup_interval_in_seconds: int, game_loader: GameLoader, player: Player=None) -> None:
+        super().__init__()
+        self.__backup_interval_in_seconds: int = backup_interval_in_seconds
+        self.__is_running: bool = False
+        self.__game_loader: GameLoader = game_loader
+        self.__player: Player = player
+        self.__last_backup_time: int = 0
+    
+    def set_player(self, player: Player):
+        self.__player = player
+    
+    def __now_in_milliseconds(self) -> int:
+       return int(datetime.now().timestamp() * 1000) 
+    
+    def run(self) -> None:
+        self.__is_running = True
+        while (self.__is_running):
+            if (self.__player is not None):
+                if (self.__last_backup_time == 0):
+                    self.__game_loader.save(self.__player)
+                    self.__last_backup_time = self.__now_in_milliseconds()
+                else:
+                    if ((self.__last_backup_time + self.__backup_interval_in_seconds) >= self.__now_in_milliseconds()):
+                        self.__game_loader.save(self.__player)
+                        self.__last_backup_time = self.__now_in_milliseconds()
+                        
+                sleep(0.1)
+            else:
+                sleep(1.0)
+    
+    def shutdown(self):
+        self.__is_running = False
