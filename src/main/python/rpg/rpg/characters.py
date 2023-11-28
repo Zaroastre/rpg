@@ -1,84 +1,71 @@
-from math import sqrt, pi, cos, sin
+from math import cos, pi, sin, sqrt
 from random import uniform
 
 import pygame
 
 import rpg.constants
+from rpg.gamedesign.character_system import BaseCharacter
+from rpg.gamedesign.faction_system import Faction
+from rpg.gamedesign.geolocation_system import Position, Tracker
+from rpg.gameplay.attack_strategy import (AttackStategy, AttackStategyChooser,
+                                          UnarmedAttackStategy)
+from rpg.gamedesign.currency_system import Currency
 from rpg.gameplay.breeds import Breed
 from rpg.gameplay.classes import Class
 from rpg.gameplay.genders import Gender
-from rpg.gamedesign.faction_system import Faction
-from rpg.math.geometry import Geometry, Position
-from rpg.geolocation import Moveable, WindRose
-from rpg.gameplay.storages import Storage
-from rpg.gameplay.attack_strategy import AttackStategyChooser, AttackStategy, UnarmedAttackStategy
-from rpg.gamedesign.character_system import BaseCharacter
 from rpg.gameplay.spells import Projectil
+from rpg.gameplay.storages import Storage
+from rpg.math.geometry import Geometry
 from rpg.utils import Color
 
 pygame.init()
 
-class HitBox:
-    def __init__(self, top_left: Position, width: int, height: int) -> None:
-        self.width: int = width
-        self.height: int = height
-        self.size: tuple[int, int] = [self.width, self.height]
-        self.top: int = top_left.y
-        self.left: int = top_left.x
-        self.bottom: int = top_left.y + self.height
-        self.right: int = top_left.x + self.width
-        self.topleft: Position = top_left
-        self.bottomleft: Position = Position(self.left, self.bottom)
-        self.topright: Position = Position(self.right, self.top)
-        self.bottomright: Position = Position(self.right, self.bottom)
-        self.centerx: int = int(self.left + (self.width/2))
-        self.centery: int = int(self.top + (self.height/2))
-        self.midtop: Position = Position(self.centerx, self.top)
-        self.midleft: Position = Position(self.left, self.centery)
-        self.midbottom: Position = Position(self.centerx, self.bottom)
-        self.midright: Position = Position(self.right, self.centery)
-        self.center: Position = Position(self.centerx, self.centery)
-        self.x: int = self.left
-        self.y: int = self.top
-
-    def is_touching(self, other) -> bool:
-        if (not isinstance(other, HitBox)):
-            raise ValueError()
-        is_in_contact: bool = False
-        distance: float = Geometry.compute_distance(self.center, other.center)
-        min_distance: float = (self.width * 2)
-        if (distance < min_distance):
-            is_in_contact = True
-        return is_in_contact
-
-
 class Character(BaseCharacter):
+    _MINIMUM_AGGRO_AREA_RADIUS: int = 5
+    _MAXIMUM_AGGRO_AREA_RADIUS: int = 45
+    _DEFAULT_AGGRO_AREA_RADIUS: int = 20
     def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender, faction: Faction) -> None:
         BaseCharacter.__init__(self, name, breed, character_class, gender, faction)
 
         self.__radius: float = 10.0
         self.zone_center: Position = None
         self.zone_radius: float = 0.0
-        self._aggro_area_radius: float = 0.0
+        
+        self._aggro_area_radius: float = Character._DEFAULT_AGGRO_AREA_RADIUS # 1/diff(level)
+        
+        self.__can_be_moved_by_others: bool = False
+        
+        self.__currency: Currency = Currency()
 
-        # self.__hitbox: HitBox = HitBox(self.__position, self.__radius,self.__radius)
         self.__trigged_projectils: list[Projectil] = []
         self.__is_selected: bool = False
+
         self.__storages: list[Storage] = []
-        self.target: Character = None
-        self.__attack_strategy: AttackStategy = UnarmedAttackStategy(self)
         for _ in range(4):
             self.__storages.append(None)
+            
+        self.__target: Character = None
+        self.__attack_strategy: AttackStategy = UnarmedAttackStategy(self)
+    @property
+    def has_target(self) -> bool:
+        return self.__target is not None
+    @property
+    def target(self):
+        return self.__target
+    @property
+    def currency(self) -> Currency:
+        return self.__currency
     
+    @property
+    def can_be_moved(self) -> bool:
+        return self.__can_be_moved_by_others
     @property
     def storages(self) -> list[Storage]:
         return self.__storages.copy()
     @property
     def radius(self) -> float:
         return self.__radius
-    # @property
-    # def hitbox(self) -> HitBox:
-    #     return self.__hitbox
+    
     @property
     def trigged_projectils(self) -> list[Projectil]:
         return self.__trigged_projectils
@@ -86,16 +73,17 @@ class Character(BaseCharacter):
     @property
     def aggro_area_radius(self) -> float:
         return self._aggro_area_radius
-    
+    def set_target(self, target):
+        self.__target = target
     def set_attack_strategy(self, strategy: AttackStategy):
         if (strategy is None):
             raise ValueError()
         self.__attack_strategy = strategy
     
-    def follow(self, target):
-        if (isinstance(target, Character)):
-            direction_x = target.get_position().x - self.get_position().x
-            direction_y = target.get_position().y - self.get_position().y
+    def follow(self, target: Tracker):
+        if (target is not None):
+            direction_x = target.current_position.x - self.current_position.x
+            direction_y = target.current_position.y - self.current_position.y
             direction_length = sqrt(direction_x**2 + direction_y**2)
 
             # Normalisation de la direction
@@ -104,46 +92,43 @@ class Character(BaseCharacter):
                 direction_y /= direction_length
 
             # Déplacement du personnage
-            # self.previous_position = Position(self.get_position().x, self.get_position().y)
-            before: Position = self.get_position().copy()
-            self.get_position().x += direction_x * self.move_speed
-            self.get_position().y += direction_y * self.move_speed
-            after: Position = self.get_position().copy()
-            if (before != after):
-                self.__orientation = WindRose.detect_direction(before, after)
+            new_x: int = self.current_position.x + direction_x * self.move_speed
+            new_y: int = self.current_position.y + direction_y * self.move_speed
+            new_position: Position = Position((new_x), (new_y))
+            self.set_current_position(new_position)
 
-    def is_touching(self, other) -> bool:
+    def is_touching(self, other: Tracker) -> bool:
         is_in_contact: bool = False
         if (isinstance(other, Character)):
             distance: float = Geometry.compute_distance(
-                self.get_position(), other.get_position())
+                self.current_position, other.current_position)
             min_distance: float = (self.radius * 2)
             if (distance < min_distance):
                 is_in_contact = True
         elif (isinstance(other, Projectil)):
-            if (self.get_position().x-self.radius <= other.to_position.x <= self.get_position().x+self.radius):
-                if (self.get_position().y-self.radius <= other.to_position.y <= self.get_position().y+self.radius):
+            if (self.current_position.x-self.radius <= other.to_position.x <= self.current_position.x+self.radius):
+                if (self.current_position.y-self.radius <= other.to_position.y <= self.current_position.y+self.radius):
                     is_in_contact = True
         return is_in_contact
 
-    def is_feel_threatened(self, target) -> bool:
+    def is_feel_threatened(self, target: Tracker) -> bool:
         is_real_threat: bool = False
-        if (isinstance(target, Character)):
-            distance_between_enemy_and_target = Geometry.compute_distance(target.get_position(), self.get_position())
+        if (target is not None):
+            distance_between_enemy_and_target = Geometry.compute_distance(target.current_position, self.current_position)
             if (distance_between_enemy_and_target >= 0):
-                is_real_threat = distance_between_enemy_and_target <= self.aggro_area_radius
+                is_real_threat = distance_between_enemy_and_target <= (self.radius + self.aggro_area_radius)
             
         return is_real_threat
 
-    def avoid_collision_with_other(self, other):
-        if (isinstance(other, Character)):
+    def avoid_collision_with_other(self, other: Tracker):
+        if (other is not None):
             distance = Geometry.compute_distance(
-                self.get_position(), other.get_position())
+                self.current_position, other.current_position)
             # Valeur minimale pour éviter la superposition
             min_distance = self.__radius * 2
             # Si un personnage est trop proche de nico, déplacer nico dans la direction opposée
-            direction_x = self.get_position().x - other.get_position().x
-            direction_y = self.get_position().y - other.get_position().y
+            direction_x = self.current_position.x - other.current_position.x
+            direction_y = self.current_position.y - other.current_position.y
             direction_length = sqrt(direction_x**2 + direction_y**2)
 
             # Normalisation de la direction
@@ -152,18 +137,17 @@ class Character(BaseCharacter):
                 direction_y /= direction_length
 
             # Déplacement de nico
-            if (other.can_be_moved):
-                # other.previous_position = other.get_position().copy()
-                other.get_position().x -= direction_x * \
-                    (min_distance - distance)
-                other.get_position().y -= direction_y * \
-                    (min_distance - distance)
+            if (self.can_be_moved):
+                new_x: int = self.current_position.x + direction_x * (min_distance - distance)
+                new_y: int = self.current_position.y + direction_y* (min_distance - distance)
+                new_position: Position = Position((new_x), (new_y))
+                self.set_current_position(new_position)
             else:
-                # self.previous_position = self.get_position().copy()
-                self.get_position().x += direction_x * \
-                    (min_distance - distance)
-                self.get_position().y += direction_y * \
-                    (min_distance - distance)
+                new_x: int = other.current_position.x - direction_x * (min_distance - distance)
+                new_y: int = other.current_position.y - direction_y* (min_distance - distance)
+                new_position: Position = Position((new_x), (new_y))
+                other.set_current_position(new_position)
+                # self.previous_position = self.current_position.copy()
 
     def is_selected(self) -> bool:
         return self.__is_selected
@@ -176,30 +160,27 @@ class Character(BaseCharacter):
 
     def attack(self, target=None) -> int:
         generated_threat: int = 1
-        if (target is not None and isinstance(target, Character)):
-            self.__attack_strategy.execute(target)
+        if (target is not None):
+            damage: int = self.__attack_strategy.execute(target)
+            # TODO Event listener call
         else:
-            new_projectil: Projectil = Projectil(True, 10, False, 10.0, self.previous_position.copy(), self.get_position().copy(), 5, self.character_class.class_type.value.color)
+            new_projectil: Projectil = Projectil(True, 10, False, 10.0, self.last_previous_position.copy(), self.current_position.copy(), 5, self.character_class.class_type.value.color)
             self.trigged_projectils.append(new_projectil)
             if (target is not None and isinstance(target, Character)):
-                new_projectil.to_position = target.get_position().copy()
+                new_projectil.to_position = target.current_position.copy()
         return generated_threat
 
 class Enemy(Character):
     def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender, faction: Faction) -> None:
         super().__init__(name, breed, character_class, gender, faction)
-        self.__default_position: Position = self.get_position()
         self.patrol_angle: float = 0.0
         self.__patrol_destination: Position = None
         self.__is_patrolling: bool = False
-        self._aggro_area_radius = 50
     
     def set_default_position(self, position: Position):
-        self.__default_position = position.copy()
-        self.get_position().x = position.x
-        self.get_position().y = position.y
-        self.get_position().z = position.z
-        self.zone_center = self.__default_position.copy()
+        super().set_default_position(position)
+        self.set_current_position(position)
+        self.zone_center = self.default_position.copy()
     
     @property
     def patrol_destination(self) -> Position:
@@ -216,8 +197,8 @@ class Enemy(Character):
         new_y = self.zone_center.y + distance * sin(self.patrol_angle)
 
         # # Se déplacer progressivement vers la nouvelle position
-        # direction_x = new_x - self.get_position().x
-        # direction_y = new_y - self.get_position().y
+        # direction_x = new_x - self.current_position.x
+        # direction_y = new_y - self.current_position.y
         # direction_length = sqrt(direction_x ** 2 + direction_y ** 2)
 
         # # Normaliser la direction
@@ -233,11 +214,8 @@ class Enemy(Character):
         self.__is_patrolling = False
         
     def is_arrived_to_patrol_destination(self) -> bool:
-        return Position.are_equivalent(self.get_position(), self.__patrol_destination, 1)
+        return Position.are_equivalent(self.current_position, self.__patrol_destination, 1)
     
     def is_arrived_to_default_position(self) -> bool:
-        return Position.are_equivalent(self.get_position(), self.__default_position, 1)
+        return Position.are_equivalent(self.current_position, self.default_position, 1)
     
-    @property
-    def default_position(self) -> Position:
-        return self.__default_position.copy()

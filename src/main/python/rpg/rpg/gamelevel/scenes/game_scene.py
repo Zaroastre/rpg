@@ -5,14 +5,15 @@ from rpg.gamedesign.difficulty_system import Difficulty
 from rpg.gamedesign.fight_system import Fight
 from rpg.gamedesign.interval_system import Range
 from rpg.gamedesign.message_system import MessageBroker
+from rpg.gamedesign.geolocation_system import Position
 from rpg.gamengine import GameGenerator
 from rpg.gameplay.classes import ClassType
 from rpg.gameplay.player import Player
 from rpg.gameplay.spells import Spell
 from rpg.gameplay.teams import Group
-from rpg.math.geometry import Geometry, Position
-from rpg.ui.components import (CharacterComponent, EnemyComponent,
-                               ProjectilComponent)
+from rpg.math.geometry import Geometry
+from rpg.ui.sprites import (CharacterSprite, EnemySprite,
+                               ProjectilSprite)
 from rpg.ui.graphics import (ActionPanel, ExperiencePanel, GroupPanel,
                              MessagePanel, SpellDetailPopup)
 from rpg.gamelevel.scenes.scenes import Scene
@@ -21,14 +22,15 @@ class GameScene(Scene):
     def __init__(self, width: int, height: int, player: Player) -> None:
         super().__init__(width, height, player)
         
+        self.__friends_group: Group = Group(max_capacity=5)
+        
         self.__action_panel: ActionPanel = ActionPanel(rpg.constants.ACTION_PANEL_WIDTH, rpg.constants.ACTION_PANEL_HEIGHT, rpg.constants.ACTION_PANEL_POSITION)
         self.__experience_panel: ExperiencePanel = ExperiencePanel(rpg.constants.EXPERIENCE_PANEL_WIDTH, rpg.constants.EXPERIENCE_PANEL_HEIGHT, rpg.constants.EXPERIENCE_PANEL_POSITION)
-        self.__friends_group: Group = Group(max_capacity=5)
         self.__group_panel: GroupPanel = GroupPanel(group=self.__friends_group, width=rpg.constants.GROUP_PANEL_WIDTH, height=rpg.constants.GROUP_PANEL_HEIGHT, position=rpg.constants.GROUP_PANEL_POSITION)
         self.__message_panel: MessagePanel = MessagePanel(width=rpg.constants.MESSAGE_PANEL_WIDTH, height=rpg.constants.MESSAGE_PANEL_HEIGHT, position=rpg.constants.MESSAGE_PANEL_POSITION)
 
-        self.__friends_sprites: list[CharacterComponent] = []
-        self.__enemies_sprites: list[EnemyComponent] = []
+        self.__friends_sprites: list[CharacterSprite] = []
+        self.__enemies_sprites: list[EnemySprite] = []
         
         self.__spell_detail_popup: SpellDetailPopup = None
         self.__message_broker: MessageBroker = MessageBroker()
@@ -46,17 +48,20 @@ class GameScene(Scene):
     def set_friends_group(self, friends: list[Character]):
         if (len(friends) > 0):
             player: Character = friends[0]
-            player.get_position().x = Range(0, rpg.constants.WINDOW_WIDTH).random()
-            player.get_position().y = Range(0, rpg.constants.WINDOW_HEIGHT).random()
+            if (player.current_position == Position(0,0)):
+                player.set_current_position(Position(
+                    Range(0, rpg.constants.WINDOW_WIDTH).random(),
+                    Range(0, rpg.constants.WINDOW_HEIGHT).random()
+                ))
             player.select()
-            player.threat.increase(20.0)
+            # player.threat.increase(20.0)
             self.__friends_group.add_member(player)
             self.player.set_character(player)
-            self.__friends_sprites.append(CharacterComponent(player))
+            self.__friends_sprites.append(CharacterSprite(player))
             for friend in friends:
                 if (friend is not player):
                     self.__friends_group.add_member(friend)
-                    self.__friends_sprites.append(CharacterComponent(friend))
+                    self.__friends_sprites.append(CharacterSprite(friend))
 
     def __initialize_events_listeners(self):
         self.__action_panel.on_spell_slot_hover(self.__handle_on_spell_slot_hover)
@@ -79,26 +84,49 @@ class GameScene(Scene):
     def __handle_on_spell_slot_leave(self):
         self.__spell_detail_popup = None
 
+    def __handle_killed_enemy(self, enemy: Enemy):
+        enemy_sprite_to_remove: EnemySprite = None
+        for enemy_sprite in self.__enemies_sprites:
+            if (enemy_sprite.character == enemy):
+                enemy_sprite_to_remove = enemy_sprite
+                break
+        if (enemy_sprite_to_remove is not None):
+            self.__enemies_sprites.remove(enemy_sprite_to_remove)
+        win_experience: int = int((enemy.level.value*5) + 45)/len(self.__friends_group.members)
+        self.__message_broker.add_debug_message(f"Exp: +{str(win_experience)}")
+        for friend in self.__friends_group.members:
+            friend.threat.decrease(friend.threat.level)
+            if (friend.life.is_alive()):
+                friend.level.gain(win_experience)
+            if (friend.target == enemy):
+                friend.set_target(None)
+                friend.set_stay_in_place_mode()
+                friend.is_in_fight_mode = False
+
     def __generate_enemies(self):
         for _ in range(Range(10, 20).random()):
             enemy: Enemy = GameGenerator.generate_random_enemy()
             enemy.threat.increase(50.0)
             enemy.zone_radius = 200
             enemy.set_default_position(Position(Range(0, rpg.constants.WINDOW_WIDTH).random(), Range(0, rpg.constants.WINDOW_HEIGHT).random()))
+            enemy.set_on_die_event_listener(self.__handle_killed_enemy)
             level: int = Range(1, 20).random()
             while (enemy.level.value < level):
                 enemy.level.up()
-            self.__enemies_sprites.append(EnemyComponent(enemy))
+            self.__enemies_sprites.append(EnemySprite(enemy))
 
     def __prevent_character_to_disapear_from_scene(self, character: Character):
-        if (character.get_position().x < (rpg.constants.GROUP_PANEL_WIDTH + rpg.constants.GROUP_PANEL_POSITION.x)):
-            character.get_position().x = rpg.constants.GROUP_PANEL_WIDTH + rpg.constants.GROUP_PANEL_POSITION.x
-        if (character.get_position().x > self.width):
-            character.get_position().x = self.width
-        if (character.get_position().y < 0):
-            character.get_position().y = 0
-        if (character.get_position().y > self.height):
-            character.get_position().y = self.height
+        new_position: Position = None
+        if (character.current_position.x < (rpg.constants.GROUP_PANEL_WIDTH + rpg.constants.GROUP_PANEL_POSITION.x)):
+            new_position = Position(rpg.constants.GROUP_PANEL_WIDTH + rpg.constants.GROUP_PANEL_POSITION.x, character.current_position.y)
+        if (character.current_position.x > self.width):
+            new_position = Position(self.width, character.current_position.y)
+        if (character.current_position.y < 0):
+            new_position = Position(character.current_position.x, 0)
+        if (character.current_position.y > self.height):
+            new_position = Position(character.current_position.x, self.height)
+        if (new_position is not None):
+            character.set_current_position(new_position)
 
     def __handle_interaction_and_moves_for_friends(self):
         for friend in self.__friends_group.members:
@@ -116,12 +144,11 @@ class GameScene(Scene):
                     self.__prevent_character_to_disapear_from_scene(friend)
 
     def __move_enemy_to_the_default_observation_position(self, enemy: Enemy):
-        enemy.is_in_fight_mode = False
-        if Geometry.compute_distance(enemy.get_position(), enemy.zone_center) > 1:
+        if Geometry.compute_distance(enemy.current_position, enemy.zone_center) > 1:
             # Calculer le vecteur directionnel vers la position initiale
-            direction_x = enemy.zone_center.x - enemy.get_position().x
-            direction_y = enemy.zone_center.y - enemy.get_position().y
-            direction_length = Geometry.compute_distance(enemy.get_position(), enemy.zone_center)
+            direction_x = enemy.zone_center.x - enemy.current_position.x
+            direction_y = enemy.zone_center.y - enemy.current_position.y
+            direction_length = Geometry.compute_distance(enemy.current_position, enemy.zone_center)
 
             # Normaliser le vecteur directionnel
             if direction_length != 0:
@@ -129,16 +156,17 @@ class GameScene(Scene):
                 direction_y /= direction_length
 
             # Déplacer progressivement l'ennemi vers sa position initiale
-            enemy.get_position().x += direction_x * enemy.move_speed
-            enemy.get_position().y += direction_y * enemy.move_speed
+            new_x: int = enemy.current_position.x + direction_x * enemy.move_speed
+            new_y: int = enemy.current_position.y + direction_y * enemy.move_speed
+            new_position: Position = Position(new_x, new_y)
+            enemy.set_current_position(new_position)
 
     def __move_enemy_to_the_patrol_position(self, enemy: Enemy):
-        enemy.is_in_fight_mode = False
-        if (Geometry.compute_distance(enemy.get_position(), enemy.patrol_destination) > 1):
+        if (Geometry.compute_distance(enemy.current_position, enemy.patrol_destination) > 1):
             # Calculer le vecteur directionnel vers la position initiale
-            direction_x = enemy.patrol_destination.x - enemy.get_position().x
-            direction_y = enemy.patrol_destination.y - enemy.get_position().y
-            direction_length = Geometry.compute_distance(enemy.get_position(), enemy.patrol_destination)
+            direction_x = enemy.patrol_destination.x - enemy.current_position.x
+            direction_y = enemy.patrol_destination.y - enemy.current_position.y
+            direction_length = Geometry.compute_distance(enemy.current_position, enemy.patrol_destination)
 
             # Normaliser le vecteur directionnel
             if direction_length != 0:
@@ -146,14 +174,15 @@ class GameScene(Scene):
                 direction_y /= direction_length
 
             # Déplacer progressivement l'ennemi vers sa destination de patrouillage
-            enemy.get_position().x += (direction_x * (enemy.move_speed/2))
-            enemy.get_position().y += (direction_y * (enemy.move_speed/2))
+            new_x: int = enemy.current_position.x + (direction_x * (enemy.move_speed/2))
+            new_y: int = enemy.current_position.y + (direction_y * (enemy.move_speed/2))
+            new_position: Position = Position(new_x, new_y)
+            enemy.set_current_position(new_position)
 
     def __move_attacker_to_target_if_required(self, attacker: Character, target: Character):
         if (target.life.is_alive()):
-            target.is_in_fight_mode = True
             if (not ClassType.is_damage_spell_caster(attacker.character_class.class_type)):
-                distance_between_enemy_and_zone_center = Geometry.compute_distance(attacker.get_position(), target.get_position())
+                distance_between_enemy_and_zone_center = Geometry.compute_distance(attacker.current_position, target.current_position)
                 if distance_between_enemy_and_zone_center < attacker.zone_radius:
                     attacker.follow(target)
 
@@ -178,22 +207,14 @@ class GameScene(Scene):
             hero_sprite.draw(master)
         for vilain_sprite in self.__enemies_sprites:
             vilain_sprite.draw(master)
-        
-    def __handle_enemy_killed_by_friend(self, friend_sprite: CharacterComponent, enemy_sprite: CharacterComponent):
-        if (enemy_sprite in self.__enemies_sprites):
-            self.__enemies_sprites.remove(enemy_sprite)
-        win_experience: int = (enemy_sprite.character.level.value*5) + 45
-        friend_sprite.character.level.gain(win_experience)
-
-    def __handle_projectil_sprite(self, attacker_sprite: CharacterComponent, projectil_sprite: ProjectilComponent, target_sprite: CharacterComponent):
+       
+    def __handle_projectil_sprite(self, attacker_sprite: CharacterSprite, projectil_sprite: ProjectilSprite, target_sprite: CharacterSprite):
         if (target_sprite.character.is_touching(projectil_sprite.projectil)):
             self.__message_broker.add_debug_message(f"{target_sprite.character.name} loose {projectil_sprite.projectil.payload} PVs.")
             target_sprite.character.life.loose(projectil_sprite.projectil.payload)
             if (projectil_sprite.projectil in attacker_sprite.character.trigged_projectils):
                 attacker_sprite.character.trigged_projectils.remove(projectil_sprite.projectil)
                 attacker_sprite.projectils.remove(projectil_sprite)
-            if (target_sprite.character.life.is_dead()):
-                self.__handle_enemy_killed_by_friend(attacker_sprite, target_sprite)
 
     def __handle_trigged_projectils_by_friends(self):
         for friend_sprite in self.__friends_sprites:
@@ -205,8 +226,8 @@ class GameScene(Scene):
         if (attacker.name in list(self.__fights.keys())):
             existing_fight: Fight = self.__fights.get(attacker.name)
             if (existing_fight is not None):
-                existing_fight.stop()
-                print("Fight is stoped")
+                if (existing_fight.is_alive()):
+                    existing_fight.stop()
                 del self.__fights[attacker.name]
 
     def __retrieve_most_threatening_character_for_enemy(self, enemy: Character) -> Character:
@@ -217,7 +238,7 @@ class GameScene(Scene):
                 if (enemy.is_feel_threatened(potential_target)):
                     if (not enemy_is_already_threatened):
                         self.__message_broker.add_debug_message(f"Enemy {enemy.name} is feel threatened by {potential_target.name}.")
-                    threated_distances[potential_target] = Geometry.compute_distance(potential_target.get_position(), enemy.get_position())
+                    threated_distances[potential_target] = Geometry.compute_distance(potential_target.current_position, enemy.current_position)
         most_threatening_target: Character = None
         if (threated_distances):
             most_threatening_target = min(threated_distances, key=threated_distances.get)
@@ -226,16 +247,16 @@ class GameScene(Scene):
     def __can_attacker_attacks_target(self, attacker: Character, target: Character) -> bool:
         can_attack: bool = ClassType.is_damage_spell_caster(attacker.character_class.class_type)
         if (not can_attack):
-            distance_between_enemy_and_zone_center = Geometry.compute_distance(attacker.get_position(), target.get_position())
+            distance_between_enemy_and_zone_center = Geometry.compute_distance(attacker.current_position, target.current_position)
             can_attack = distance_between_enemy_and_zone_center < attacker.zone_radius
         return can_attack
 
     def __is_future_attacker_already_running_fight(self, attacker: Character) -> bool:
         return (attacker.name in list(self.__fights.keys()))
 
-    def __handle_enemy_actions(self, enemy_sprite: EnemyComponent):
+    def __handle_enemy_actions(self, enemy_sprite: EnemySprite):
         potential_target: Character = self.__retrieve_most_threatening_character_for_enemy(enemy_sprite.character)
-        enemy_sprite.character.target = potential_target
+        enemy_sprite.character.set_target(potential_target)
         if (potential_target is not None):
             # Stop patrol
             if (enemy_sprite.character.is_patrolling):
@@ -250,9 +271,7 @@ class GameScene(Scene):
             
             if (not potential_target.is_in_fight_mode):
                 if (potential_target.name not in list(self.__fights.keys())):
-                    # start fight for friend
-                    potential_target.is_in_fight_mode = True
-                    potential_target.target = enemy_sprite.character
+                    potential_target.set_target(enemy_sprite.character)
                     new_friend_fight = Fight(potential_target, enemy_sprite.character)
 
             self.__move_attacker_to_target_if_required(enemy_sprite.character, potential_target)
@@ -265,13 +284,6 @@ class GameScene(Scene):
                 if (not new_friend_fight.is_alive()):
                     if (self.__can_attacker_attacks_target(potential_target, enemy_sprite.character)):
                         new_friend_fight.start()
-            # if (enemy_sprite.character.is_touching(target)):
-            #     enemy_sprite.character.attack(target)
-            #     if (len(enemy_sprite.character.trigged_projectils) > 0):
-            #         projectil: Projectil = enemy_sprite.character.trigged_projectils[-1]
-            #         projectil.to_position = target.get_position().copy()
-            #         projectil_sprite: ProjectilComponent = ProjectilComponent(projectil)
-            #         enemy_sprite.projectils.append(projectil_sprite)
                 
         else:
             # Stop fight
@@ -279,7 +291,6 @@ class GameScene(Scene):
                 self.__terminate_fight(enemy_sprite.character)
                 if (enemy_sprite.character.target is not None):
                     self.__terminate_fight(enemy_sprite.character.target)
-                self.__enemies_sprites.remove(enemy_sprite)
 
             # Delete trigged projectils
             enemy_sprite.projectils.clear()
@@ -350,8 +361,7 @@ class GameScene(Scene):
                 self.__recruit_member_if_is_touching(member)
 
         self.__handle_interaction_and_moves_for_friends()
-
-        # self.player.character.is_in_fight_mode = False
+        
         for vilain_sprite in self.__enemies_sprites:
             if (vilain_sprite.character.life.is_alive()):
                 difficulty: Difficulty = Difficulty.compute(self.player.character.level, vilain_sprite.character.level)
@@ -361,8 +371,8 @@ class GameScene(Scene):
                 self.__terminate_fight(vilain_sprite.character)
                 if (vilain_sprite.character.target is not None):
                     self.__terminate_fight(vilain_sprite.character.target)
-                    vilain_sprite.character.target.target = None
-                vilain_sprite.character.target = None
+                    vilain_sprite.character.target.set_target(None)
+                vilain_sprite.character.set_target(None)
 
     def draw(self, master: pygame.Surface):
         heroes_alive: list[Character] = [member for member in self.__friends_group.members if member.life.is_alive()]

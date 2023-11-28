@@ -1,5 +1,5 @@
 from threading import Thread
-from rpg.characters import Character
+from rpg.characters import Character, Enemy
 from rpg.gameplay.attack_strategy import AttackStategy, AttackStategyChooser, InstantDamageSpellAttackStrategy, PeriodicDamageSpellAttackStrategy
 from rpg.gamedesign.message_system import MessageBroker
 from time import sleep
@@ -13,10 +13,14 @@ class Fight(Thread):
         self.__attack_strategy_chooser: AttackStategyChooser = AttackStategyChooser(self.__attacker)
         self.__message_broker: MessageBroker = MessageBroker()
         self.__message_broker.add_debug_message(self.name + " - " + attacker.name + " will fight " + target.name)
+        self.__attacker.is_in_fight_mode = True
         
     def run(self) -> None:
+        self.__attacker.set_stay_in_place_mode()
+        self.__target.set_stay_in_place_mode()
         self.__must_fight = True
         attack_strategy: AttackStategy = None
+        self.__attacker.is_in_fight_mode = True
         while (self.__must_fight and self.__attacker.life.is_alive() and self.__target.life.is_alive()):
             attack_strategy = self.__attack_strategy_chooser.choose_best_attack_strategy(self.__target)
             self.__attacker.set_attack_strategy(attack_strategy)
@@ -35,6 +39,9 @@ class Fight(Thread):
         if (self.__target.life.is_dead()):
             self.__message_broker.add_debug_message(self.name + " - " + self.__target.name + " the target is dead")
         self.__message_broker.add_debug_message(self.name + " - " + self.__attacker.name + " stop to attack " + self.__target.name)
+        self.__attacker.is_in_fight_mode = False
+
     def stop(self):
         self.__message_broker.add_debug_message(self.name + " - " + self.__attacker.name + " must stoped to attack " + self.__target.name)
         self.__must_fight = False
+        self.__attacker.is_in_fight_mode = False

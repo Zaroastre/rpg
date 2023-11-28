@@ -1,15 +1,16 @@
 import pygame
 import rpg.constants
-from rpg.characters import Character
+from rpg.characters import Character, Enemy
 from rpg.gameplay.classes import Class
 from rpg.gameapi import Draw, InputEventHandler
 from rpg.math.geometry import Position
 from rpg.gameplay.spells import Spell
 from rpg.gameplay.teams import Group
 from rpg.gameplay.storages import Storage
-from rpg.ui.components import CharacterComponent, GroupComponent
+from rpg.ui.sprites import CharacterSprite, GroupComponent
 from rpg.gamedesign.spells_system import SpellsSet, SpellsWheel
 from rpg.gamedesign.message_system import MessageBroker
+from rpg.gamedesign.difficulty_system import Difficulty
 
 class SpellDetailPopup(InputEventHandler, Draw):
     def __init__(self, spell: Spell, character_class: Class, width: int, height: int, position: Position) -> None:
@@ -58,7 +59,6 @@ class SpellDetailPopup(InputEventHandler, Draw):
         self.__background_texture.blit(self.__spell_detail, (0,self.__text_font_size*6))
         self.__border_texture.blit(self.__background_texture, (self.__border_size, self.__border_size))
         master.blit(self.__border_texture, (self.__position.x, self.__position.y))
-
 
 class LifeGauge(InputEventHandler, Draw):
     def __init__(self, character: Character, width: int, height: int, position: Position) -> None:
@@ -176,7 +176,11 @@ class Avatar(InputEventHandler, Draw):
         self.__unselected_border_color: pygame.Color = pygame.Color(50,50,50)
         self.__selected_border_color: pygame.Color = pygame.Color(150,255,0)
         
-
+    @property
+    def width(self) -> int:
+        return self.__width
+    def set_background_color(self, color: pygame.Color):
+        self.__background_color = color
     def handle(self, event: pygame.event.Event):
         pass
     
@@ -228,6 +232,7 @@ class MemberPanel(InputEventHandler, Draw):
         self.__font_color: pygame.Color = pygame.Color(255, 255, 255)
         self.__pseudo_label: pygame.Surface = self.__font.render(
             self.__member.name, True, self.__font_color)
+        self.__target_panel: TargetPanel = None
         
         self.__level_label: pygame.Surface = self.__font.render(
             str(self.__member.level.value), True, self.__font_color)
@@ -248,11 +253,19 @@ class MemberPanel(InputEventHandler, Draw):
         return self.__avatar_picture_radius*2
 
     def handle(self, event: pygame.event.Event):
+        if (self.__member.target is not None):
+            self.__target_panel = TargetPanel(self.__member, self.__member.target, self.__width, self.__height, Position(self.__position.x+self.__width+20, self.__position.y))
+        else:
+            self.__target_panel = None
         self.__avatar.handle(event)
         self.__fight_mode_led.handle(event)
         self.__life_gauge.handle(event)
         self.__power_gauge.handle(event)
         self.__threat_gauge.handle(event)
+        
+        if (self.__target_panel is not None):
+            self.__target_panel.handle(event)
+
 
     def draw(self, master: pygame.Surface):
         self.__texture.fill(pygame.Color(20,20,20))
@@ -264,19 +277,18 @@ class MemberPanel(InputEventHandler, Draw):
         self.__life_gauge.draw(self.__texture)
         self.__power_gauge.draw(self.__texture)
         self.__threat_gauge.draw(self.__texture)
-        if (self.__member.target is not None):
-            pygame.draw.line(master, pygame.Color(255,255,255), (self.__position.x+self.__texture.get_width(), self.__position.y+(self.__texture.get_height()/2)), (self.__member.target.get_position().x, self.__member.target.get_position().y))
-        
+        # if (self.__member.target is not None):
+            # pygame.draw.line(master, pygame.Color(255,255,255), (self.__position.x+self.__texture.get_width(), self.__position.y+(self.__texture.get_height()/2)), (self.__member.target.current_position.x, self.__member.target.current_position.y))
+        if (self.__target_panel is not None):
+            self.__target_panel.draw(master)
         master.blit(self.__texture, (self.__position.x, self.__position.y))
 
 class GroupPanel(InputEventHandler, Draw):
     def __init__(self, group: Group, width: int, height: int, position: Position) -> None:
         self.__group_component: GroupComponent = GroupComponent(group)
         self.__members_panels: list[MemberPanel] = []
-        self.__texture: pygame.Surface = pygame.Surface([width, height], pygame.SRCALPHA)
+        self.__texture: pygame.Surface = pygame.Surface([width*2, height], pygame.SRCALPHA)
         self.__position: Position = position
-
-
 
     def handle(self, event: pygame.event.Event):
         self.__group_component.handle(event)
@@ -498,7 +510,6 @@ class StorageSlot(InputEventHandler, Draw):
             self.__texture.blit(self.__title, (0, 0))
         self.__hitbox = master.blit(self.__texture, (self.__position.x, self.__position.y))
 
-
 class ActionPanel(InputEventHandler, Draw):
     def __init__(self, width: int, height: int, position: Position) -> None:
         self.__character: Character = None
@@ -676,3 +687,58 @@ class MessagePanel(InputEventHandler, Draw):
             line_position_y += self.__font_size
         
         master.blit(self.__panel, (self.__position.x, self.__position.y))
+
+class TargetPanel(InputEventHandler, Draw):
+    def __init__(self, observer: Character, target: Character, width: int, height: int, position: Position) -> None:
+        self.__target: Character = target
+        self.__observer: Character = observer
+        self.__position: Position = position
+        self.__font_size: int = 22
+        self.__height: int = height
+        self.__width: int = width
+        self.__avatar_picture_radius: float = height
+        self.__gauge_width: int = (self.__width - (self.__avatar_picture_radius*2))
+        self.__texture: pygame.Surface = pygame.Surface([self.__width, self.__avatar_picture_radius*2], pygame.SRCALPHA)
+        self.__font: pygame.font.Font = pygame.font.Font(
+            None, self.__font_size)
+        self.__font_color: pygame.Color = pygame.Color(255, 255, 255)
+        self.__pseudo_label: pygame.Surface = self.__font.render(
+            self.__target.name, True, self.__font_color)
+        
+        self.__level_label: pygame.Surface = self.__font.render(
+            str(self.__target.level.value), True, self.__font_color)
+        
+        life_gauge_position: Position = Position(self.__avatar_picture_radius*2,self.__pseudo_label.get_height())
+        power_gauge_position: Position = Position(self.__avatar_picture_radius*2, life_gauge_position.y+30)
+        threat_gauge_position: Position = Position(self.__avatar_picture_radius*2, power_gauge_position.y+15)
+        
+        self.__life_gauge: LifeGauge = LifeGauge(self.__target, self.__gauge_width, 30, life_gauge_position)
+        self.__power_gauge: PowerGauge = PowerGauge(self.__target, self.__gauge_width, 15, power_gauge_position)
+        
+        self.__avatar: Avatar = Avatar(self.__target, self.__height*2, self.__height*2, Position(0,0))
+        if (isinstance(self.__target, Enemy)):
+            self.__avatar.set_background_color(pygame.Color(255,0,0))
+        elif (not isinstance(self.__target, Enemy)):
+            self.__avatar.set_background_color(pygame.Color(0,0,255))
+            
+    def handle(self, event: pygame.event.Event):
+        self.__avatar.handle(event)
+        # self.__fight_mode_led.handle(event)
+        self.__life_gauge.handle(event)
+        self.__power_gauge.handle(event)
+        
+        self.__level_label: pygame.Surface = self.__font.render(
+            str(self.__target.level.value), True, Difficulty.compute(self.__observer.level, self.__target.level).value.color.to_tuple())
+        # self.__threat_gauge.handle(event)
+        
+    
+    def draw(self, master: pygame.Surface):
+        self.__texture.fill(pygame.Color(20,20,20))
+        self.__texture.blit(self.__pseudo_label, (self.__avatar.width, 0))
+        self.__texture.blit(self.__level_label, (self.__avatar.width+self.__pseudo_label.get_width(), 0))
+
+        self.__avatar.draw(self.__texture)
+        self.__life_gauge.draw(self.__texture)
+        self.__power_gauge.draw(self.__texture)
+        # self.__threat_gauge.draw(self.__texture)
+        master.blit(self.__texture, (self.__position.x, self.__position.y))

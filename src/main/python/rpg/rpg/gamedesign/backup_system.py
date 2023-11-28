@@ -5,6 +5,8 @@ from rpg.gamengine import GameGenerator
 from rpg.gameplay.genders import Gender
 from rpg.gamedesign.faction_system import Faction
 from rpg.characters import Character
+from rpg.gamedesign.geolocation_system import Position
+
 from pathlib import Path
 from json import dumps, loads
 from threading import Thread
@@ -35,8 +37,6 @@ class GameLoader:
     def is_backup_exists(self) -> bool:
         return Path(GameLoader.__BACKUP_FILE_NAME).exists()
     
-    
-    
     def save(self, player: Player):
         with open(Path(GameLoader.__BACKUP_FILE_NAME), 'w', encoding="UTF-8") as file:
             backup: dict = {}
@@ -49,9 +49,9 @@ class GameLoader:
                 character[GameLoader.__CLASS_ATTRIBUTE] = member.character_class.class_type.name
                 character[GameLoader.__LEVEL_ATTRIBUTE] = member.level.value
                 character[GameLoader.__EXPERIENCE_ATTRIBUTE] = member.level.experience.current
-                character[GameLoader.__POSITION_X_ATTRIBUTE] = member.get_position().x
-                character[GameLoader.__POSITION_Y_ATTRIBUTE] = member.get_position().y
-                character[GameLoader.__POSITION_Z_ATTRIBUTE] = member.get_position().z
+                character[GameLoader.__POSITION_X_ATTRIBUTE] = member.current_position.x
+                character[GameLoader.__POSITION_Y_ATTRIBUTE] = member.current_position.y
+                character[GameLoader.__POSITION_Z_ATTRIBUTE] = member.current_position.z
                 backup[str(index)] = character
             json: dict = dumps(backup)
             file.write(str(json))
@@ -79,9 +79,12 @@ class GameLoader:
                 while (character.level.value < level):
                     character.level.up()
                 character.level.experience.gain(experience)
-                character.get_position().x = int(character_configuration.get(GameLoader.__POSITION_X_ATTRIBUTE))
-                character.get_position().y = int(character_configuration.get(GameLoader.__POSITION_Y_ATTRIBUTE))
-                character.get_position().z = int(character_configuration.get(GameLoader.__POSITION_Z_ATTRIBUTE))
+                position: Position = Position(
+                    int(character_configuration.get(GameLoader.__POSITION_X_ATTRIBUTE)),
+                    int(character_configuration.get(GameLoader.__POSITION_Y_ATTRIBUTE)),
+                    int(character_configuration.get(GameLoader.__POSITION_Z_ATTRIBUTE))
+                )
+                character.set_current_position(position)
                 if (player.character is None):
                     character.select()
                     player.set_character(character)
@@ -98,7 +101,7 @@ class GameSaverThread(Thread):
         self.__game_loader: GameLoader = game_loader
         self.__player: Player = player
         self.__last_backup_timestamp_in_milliseconds: int = 0
-    
+
     def set_player(self, player: Player):
         self.__player = player
     
@@ -110,12 +113,10 @@ class GameSaverThread(Thread):
         while (self.__is_running):
             if (self.__player is not None):
                 if (self.__last_backup_timestamp_in_milliseconds == 0):
-                    print("Save1")
                     self.__game_loader.save(self.__player)
                     self.__last_backup_timestamp_in_milliseconds = self.__now_in_milliseconds()
                 else:
                     if (((self.__now_in_milliseconds() - self.__last_backup_timestamp_in_milliseconds)/1000) >= (self.__backup_interval_in_seconds)):
-                        print("Save2")
                         self.__game_loader.save(self.__player)
                         self.__last_backup_timestamp_in_milliseconds = self.__now_in_milliseconds()
                         

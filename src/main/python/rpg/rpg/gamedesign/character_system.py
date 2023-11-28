@@ -1,40 +1,87 @@
+from math import sqrt
 from threading import Thread
 from time import sleep
 
 from rpg.concurent import synchonized
 from rpg.gamedesign.faction_system import Faction
+from rpg.gamedesign.geolocation_system import Position, Tracker
 from rpg.gamedesign.progression_system import Level
 from rpg.gamedesign.threat_system import Threat
 from rpg.gameplay.attributes import Attribute
 from rpg.gameplay.breeds import Breed, BreedFactory
 from rpg.gameplay.classes import Class, ClassFactory
 from rpg.gameplay.genders import Gender
-from rpg.geolocation import Moveable, WindRose
-from rpg.math.geometry import Position
 
 
 class Life:
     def __init__(self, maximum: int, left: int = None) -> None:
         self.__maximum: int = maximum
         self.__current: int = left if left is not None else maximum
-        self.__boost: list[int] = []
+        self.__boost: list[Life] = []
         
+        self.__on_life_lost_callbacks: list[callable] = []
+        self.__on_life_gained_callbacks: list[callable] = []
+        self.__on_die_callbacks: list[callable] = []
+        self.__on_resurrect_callbacks: list[callable] = []
+        self.__on_boost_win: callable = None
+        self.__on_boost_lost: callable = None
+        self.__on_maximum_changed: callable = None
+    
+    def add_on_life_lost_event_listener(self, callback: callable):
+        if (callback is not None):
+            self.__on_life_lost_callbacks.append(callback)
+    def add_on_life_gained_event_listener(self, callback: callable):
+        if (callback is not None):
+            self.__on_life_gained_callbacks.append(callback)
+    def add_on_die_event_listener(self, callback: callable):
+        if (callback is not None):
+            self.__on_die_callbacks.append(callback)
+    def add_on_resurrect_event_listener(self, callback: callable):
+        if (callback is not None):
+            self.__on_resurrect_callbacks.append(callback)
+    def set_on_boost_win_event_listener(self, callback: callable):
+        self.__on_boost_win = callback
+    def set_on_boost_lost_event_listener(self, callback: callable):
+        self.__on_boost_lost = callback
+    def set_on_maximum_changed_event_listener(self, callback: callable):
+        self.__on_maximum_changed = callback
+    
+    def set_maximum(self, points: int):
+        old_maximum: int = self.__maximum
+        self.__maximum = points
+        if (self.__current > self.__maximum):
+            self.__current = self.__maximum
+        if (self.__on_maximum_changed is not None):
+            self.__on_maximum_changed(old_maximum, self.__maximum)
+    
     @property
     def maximum(self) -> int:
-        return self.__maximum
+        maximum_boosts: int = 0
+        if (len(self.__boost) > 0):
+            maximum_boosts = sum([boost.maximum for boost in self.__boost], 0)
+        return self.__maximum + maximum_boosts
+    
+    # def up()
 
     @property
     def current(self) -> int:
-        return self.__current
+        current_boosts: int = 0
+        if (len(self.__boost) > 0):
+            current_boosts = sum([boost.current for boost in self.__boost], 0)
+        return self.__current + current_boosts
     
     @synchonized
     def loose(self, points: int):
         self.__current -= points
+        for callback in self.__on_life_lost_callbacks:
+            callback(points)
         if (self.__current <= 0):
             self.die()
 
     def die(self):
         self.__current = 0
+        for callback in self.__on_die_callbacks:
+            callback()
 
     def is_dead(self) -> bool:
         return self.__current <= 0
@@ -44,30 +91,46 @@ class Life:
         self.__current += points
         if (self.__current > self.__maximum):
             self.__current = self.__maximum
-    
+            for callback in self.__on_life_gained_callbacks:
+                callback(points)
+
     def is_alive(self) -> bool:
         return not self.is_dead()
     
-    def win_boost(self, boost_points: int):
-        self.__maximum += boost_points
-        self.__current += boost_points
+    def resurect(self):
+        self.heal(self.__maximum)
+        for callback in self.__on_resurrect_callbacks:
+            callback()
     
-    def loose_boost(self, boost_points: int):
-        self.__maximum -= boost_points
+    def win_boost(self, boost_life):
+        if (isinstance(boost_life, Life)):
+            self.__boost.append(boost_life)
+        if (self.__on_boost_win is not None):
+            self.__on_boost_win(boost_life)
+    
+    def loose_boost(self, boost_life):
+        if (isinstance(boost_life, Life)):
+            if (boost_life in self.__boost):
+                self.__boost.remove(boost_life)
         if (self.__current > self.__maximum):
             self.__current = self.__maximum
+        if (self.__on_boost_lost is not None):
+            self.__on_boost_lost(boost_life)
 
 class FormOfLife:
     def __init__(self) -> None:
-        self._life: Life = Life(100, 100)
-    
+        self.__life: Life = Life(100, 100)
+        # self.__on_suffered_damage: callable = None
+        # self.__on_inflicted_damage: callable = None
+
     @property
     def life(self) -> Life:
-        return self._life
+        return self.__life
 
-class BaseCharacter(FormOfLife, Moveable):
+class BaseCharacter(FormOfLife, Tracker):
     def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender, faction: Faction) -> None:
         FormOfLife.__init__(self)
+        Tracker.__init__(self, default_position=Position(0,0))
         self.__name: str = name
         self.__gender: Gender = gender
         self.__faction: Faction = faction
@@ -76,20 +139,27 @@ class BaseCharacter(FormOfLife, Moveable):
         self.__class: Class = character_class
         self.__threat: Threat = Threat()
         maximum_life: int = self.__breed.get_attribute(Attribute.STAMANIA) + self.__class.get_attribute(Attribute.STAMANIA)
-        self._life = Life(maximum_life*10)
+        self.life.set_maximum(maximum_life*10)
         self.__attack_speed: float = 2.6
         self.is_in_fight_mode: bool = False
+        
         self.__move_speed: int = 2.5
-        self.__can_be_moved: bool = True
-        self.__position: Position = Position(0,0)
-        self.__orientation: WindRose = WindRose.EAST
-        self.previous_position: Position = Position(0, 0)
-        self.is_moving: bool = False
+        
         self.__level.set_on_level_up_event_listener(self.__on_level_up_handler)
         self.__health_regeneration: HealthRegenerationThread = HealthRegenerationThread(self)
         self.__power_regeneration: PowerRegenerationThread = PowerRegenerationThread(self)
         self.__health_regeneration.start()
         # self.__power_regeneration.start()
+        
+        self.__on_die_handler: callable = None
+        
+    def set_on_die_event_listener(self, callback: callable):
+        self.__on_die_handler = callback
+        self.life.add_on_die_event_listener(self.__on_die_event_listener)
+
+    def __on_die_event_listener(self):
+        self.__on_die_handler(self)
+        
     def __on_level_up_handler(self):
         maximum_life: int = self.__breed.get_attribute(Attribute.STAMANIA) + self.__class.get_attribute(Attribute.STAMANIA)
         self._life = Life((maximum_life*10)*self.level.value)
@@ -128,38 +198,6 @@ class BaseCharacter(FormOfLife, Moveable):
     @property
     def move_speed(self) -> int:
         return self.__move_speed
-    @property
-    def can_be_moved(self) -> bool:
-        return self.__can_be_moved
-    def get_orientation(self) -> WindRose:
-        return self.__orientation
-
-    def get_position(self) -> Position:
-        return self.__position
-    
-    def set_position(self, new_position: Position):
-        self.__position = new_position
-    
-    def move(self, speed: float, orientation: WindRose):
-        if (self.__orientation is not orientation):
-            self.__orientation = orientation
-        # Impl not finished
-    
-    def move_foreward(self, speed: float):
-        pass
-    
-    def move_backward(self, speed: float):
-        pass
-    
-    def turn_around(self):
-        self.__orientation = WindRose.opposite(self.__orientation)
-    
-    def turn_left(self):
-        self.__orientation = WindRose.compute_following_direction_counterclockwise(self.__orientation)
-    
-    def turn_right(self):
-        self.__orientation = WindRose.compute_following_direction_clockwise(self.__orientation)
-    
     
     def copy(self):
         name: str = self.__name
@@ -179,15 +217,15 @@ class HealthRegenerationThread(Thread):
         super().__init__()
         self.__character: BaseCharacter = character
         self.__must_regenerate: bool = False
-        print("..s")
     
     def run(self) -> None:
         self.__must_regenerate = True
         while (self.__must_regenerate):
-            if (self.__character.life.current < self.__character.life.maximum):
-                if (not self.__character.is_in_fight_mode):
-                    points: int = int((5 * self.__character.life.maximum)/100)
-                    self.__character.life.heal(points)
+            if (self.__character.life.is_alive()):
+                if (self.__character.life.current < self.__character.life.maximum):
+                    if (not self.__character.is_in_fight_mode):
+                        points: int = int((5 * self.__character.life.maximum)/100)
+                        self.__character.life.heal(points)
             sleep(2)
 
 class PowerRegenerationThread(Thread):
@@ -199,12 +237,17 @@ class PowerRegenerationThread(Thread):
     def run(self) -> None:
         self.__must_regenerate = True
         while (self.__must_regenerate):
-            if (self.__character.character_class.resource.current < self.__character.character_class.resource.maximum):
-                if (not self.__character.is_in_fight_mode):
-                    points: int = self.__character.get_attribute(Attribute.SPIRIT)
-                    self.__character.character_class.resource.gain(points)   
-                    sleep(2)
+            if (self.__character.life.is_alive()):
+                if (self.__character.character_class.resource.current < self.__character.character_class.resource.maximum):
+                    if (not self.__character.is_in_fight_mode):
+                        points: int = self.__character.get_attribute(Attribute.SPIRIT)
+                        self.__character.character_class.resource.gain(points)
+                        sleep(2)
+                    else:
+                        points: int = int((5 * self.__character.character_class.resource.maximum)/100)
+                        self.__character.character_class.resource.gain(points)
+                        sleep(5)
                 else:
-                    points: int = int((5 * self.__character.character_class.resource.maximum)/100)
-                    self.__character.character_class.resource.gain(points)
-                    sleep(5)
+                    sleep(1)
+            else:
+                sleep(1)

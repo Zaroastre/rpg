@@ -1,16 +1,14 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from datetime import datetime
 from enum import Enum
-from threading import Thread
-from time import sleep
 
+from rpg.gamedesign.geolocation_system import Position, Tracker
 from rpg.gamedesign.interval_system import Range
 from rpg.gamedesign.progression_system import Rank
 from rpg.utils import Color
-from rpg.geolocation import Position
 
 
-class Projectil:
+class Projectil(Tracker):
     def __init__(self, is_damage: bool, payload: int, is_hit: bool, move_speed: float, from_position: Position, to_position: Position, radius: float, color: Color) -> None:
         self.from_position: Position = from_position
         self.to_position: Position = to_position

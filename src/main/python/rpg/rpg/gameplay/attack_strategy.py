@@ -31,40 +31,49 @@ class AttackStategy:
         return self.__attack_strategy_type
 
     @abstractmethod
-    def execute(self, target: BaseCharacter) -> None:
+    def execute(self, target: BaseCharacter) -> int:
         raise NotImplementedError()
 
 class UnarmedAttackStategy(AttackStategy):
     def __init__(self, attacker: BaseCharacter) -> None:
         super().__init__(AttackStategyType.UNARMED, attacker)
-    def execute(self, target: BaseCharacter) -> None:
+    def execute(self, target: BaseCharacter) -> int:
         strength: int = self.attacker.character_class.get_attribute(Attribute.STRENGTH)
         if (strength == 0):
             strength = 1
         target.life.loose(strength)
+        return strength
 
-class WeaponAttackStrategy(AttackStategy):
+class RightWeaponAttackStrategy(AttackStategy):
     def __init__(self, attacker: BaseCharacter) -> None:
         super().__init__(AttackStategyType.WEAPON, attacker)
         
-    def execute(self, target: BaseCharacter) -> None:
-        right_damage: int = 0
-        left_damage: int = 0
+    def execute(self, target: BaseCharacter) -> int:
+        damage: int = 0
         if (self.attacker.character_class.right_hand_weapon is not None):
-            right_damage = self.attacker.character_class.right_hand_weapon.damage()
-        if (self.attacker.character_class.left_hand_weapon is not None):
-            left_damage = self.attacker.character_class.left_hand_weapon.damage()
+            damage = self.attacker.character_class.right_hand_weapon.damage()
+        if (damage > 0):
+            target.life.loose(damage)
+        return damage
 
-        if (right_damage > 0):
-            target.life.loose(right_damage)
-        if (left_damage > 0):
-            target.life.loose(left_damage)
+class LeftWeaponAttackStrategy(AttackStategy):
+    def __init__(self, attacker: BaseCharacter) -> None:
+        super().__init__(AttackStategyType.WEAPON, attacker)
+        
+    def execute(self, target: BaseCharacter) -> int:
+        damage: int = 0
+        if (self.attacker.character_class.left_hand_weapon is not None):
+            damage = self.attacker.character_class.left_hand_weapon.damage()
+        if (damage > 0):
+            target.life.loose(damage)
+        return damage
+
 
 class RangedWeaponAttackStrategy(AttackStategy):
     def __init__(self, attacker: BaseCharacter) -> None:
         super().__init__(AttackStategyType.WEAPON, attacker)
     
-    def execute(self, target: BaseCharacter) -> None:
+    def execute(self, target: BaseCharacter) -> int:
         if (self.attacker.character_class.right_hand_weapon is not None):
             self.attacker.character_class.right_hand_weapon.damage()
 
@@ -75,13 +84,16 @@ class InstantDamageSpellAttackStrategy(AttackStategy):
     @property
     def spell(self) -> Spell:
         return self.__spell
-    def execute(self, target: BaseCharacter) -> None:
+    def execute(self, target: BaseCharacter) -> int:
+        damage: int = 0
         if (self.__spell.can_be_casted()):
             casted_projectil: Projectil = self.__spell.cast()
-            casted_projectil.from_position = self.attacker.get_position().copy()
-            casted_projectil.to_position = target.get_position().copy()
+            casted_projectil.from_position = self.attacker.current_position.copy()
+            casted_projectil.to_position = target.current_position.copy()
             self.attacker.character_class.trigged_projectils.append(casted_projectil)
             target.life.loose(casted_projectil.payload)
+            damage = casted_projectil.payload
+        return damage
 
 class PeriodicDamageSpellAttackStrategy(AttackStategy):
     def __init__(self, attacker: BaseCharacter, spell: Spell) -> None:
@@ -90,9 +102,10 @@ class PeriodicDamageSpellAttackStrategy(AttackStategy):
     @property
     def spell(self) -> Spell:
         return self.__spell
-    def execute(self, target: BaseCharacter) -> None:
-        print("PERIODIC_DAMAGE")
-        self.__spell.cast(target)
+
+    def execute(self, target: BaseCharacter) -> int:
+        projectil: Projectil = self.__spell.cast(target)
+        return projectil.payload
 
 class AttackStategyChooser:
     def __init__(self, attacker: BaseCharacter) -> None:
@@ -137,7 +150,7 @@ class AttackStategyChooser:
                     strategy = PeriodicDamageSpellAttackStrategy(target, less_mana_usage_spell)
         else:
             if (self.__attacker.character_class.right_hand_weapon is not None):
-                strategy = WeaponAttackStrategy(self.__attacker.character_class.right_hand_weapon)
+                strategy = RightWeaponAttackStrategy(self.__attacker.character_class.right_hand_weapon)
         return strategy
 
     def __choose_default_strategy_for_melee_attackers(self, target: BaseCharacter) -> AttackStategy:
@@ -184,7 +197,7 @@ class AttackStategyChooser:
                     strategy = PeriodicDamageSpellAttackStrategy(target, less_mana_usage_spell)
         else:
             if (self.__attacker.character_class.right_hand_weapon is not None):
-                strategy = WeaponAttackStrategy(self.__attacker)
+                strategy = RightWeaponAttackStrategy(self.__attacker)
         return strategy
 
     def __choose_strategy_for_mage(self, target: BaseCharacter) -> AttackStategy:
