@@ -1,6 +1,6 @@
 import pygame
 
-from rpg.math.geometry import Position
+from rpg.gamedesign.geolocation_system import Position
 
 FRAMES_PER_SECOND: int = 60
 WINDOW_WIDTH: int = 1920
@@ -37,13 +37,11 @@ MESSAGE_PANEL_WIDTH: int = 450
 MESSAGE_PANEL_HEIGHT: int = 400
 MESSAGE_PANEL_POSITION: Position = Position(0, WINDOW_HEIGHT-MESSAGE_PANEL_HEIGHT)
 
+# HUD Target
+HUD_TARGET_WIDTH: int = 20
+HUD_TARGET_HEIGHT: int = 20
+HUD_TARGET_THICKNESS: int = 5
+HUD_TARGET_CORNER_LENGTH: int = 10
+HUD_TARGET_COLOR: pygame.Color = pygame.Color(255, 0, 0)
+
 RETURN_SPEED = 2
-FRIENDS_NAMES: list[str] = [
-    "Victor TRUONG",
-    "Rébecca MOLARET",
-    "Lucie LAURENT",
-    "Jimi TRUONG",
-    "Anthony GIRARDO",
-    "Nicolas PIAR",
-    "C... M... 3e",
-]

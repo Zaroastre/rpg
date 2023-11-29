@@ -3,7 +3,7 @@ import rpg.constants
 from rpg.characters import Character, Enemy
 from rpg.gameplay.classes import Class
 from rpg.gameapi import Draw, InputEventHandler
-from rpg.math.geometry import Position
+from rpg.gamedesign.geolocation_system import Position, Tracker
 from rpg.gameplay.spells import Spell
 from rpg.gameplay.teams import Group
 from rpg.gameplay.storages import Storage
@@ -742,3 +742,49 @@ class TargetPanel(InputEventHandler, Draw):
         self.__power_gauge.draw(self.__texture)
         # self.__threat_gauge.draw(self.__texture)
         master.blit(self.__texture, (self.__position.x, self.__position.y))
+
+class TargetHUD(InputEventHandler, Draw):
+    def __init__(self, character: Tracker, width: int, height: int, thickness: int, corner_lenght: int) -> None:
+        self.__character: Tracker = character
+        self.__width: int = width
+        self.__height: int = height
+        self.__thickness: int = thickness
+        self.__corner_length: int = corner_lenght
+    
+    def set_character(self, character: Tracker):
+        self.__character = character
+    
+    def handle(self, event: pygame.event.Event):
+        pass
+    
+    def draw(self, master: pygame.Surface):
+        if (self.__character is not None):
+            panel: pygame.Surface = pygame.Surface((((self.__width)+(self.__thickness*4)), ((self.__height)+(self.__thickness*4))))
+            horizontal_rect: pygame.Surface = pygame.Surface((self.__corner_length, self.__thickness))
+            vertical_rect: pygame.Surface = pygame.Surface((self.__thickness, self.__corner_length))
+            vertical_rect.fill(rpg.constants.HUD_TARGET_COLOR)
+            horizontal_rect.fill(rpg.constants.HUD_TARGET_COLOR)
+            
+            # Top Left
+            position_x: int = (self.__character.current_position.x - (panel.get_width()/2))
+            position_y: int = (self.__character.current_position.y - (panel.get_height()/2))
+            master.blit(horizontal_rect, (position_x, position_y))
+            master.blit(vertical_rect, (position_x, position_y))
+
+            # Bottom Right
+            position_x = (self.__character.current_position.x + (panel.get_width()/2))
+            position_y = (self.__character.current_position.y + (panel.get_height()/2))
+            master.blit(horizontal_rect, (position_x-(self.__corner_length/2)-self.__thickness, position_y-self.__thickness))
+            master.blit(vertical_rect, (position_x-self.__thickness, position_y-self.__corner_length))
+            
+            # Top Right
+            position_x = (self.__character.current_position.x + (panel.get_width()/2))
+            position_y = (self.__character.current_position.y - (panel.get_height()/2))
+            master.blit(horizontal_rect, (position_x-(self.__corner_length/2)-self.__thickness, position_y))
+            master.blit(vertical_rect, (position_x-self.__thickness, position_y))
+            
+            # Bottom Left
+            position_x = (self.__character.current_position.x - (panel.get_width()/2))
+            position_y = (self.__character.current_position.y + (panel.get_height()/2))
+            master.blit(horizontal_rect, (position_x, position_y-self.__thickness))
+            master.blit(vertical_rect, (position_x, position_y-self.__corner_length))
