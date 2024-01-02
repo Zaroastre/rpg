@@ -95,7 +95,7 @@ class App:
             self.__scene.handle(None)
     
     def __draw(self):
-        self.__window.fill(rpg.constants.BACKGROUND_COLOR)
+        self.__window.fill(rpg.constants.BACKGROUND_COLOR.to_tuple())
         self.__scene.draw(self.__window)
 
     def run(self):

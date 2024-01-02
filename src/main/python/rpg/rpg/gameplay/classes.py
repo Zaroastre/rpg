@@ -65,10 +65,18 @@ class Class(ABC):
         self.__spells_book: SpellsBook = SpellsBook()
         self._left_hand_supported_weapons: list[WeaponType] = []
         self._right_hand_supported_weapons: list[WeaponType] = []
-        self.__left_hand_weapon: Weapon = None
-        self.__right_hand_weapon: Weapon = None
+        self._left_hand_weapon: Weapon = None
+        self._right_hand_weapon: Weapon = None
         self._attributes: dict[Attribute, int] = {}
         self.__trigged_projectils: list[Projectil] = []
+
+    def use_weapon(self, weapon: Weapon|None):
+        if ((weapon is None) or (weapon.weapon_type in self._right_hand_supported_weapons)):
+            self._right_hand_weapon = weapon
+        elif ((weapon is None) or (weapon.weapon_type in self._left_hand_supported_weapons)):
+            self._left_hand_weapon = weapon
+        else:
+            raise ValueError("This class cannot use this weapon")
 
     @property
     def trigged_projectils(self) -> list[Projectil]:
@@ -85,11 +93,11 @@ class Class(ABC):
         return self._right_hand_supported_weapons.copy()
     @property
     def left_hand_weapon(self) -> Weapon:
-        return self.__left_hand_weapon
+        return self._left_hand_weapon
     
     @property
     def right_hand_weapon(self) -> Weapon:
-        return self.__right_hand_weapon
+        return self._right_hand_weapon
     @property
     def spells_book(self) -> SpellsBook:
         return self.__spells_book
@@ -135,7 +143,7 @@ class Paladin(Class):
                 .instant_health(Range(39, 47))
                 .spell_color(Color(255,255,0))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.one_hand_mace("Little Mace", "Little mace", StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._right_hand_weapon = WeaponFactory.one_hand_mace("Little Mace", "Little mace", StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
         self._attributes[Attribute.AGILITY] = 5
         self._attributes[Attribute.INTELLECT] = 12
         self._attributes[Attribute.STRENGTH] = 17
@@ -172,7 +180,7 @@ class Demonist(Class):
                 .periodic_damage(Range(1,2), 15.0)
                 .spell_color(Color(255,50,0))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.stave(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._right_hand_weapon = WeaponFactory.stave(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
         self._attributes[Attribute.AGILITY] = 12
         self._attributes[Attribute.INTELLECT] = 12
         self._attributes[Attribute.STRENGTH] = 6
@@ -207,7 +215,7 @@ class Mage(Class):
                 .instant_damage(Range(16, 25))
                 .spell_color(Color(0,0,255))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.stave(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._right_hand_weapon = WeaponFactory.stave(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
         self._attributes[Attribute.AGILITY] = 10
         self._attributes[Attribute.INTELLECT] = 12
         self._attributes[Attribute.STRENGTH] = 8
@@ -243,7 +251,7 @@ class Priest(Class):
                 .instant_damage(Range(46, 56))
                 .spell_color(Color(0,0,255))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.stave(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._right_hand_weapon = WeaponFactory.stave(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
         self._attributes[Attribute.AGILITY] = 12
         self._attributes[Attribute.INTELLECT] = 12
         self._attributes[Attribute.STRENGTH] = 10
@@ -273,7 +281,7 @@ class Hunter(Class):
                 .cooldown(6.0)
                 .instant_damage(Range(46, 56))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.bow(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._right_hand_weapon = WeaponFactory.bow(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
         self._attributes[Attribute.AGILITY] = 15
         self._attributes[Attribute.INTELLECT] = 10
         self._attributes[Attribute.STRENGTH] = 10
@@ -309,7 +317,7 @@ class Shaman(Class):
                 .cooldown(1.5)
                 .instant_health(Range(36, 47))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.one_hand_axe(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._right_hand_weapon = WeaponFactory.one_hand_axe(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
         self._attributes[Attribute.AGILITY] = 15
         self._attributes[Attribute.INTELLECT] = 12
         self._attributes[Attribute.STRENGTH] = 7
@@ -344,7 +352,7 @@ class Druid(Class):
                 .cooldown(1.5)
                 .instant_health(Range(40, 55))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.stave(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._right_hand_weapon = WeaponFactory.stave(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
         self._attributes[Attribute.AGILITY] = 15
         self._attributes[Attribute.INTELLECT] = 12
         self._attributes[Attribute.STRENGTH] = 7
@@ -366,8 +374,8 @@ class DemonHunter(Class):
         self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_MACE)
         self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
         self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
-        self.__right_hand_weapon = WeaponFactory.dagger(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
-        self.__left_hand_weapon = WeaponFactory.dagger(None, None, StuffPartType.LEFT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._right_hand_weapon = WeaponFactory.dagger(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._left_hand_weapon = WeaponFactory.dagger(None, None, StuffPartType.LEFT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
         self._attributes[Attribute.AGILITY] = 10
         self._attributes[Attribute.INTELLECT] = 10
         self._attributes[Attribute.STRENGTH] = 15
@@ -410,8 +418,8 @@ class Rogue(Class):
                 .cooldown(10.0)
                 .build())
        
-        self.__right_hand_weapon = WeaponFactory.dagger(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
-        self.__left_hand_weapon = WeaponFactory.dagger(None, None, StuffPartType.LEFT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._right_hand_weapon = WeaponFactory.dagger(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._left_hand_weapon = WeaponFactory.dagger(None, None, StuffPartType.LEFT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
         self._attributes[Attribute.AGILITY] = 15
         self._attributes[Attribute.INTELLECT] = 8
         self._attributes[Attribute.STRENGTH] = 14
@@ -424,7 +432,7 @@ class Monk(Class):
         self._right_hand_supported_weapons.append(WeaponType.DAGGER)
         self._left_hand_supported_weapons.append(WeaponType.DAGGER)
         self._right_hand_supported_weapons.append(WeaponType.STAVE)
-        self.__right_hand_weapon = WeaponFactory.stave(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._right_hand_weapon = WeaponFactory.stave(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
         self._attributes[Attribute.AGILITY] = 15
         self._attributes[Attribute.INTELLECT] = 12
         self._attributes[Attribute.STRENGTH] = 7
@@ -457,7 +465,7 @@ class Warrior(Class):
                 .resource_usage(15)
                 .instant_damage(Range(11, 11))
                 .build())
-        self.__right_hand_weapon = WeaponFactory.two_hands_sword(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._right_hand_weapon = WeaponFactory.two_hands_sword(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
         self._attributes[Attribute.AGILITY] = 10
         self._attributes[Attribute.INTELLECT] = 8
         self._attributes[Attribute.STRENGTH] = 17
@@ -478,8 +486,8 @@ class DeathKnight(Class):
         self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_AXE)
         self._left_hand_supported_weapons.append(WeaponType.ONE_HAND_SWORD)
 
-        self.__right_hand_weapon = WeaponFactory.one_hand_sword(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
-        self.__left_hand_weapon = WeaponFactory.one_hand_sword(None, None, StuffPartType.LEFT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._right_hand_weapon = WeaponFactory.one_hand_sword(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
+        self._left_hand_weapon = WeaponFactory.one_hand_sword(None, None, StuffPartType.LEFT_HAND_OBJECT, QualityType.COMMON, 1, Range(1, 5), 1.0)
         self._attributes[Attribute.AGILITY] = 13
         self._attributes[Attribute.INTELLECT] = 7
         self._attributes[Attribute.STRENGTH] = 17

@@ -1,0 +1,8 @@
+part, man_min, max_max, woman_min, woman_max
+head, 8, 12, 7, 10
+neck, 7, 10, 6, 9
+arm, 30, 40, 25, 30
+hand, 7, 10, 6, 9
+body, 35, 45, 30, 40
+leg, 40, 50, 35, 45
+foot 10, 15, 8, 12

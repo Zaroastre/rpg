@@ -1,8 +1,6 @@
 from math import cos, pi, sin, sqrt
 from random import uniform
 
-import pygame
-
 import rpg.constants
 from rpg.gamedesign.character_system import BaseCharacter
 from rpg.gamedesign.faction_system import Faction
@@ -18,12 +16,12 @@ from rpg.gameplay.storages import Storage
 from rpg.math.geometry import Geometry
 from rpg.utils import Color
 
-pygame.init()
-
 class Character(BaseCharacter):
     _MINIMUM_AGGRO_AREA_RADIUS: int = 5
     _MAXIMUM_AGGRO_AREA_RADIUS: int = 45
     _DEFAULT_AGGRO_AREA_RADIUS: int = 20
+    __DEFAULT_BAG_SIZE: int = 16
+
     def __init__(self, name: str, breed: Breed, character_class: Class, gender: Gender, faction: Faction) -> None:
         BaseCharacter.__init__(self, name, breed, character_class, gender, faction)
 
@@ -41,11 +39,12 @@ class Character(BaseCharacter):
         self.__is_selected: bool = False
 
         self.__storages: list[Storage] = []
-        for _ in range(4):
+        for _ in range(Character.__DEFAULT_BAG_SIZE):
             self.__storages.append(None)
             
         self.__target: Character = None
         self.__attack_strategy: AttackStategy = UnarmedAttackStategy(self)
+
     @property
     def has_target(self) -> bool:
         return self.__target is not None
@@ -55,7 +54,6 @@ class Character(BaseCharacter):
     @property
     def currency(self) -> Currency:
         return self.__currency
-    
     @property
     def can_be_moved(self) -> bool:
         return self.__can_be_moved_by_others
@@ -65,21 +63,19 @@ class Character(BaseCharacter):
     @property
     def radius(self) -> float:
         return self.__radius
-    
     @property
     def trigged_projectils(self) -> list[Projectil]:
         return self.__trigged_projectils
-    
     @property
     def aggro_area_radius(self) -> float:
         return self._aggro_area_radius
+
     def set_target(self, target):
         self.__target = target
     def set_attack_strategy(self, strategy: AttackStategy):
         if (strategy is None):
             raise ValueError()
         self.__attack_strategy = strategy
-    
     def follow(self, target: Tracker):
         if (target is not None):
             direction_x = target.current_position.x - self.current_position.x
@@ -96,7 +92,6 @@ class Character(BaseCharacter):
             new_y: int = self.current_position.y + direction_y * self.move_speed
             new_position: Position = Position((new_x), (new_y))
             self.set_current_position(new_position)
-
     def is_touching(self, other: Tracker) -> bool:
         is_in_contact: bool = False
         if (isinstance(other, Character)):
@@ -110,16 +105,13 @@ class Character(BaseCharacter):
                 if (self.current_position.y-self.radius <= other.to_position.y <= self.current_position.y+self.radius):
                     is_in_contact = True
         return is_in_contact
-
     def is_feel_threatened(self, target: Tracker) -> bool:
         is_real_threat: bool = False
         if (target is not None):
             distance_between_enemy_and_target = Geometry.compute_distance(target.current_position, self.current_position)
             if (distance_between_enemy_and_target >= 0):
                 is_real_threat = distance_between_enemy_and_target <= (self.radius + self.aggro_area_radius)
-            
         return is_real_threat
-
     def avoid_collision_with_other(self, other: Tracker):
         if (other is not None):
             distance = Geometry.compute_distance(
@@ -147,7 +139,6 @@ class Character(BaseCharacter):
                 new_y: int = other.current_position.y - direction_y* (min_distance - distance)
                 new_position: Position = Position((new_x), (new_y))
                 other.set_current_position(new_position)
-                # self.previous_position = self.current_position.copy()
 
     def is_selected(self) -> bool:
         return self.__is_selected
@@ -196,15 +187,6 @@ class Enemy(Character):
         new_x = self.zone_center.x + distance * cos(self.patrol_angle)
         new_y = self.zone_center.y + distance * sin(self.patrol_angle)
 
-        # # Se déplacer progressivement vers la nouvelle position
-        # direction_x = new_x - self.current_position.x
-        # direction_y = new_y - self.current_position.y
-        # direction_length = sqrt(direction_x ** 2 + direction_y ** 2)
-
-        # # Normaliser la direction
-        # if direction_length != 0:
-        #     direction_x /= direction_length
-        #     direction_y /= direction_length
         self.__patrol_destination = Position(new_x, new_y)
     
     def patrol(self):

@@ -762,8 +762,8 @@ class TargetHUD(InputEventHandler, Draw):
             panel: pygame.Surface = pygame.Surface((((self.__width)+(self.__thickness*4)), ((self.__height)+(self.__thickness*4))))
             horizontal_rect: pygame.Surface = pygame.Surface((self.__corner_length, self.__thickness))
             vertical_rect: pygame.Surface = pygame.Surface((self.__thickness, self.__corner_length))
-            vertical_rect.fill(rpg.constants.HUD_TARGET_COLOR)
-            horizontal_rect.fill(rpg.constants.HUD_TARGET_COLOR)
+            vertical_rect.fill(rpg.constants.HUD_TARGET_COLOR.to_tuple())
+            horizontal_rect.fill(rpg.constants.HUD_TARGET_COLOR.to_tuple())
             
             # Top Left
             position_x: int = (self.__character.current_position.x - (panel.get_width()/2))

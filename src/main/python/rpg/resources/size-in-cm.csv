@@ -1,0 +1,14 @@
+breed, man_min, man_max, woman_min, woman_max
+human, 160, 210, 150, 200
+gnome, 080, 120, 070, 110
+draenei, 190, 240, 180, 230
+night_elf, 170, 210, 160, 190
+pandaren, 170, 220, 160, 210
+knowf, 110, 150, 100, 140
+blood_elf, 170, 200, 160, 190
+undead, 170, 200, 160, 190
+orc, 180, 220, 170, 210
+troll, 200, 250, 190, 230
+tauren, 230, 310, 210, 290
+goblin, 090, 130, 080, 120
+worgen, 180, 220, 170, 210

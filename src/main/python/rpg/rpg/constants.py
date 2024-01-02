@@ -1,11 +1,10 @@
-import pygame
-
+from rpg.utils import Color
 from rpg.gamedesign.geolocation_system import Position
 
 FRAMES_PER_SECOND: int = 60
 WINDOW_WIDTH: int = 1920
 WINDOW_HEIGHT: int = 1080
-BACKGROUND_COLOR: pygame.Color = pygame.Color(0, 0, 0)
+BACKGROUND_COLOR: Color = Color(0, 0, 0)
 
 # Group Panel
 GROUP_PANEL_WIDTH: int = 300
@@ -42,6 +41,6 @@ HUD_TARGET_WIDTH: int = 20
 HUD_TARGET_HEIGHT: int = 20
 HUD_TARGET_THICKNESS: int = 5
 HUD_TARGET_CORNER_LENGTH: int = 10
-HUD_TARGET_COLOR: pygame.Color = pygame.Color(255, 0, 0)
+HUD_TARGET_COLOR: Color = Color(255, 0, 0)
 
 RETURN_SPEED = 2

@@ -58,6 +58,8 @@ class CharacterCreationScreen(Scene):
         
         self.__on_back_event_listener: callable = None
         self.__on_play_event_listener: callable = None
+        
+        
 
     def set_event_listener_on_back(self, callback: callable):
         self.__on_back_event_listener = callback
@@ -477,7 +479,24 @@ class CharacterCreationScreen(Scene):
         button_border.blit(button_background, (button_border_size, button_border_size))
         button.blit(button_border, (0,0))
         self._background_texture.blit(button, ((self.width-button.get_width()), (self.height - button.get_height())))
+    
+    def __draw_rule_size(self, master: pygame.Surface):
+        margin_top: int = 300
+        margin_left: int = 400
+        rule_size_in_cm: int = 300
         
+        # Full Rule
+        pygame.draw.line(self._background_texture, pygame.Color(255,255,255), (margin_left, margin_top), (margin_left, margin_left + rule_size_in_cm), 2)
+        pygame.draw.line(self._background_texture, pygame.Color(255,255,255), (margin_left-10, margin_top), (margin_left+10, margin_top), 2)
+        pygame.draw.line(self._background_texture, pygame.Color(255,255,255), (margin_left-10, margin_left + rule_size_in_cm), (margin_left+10, margin_left + rule_size_in_cm), 2)
+        
+        # Range Rule
+        
+        
+    
+    def __draw_avatar(self, master: pygame.Surface):
+        self.__draw_rule_size(master)
+    
     def draw(self, master: pygame.Surface):
         self.__draw_genders_buttons(master)
         self.__draw_factions_buttons(master)
@@ -486,4 +505,5 @@ class CharacterCreationScreen(Scene):
         self.__draw_characters_slots_buttons(master)
         self.__draw_back_button(master)
         self.__draw_play_button(master)
+        self.__draw_avatar(master)
         super().draw(master)

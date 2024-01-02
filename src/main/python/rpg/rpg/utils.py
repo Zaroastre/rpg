@@ -1,14 +1,69 @@
+from typing import TypeVar
+T = TypeVar('T')
+
+class NoSuchElementException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
 class Optional:
-    pass
+    """
+    A container object which may or may not contain a non-null value. If a value is present, isPresent() will return true and get() will return the value.
+    
+    Additional methods that depend on the presence or absence of a contained value are provided, such as orElse() (return a default value if value not present) and ifPresent() (execute a block of code if the value is present).
+    
+    This is a value-based class; use of identity-sensitive operations (including reference equality (==), identity hash code, or synchronization) on instances of Optional may have unpredictable results and should be avoided.
+    """
+    def __init__(self, value: T|None) -> None:
+        self.__value: T|None = value
+    
+    def is_present(self) -> bool:
+        """
+        Return true if there is a value present, otherwise false.
+        """
+        return self.__value is not None
 
-class Map:
-    pass
+    def get(self) -> T:
+        """
+        If a value is present in this Optional, returns the value, otherwise throws NoSuchElementException.
+        """
+        if (self.__value is None):
+            raise NoSuchElementException()
+        return self.__value
 
-class Set:
-    pass
+    def if_present(self, callback: callable):
+        """
+        If a value is present, invoke the specified consumer with the value, otherwise do nothing.
+        """
+        if (self.__value is not None):
+            callback()
 
-class List:
-    pass
+    def or_else(self, other: T):
+        """
+        Return the value if present, otherwise return other.
+        """
+        return self.__value if self.__value is not None else other
+
+    @staticmethod
+    def of(value: T):
+        """
+        Returns an Optional with the specified present non-null value.
+        """
+        return Optional(value)
+
+    @staticmethod
+    def of_nullable(value: T|None):
+        """
+        Returns an Optional describing the specified value, if non-null, otherwise returns an empty Optional.
+        """
+        return Optional(value)
+
+    @staticmethod
+    def empty():
+        """
+        Returns an empty Optional instance.
+        """
+        return Optional(None)
+
 
 class Color:
     def __init__(self, red: int, green: int, blue: int, alpha: int = 255) -> None:

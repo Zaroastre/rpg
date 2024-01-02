@@ -4,6 +4,7 @@ from random import randint, random
 from rpg.gamedesign.interval_system import Range
 from rpg.gameplay.qualities import QualityType
 from rpg.gameplay.stuffs import Stuff, StuffPartType
+from rpg.gameplay.attributes import Attribute
 
 
 class WeaponTypeValue:
@@ -33,8 +34,8 @@ class WeaponType(Enum):
     WAND: WeaponTypeValue = WeaponTypeValue("WAND")
 
 class Weapon(Stuff):
-    def __init__(self, name:str, description: str, weapon_type: WeaponType, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, stuff_part_type, description, quality)
+    def __init__(self, name:str, description: str, weapon_type: WeaponType, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, stuff_part_type, description, quality, attributes, gems_capacity)
         if (stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
             raise ValueError()
         self.__weapon_type: WeaponType = weapon_type
@@ -60,59 +61,59 @@ class Weapon(Stuff):
         return self.__damages.random()
 
 class Dagger(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.DAGGER, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.DAGGER, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
 
 class OneHandAxe(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.ONE_HAND_AXE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.ONE_HAND_AXE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
 
 class OneHandMace(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.ONE_HAND_MACE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.ONE_HAND_MACE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
 
 class OneHandSword(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.ONE_HAND_SWORD, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.ONE_HAND_SWORD, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
 
 class TwoHandsAxe(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.TWO_HANDS_AXE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.TWO_HANDS_AXE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
 
 class TwoHandsMace(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.TWO_HANDS_MACE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.TWO_HANDS_MACE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
 
 class TwoHandsSword(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.TWO_HANDS_SWORD, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.TWO_HANDS_SWORD, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
         
 class Polearm(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.POLEARM, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.POLEARM, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
         
 class Stave(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.STAVE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.STAVE, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
         
 class Wand(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.WAND, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.WAND, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
 class Bow(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.BOW, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.BOW, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
         
 class CrossBow(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.CROSSBOW, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.CROSSBOW, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
 
 class Gun(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.GUN, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.GUN, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
 
 class Stick(Weapon):
-    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float) -> None:
-        super().__init__(name, description, WeaponType.STICK, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed)
+    def __init__(self, name:str, description: str, stuff_part_type: StuffPartType, quality: QualityType, required_level: int, damages: Range, hit_chance: float, attack_speed: float, attributes: dict[Attribute, int]={}, gems_capacity: int = 0) -> None:
+        super().__init__(name, description, WeaponType.STICK, stuff_part_type, quality, required_level, damages, hit_chance, attack_speed, attributes, gems_capacity)
 
 
 class WeaponFactory:
@@ -190,6 +191,7 @@ class WeaponFactory:
             raise ValueError()
         if (stuff_part_type is None or stuff_part_type not in [StuffPartType.LEFT_HAND_OBJECT, StuffPartType.RIGHT_HAND_OBJECT]):
             raise ValueError()
+        weapon: Weapon
         match weapon_type:
             case WeaponType.DAGGER:
                 weapon = WeaponFactory.dagger(name, description, stuff_part_type, quality, weapon_level, damages, hit_chance)
