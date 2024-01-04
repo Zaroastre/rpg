@@ -9,6 +9,7 @@ class Scene(InputEventHandler, Draw):
         self.__width: int = width
         self.__height: int = height
         self._background_texture: pygame.Surface = pygame.Surface((self.__width, self.__height))
+        self._background_color: pygame.Color = pygame.Color(0,0,0)
     
     @property
     def width(self) -> Player:

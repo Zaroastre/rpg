@@ -17,6 +17,7 @@ from rpg.math.geometry import Geometry
 from rpg.ui.graphics import (ActionPanel, ExperiencePanel, GroupPanel,
                              MessagePanel, SpellDetailPopup, TargetHUD)
 from rpg.ui.sprites import CharacterSprite, EnemySprite, ProjectilSprite
+from rpg.artificial_intelligency.registry import ArtificialIntelligencyRegistry
 
 class CameraGroup(pygame.sprite.Group):
     def __init__(self) -> None:
@@ -129,7 +130,7 @@ class GameScene(Scene):
         
         self.__spell_detail_popup: SpellDetailPopup = None
         self.__message_broker: MessageBroker = MessageBroker()
-        
+        self.__ai_registry: ArtificialIntelligencyRegistry|None = None 
         self.__fights: dict[str, Fight] = {}
         
         self.__on_game_over_event_listener: callable = None
@@ -139,6 +140,9 @@ class GameScene(Scene):
     
     def set_event_listener_on_game_over(self, callback: callable):
         self.__on_game_over_event_listener = callback
+    
+    def set_ai_registry(self, ai_registry: ArtificialIntelligencyRegistry) -> None:
+        self.__ai_registry = ai_registry
 
     def set_friends_group(self, friends: list[Character]):
         if (len(friends) > 0):

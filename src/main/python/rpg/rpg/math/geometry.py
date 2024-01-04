@@ -155,3 +155,10 @@ class Geometry:
         new_point = Position(new_point_x, new_point_y)
         return new_point
 
+    @staticmethod
+    def compute_angle(position_1: Position, position_2: Position) -> float:
+        delta_x = position_2.x - position_1.x
+        delta_y = position_2.y - position_1.y
+        angle_rad: float = atan2(delta_y, delta_x)
+        angle_deg: float = degrees(angle_rad)
+        return angle_deg

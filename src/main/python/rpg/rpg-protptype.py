@@ -10,6 +10,8 @@ from rpg.gamelevel.scenes.game_over_scene import GameOverScene
 from rpg.gamelevel.scenes.main_menu_scene import MainMenuScene
 from rpg.gamelevel.scenes.game_scene import GameScene
 from rpg.gamedesign.backup_system import GameLoader, GameSaverThread
+from rpg.artificial_intelligency.registry import ArtificialIntelligencyRegistry
+from rpg.artificial_intelligency.sentinel_ai import SentinelAI
 
 
 pygame.init()
@@ -35,11 +37,18 @@ class App:
         self.__scene: Scene = MainMenuScene(width=self.__window.get_width(), height=self.__window.get_height(), player=self.__player)
         self.__scene.set_event_listener_on_create_new_game(self.__replace_scene_by_create_new_game_scene)
         self.__scene.set_event_listener_on_continue_game(self.__replace_scene_by_continue_game_scene)
+        self.__scene.set_event_listener_on_exit_game(self.__exit)
         self.__joystick: pygame.joystick.Joystick = None
         self.__player_characters: list[Character] = []
         self.__game_loader: GameLoader = GameLoader()
         self.__backup_thread: GameSaverThread = GameSaverThread(10, self.__game_loader)
-        
+        self.__ai_registry: ArtificialIntelligencyRegistry = ArtificialIntelligencyRegistry()
+        self.__ai_registry.sentinel_ai = SentinelAI()
+    
+    def __exit(self):
+        pygame.quit()
+        exit(0)
+    
     def __replace_scene_by_create_new_game_scene(self):
         self.__scene = CharacterCreationScreen(width=self.__window.get_width(), height=self.__window.get_height(), player=self.__player)
         self.__scene.set_event_listener_on_play(self.__replace_scene_by_game_scene)
@@ -67,6 +76,7 @@ class App:
             self.__player_characters.append(member)
         self.__scene = GameScene(width=self.__window.get_width(), height=self.__window.get_height(), player=self.__player)
         self.__scene.set_friends_group(self.__player_characters)
+        self.__scene.set_ai_registry(self.__ai_registry)
         self.__scene.set_event_listener_on_game_over(self.__replace_scene_by_game_over_scene)
     
     def __replace_scene_by_game_over_scene(self):

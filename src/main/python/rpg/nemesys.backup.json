@@ -1,1 +1,62 @@
-{"0": {"name": "Jxalo", "gender": "MAN", "faction": "HORDE", "breed": "BLOOD_ELF", "class": "PALADIN", "level": 30, "experience": 154, "position.x": 1147, "position.y": 104, "position.z": 0}, "1": {"name": "Hextankxion", "gender": "MAN", "faction": "HORDE", "breed": "UNDEAD", "class": "WARRIOR", "level": 13, "experience": 378, "position.x": 1164, "position.y": 115, "position.z": 0}, "2": {"name": "Eryma", "gender": "WOMAN", "faction": "HORDE", "breed": "BLOOD_ELF", "class": "PRIEST", "level": 15, "experience": 53, "position.x": 603, "position.y": 766, "position.z": 0}, "3": {"name": "Valichnya", "gender": "WOMAN", "faction": "HORDE", "breed": "UNDEAD", "class": "DEMONIST", "level": 14, "experience": 328, "position.x": 1163, "position.y": 95, "position.z": 0}, "4": {"name": "Plogojouish", "gender": "MAN", "faction": "HORDE", "breed": "TROLL", "class": "SHAMAN", "level": 13, "experience": 84, "position.x": 1148, "position.y": 124, "position.z": 0}}
+{
+    "0": {
+        "name": "Jxalo",
+        "gender": "MAN",
+        "faction": "HORDE",
+        "breed": "BLOOD_ELF",
+        "class": "PALADIN",
+        "level": 30,
+        "experience": 154,
+        "position.x": 1147,
+        "position.y": 104,
+        "position.z": 0
+    },
+    "1": {
+        "name": "Hextankxion",
+        "gender": "MAN",
+        "faction": "HORDE",
+        "breed": "UNDEAD",
+        "class": "WARRIOR",
+        "level": 13,
+        "experience": 378,
+        "position.x": 1164,
+        "position.y": 115,
+        "position.z": 0
+    },
+    "2": {
+        "name": "Eryma",
+        "gender": "WOMAN",
+        "faction": "HORDE",
+        "breed": "BLOOD_ELF",
+        "class": "PRIEST",
+        "level": 15,
+        "experience": 53,
+        "position.x": 603,
+        "position.y": 766,
+        "position.z": 0
+    },
+    "3": {
+        "name": "Valichnya",
+        "gender": "WOMAN",
+        "faction": "HORDE",
+        "breed": "UNDEAD",
+        "class": "DEMONIST",
+        "level": 14,
+        "experience": 328,
+        "position.x": 1163,
+        "position.y": 95,
+        "position.z": 0
+    },
+    "4": {
+        "name": "Plogojouish",
+        "gender": "MAN",
+        "faction": "HORDE",
+        "breed": "TROLL",
+        "class": "SHAMAN",
+        "level": 13,
+        "experience": 84,
+        "position.x": 1148,
+        "position.y": 124,
+        "position.z": 0
+    }
+}

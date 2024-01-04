@@ -53,7 +53,7 @@ class GameLoader:
                 character[GameLoader.__POSITION_Y_ATTRIBUTE] = member.current_position.y
                 character[GameLoader.__POSITION_Z_ATTRIBUTE] = member.current_position.z
                 backup[str(index)] = character
-            json: dict = dumps(backup)
+            json: dict = dumps(backup, indent=4)
             file.write(str(json))
     
     def load(self) -> Player:

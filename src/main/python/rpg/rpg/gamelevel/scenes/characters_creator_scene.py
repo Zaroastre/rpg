@@ -1,8 +1,5 @@
-from abc import ABC
-from math import cos, pi, radians, sin, sqrt
-from random import uniform
-
 import pygame
+from pathlib import Path
 from rpg.characters import Character
 from rpg.gamedesign.faction_system import Faction
 from rpg.gamelevel.scenes.scenes import Scene
@@ -11,6 +8,7 @@ from rpg.gameplay.breeds import BreedFactory, BreedType
 from rpg.gameplay.classes import ClassFactory, ClassType
 from rpg.gameplay.genders import Gender
 from rpg.gameplay.player import Player
+from rpg.csv import CsvReader, Csv, Optional
 
 
 class CharacterCreationScreen(Scene):
@@ -35,6 +33,8 @@ class CharacterCreationScreen(Scene):
             self.__characters_configurations.append(None)
         self.__selected_slot_index: int = 0
         self.__hover_slot_index: int = 0
+        
+        self.__cache_for_characters_sizes: dict[BreedType, dict[Gender, tuple[int, int]]] = {}
         
         self.__selected_gender_index: int = 0
         self.__selected_faction_index: int = 0
@@ -87,8 +87,6 @@ class CharacterCreationScreen(Scene):
             else:
                 self.__is_selecting_gender = False
                 self.__is_selecting_class = True
-                
-                
                 self.__is_selecting_play = False
                 self.__is_selecting_slot = False
                 self.__is_selecting_back = False
@@ -483,21 +481,73 @@ class CharacterCreationScreen(Scene):
     def __draw_rule_size(self, master: pygame.Surface):
         margin_top: int = 300
         margin_left: int = 400
-        rule_size_in_cm: int = 300
+        rule_size_in_cm: int = 350
+        origin_y_for_smaller_size: int = margin_left + rule_size_in_cm
         
         # Full Rule
-        pygame.draw.line(self._background_texture, pygame.Color(255,255,255), (margin_left, margin_top), (margin_left, margin_left + rule_size_in_cm), 2)
+        pygame.draw.line(self._background_texture, pygame.Color(255,255,255), (margin_left, margin_top), (margin_left, origin_y_for_smaller_size), 2)
         pygame.draw.line(self._background_texture, pygame.Color(255,255,255), (margin_left-10, margin_top), (margin_left+10, margin_top), 2)
-        pygame.draw.line(self._background_texture, pygame.Color(255,255,255), (margin_left-10, margin_left + rule_size_in_cm), (margin_left+10, margin_left + rule_size_in_cm), 2)
+        pygame.draw.line(self._background_texture, pygame.Color(255,255,255), (margin_left-10, origin_y_for_smaller_size), (margin_left+10, origin_y_for_smaller_size), 2)
+        min_size_label: pygame.Surface = self.__button_font.render(str(0), True, self.__button_font_color)
+        max_size_label: pygame.Surface = self.__button_font.render(str(rule_size_in_cm), True, self.__button_font_color)
+        self._background_texture.blit(max_size_label, (margin_left+10+10, margin_top-(min_size_label.get_height()/2)))
+        self._background_texture.blit(min_size_label, (margin_left+10+10, origin_y_for_smaller_size-(max_size_label.get_height()/2)))
+    
+    def __draw_rule_range_for_race(self, master: pygame.Surface):
+        margin_top: int = 300
+        margin_left: int = 400
+        rule_size_in_cm: int = 350
+        min_size: int = 0
+        max_size: int = rule_size_in_cm
+        breed_type: BreedType|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__BREED_KEY)
+        gender: Gender|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__GENDER_KEY)
         
-        # Range Rule
+        sizes: tuple[int, int]|None = None
+
+        if ((breed_type is not None) and (gender is not None)):
+            if (breed_type in list(self.__cache_for_characters_sizes.keys())):
+                if (gender in list(self.__cache_for_characters_sizes.get(breed_type).keys())):
+                    sizes = self.__cache_for_characters_sizes.get(breed_type).get(gender)
+                    print(sizes)
+
+        if ((sizes is None) and (breed_type is not None) and (gender is not None)):
+            sizes_in_csv: Csv = CsvReader.read(Path("./resources/size-in-cm.csv"))
+            sizes_found: Optional[list[object]] = sizes_in_csv.get_line_by_header(breed_type.name)
+            if (sizes_found.is_present()):
+                gender_sizes: dict[Gender, tuple[int, int]] = {}
+                gender_sizes[Gender.MAN] = tuple(sizes_found.get()[0:2])
+                gender_sizes[Gender.WOMAN] = tuple(sizes_found.get()[2:4])
+                self.__cache_for_characters_sizes[breed_type] = gender_sizes
+                sizes = gender_sizes.get(gender)
+
+        if (sizes is not None):
+            min_size = sizes[0]
+            max_size = sizes[1]
+
+        origin_y_for_smaller_size: int = margin_top + rule_size_in_cm
+
+        x: int = margin_left
+        min_x: int = x-5
+        max_x: int = x+5
+        min_y: int = origin_y_for_smaller_size-min_size
+        max_y: int = origin_y_for_smaller_size-max_size
+
+        pygame.draw.line(self._background_texture, pygame.Color(0,255,0), (x, min_y), (x, max_y), 4) # Bas en Haut
+        pygame.draw.line(self._background_texture, pygame.Color(0,255,0), (min_x, min_y), (max_x, min_y), 2)
+        pygame.draw.line(self._background_texture, pygame.Color(0,255,0), (min_x, max_y), (max_x, max_y), 2)
         
-        
+        min_size_label: pygame.Surface = self.__button_font.render(str(min_size), True, self.__button_font_color)
+        max_size_label: pygame.Surface = self.__button_font.render(str(max_size), True, self.__button_font_color)
+        self._background_texture.blit(min_size_label, (x+10+10, min_y-(min_size_label.get_height()/2)))
+        self._background_texture.blit(max_size_label, (x+10+10, max_y-(max_size_label.get_height()/2)))
     
     def __draw_avatar(self, master: pygame.Surface):
         self.__draw_rule_size(master)
+        self.__draw_rule_range_for_race(master)
+        
     
     def draw(self, master: pygame.Surface):
+        self._background_texture.fill(self._background_color)
         self.__draw_genders_buttons(master)
         self.__draw_factions_buttons(master)
         self.__draw_breeds_buttons(master)

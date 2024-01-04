@@ -1,5 +1,6 @@
 from enum import Enum
 from rpg.gameplay.attributes import Attribute
+from rpg.gamedesign.interval_system import Range
 
 class BreedTypeValue:
     def __init__(self, name: str) -> None:
@@ -54,6 +55,8 @@ class Human(Breed):
         self._attributes[Attribute.STAMANIA] = 20
         self._attributes[Attribute.INTELLECT] = 20
         self._attributes[Attribute.SPIRIT] = 20
+        
+        
 class Gnome(Breed):
     def __init__(self) -> None:
         super().__init__(BreedType.GNOME)
@@ -62,6 +65,7 @@ class Gnome(Breed):
         self._attributes[Attribute.STAMANIA] = 20
         self._attributes[Attribute.INTELLECT] = 23
         self._attributes[Attribute.SPIRIT] = 20
+        
 class Draenei(Breed):
     def __init__(self) -> None:
         super().__init__(BreedType.DRAENEI)
@@ -70,6 +74,7 @@ class Draenei(Breed):
         self._attributes[Attribute.STAMANIA] = 20
         self._attributes[Attribute.INTELLECT] = 20
         self._attributes[Attribute.SPIRIT] = 22
+        
 class NightElf(Breed):
     def __init__(self) -> None:
         super().__init__(BreedType.NIGHT_ELF)
@@ -78,6 +83,7 @@ class NightElf(Breed):
         self._attributes[Attribute.STAMANIA] = 20
         self._attributes[Attribute.INTELLECT] = 20
         self._attributes[Attribute.SPIRIT] = 20
+        
 class Pandaren(Breed):
     def __init__(self) -> None:
         super().__init__(BreedType.PANDAREN)
@@ -86,6 +92,7 @@ class Pandaren(Breed):
         self._attributes[Attribute.STAMANIA] = 21
         self._attributes[Attribute.INTELLECT] = 19
         self._attributes[Attribute.SPIRIT] = 22
+        
 class Knowrf(Breed):
     def __init__(self) -> None:
         super().__init__(BreedType.KNOWF)
@@ -94,6 +101,7 @@ class Knowrf(Breed):
         self._attributes[Attribute.STAMANIA] = 21
         self._attributes[Attribute.INTELLECT] = 19
         self._attributes[Attribute.SPIRIT] = 19
+        
 class BloodElf(Breed):
     def __init__(self) -> None:
         super().__init__(BreedType.BLOOD_ELF)
@@ -102,6 +110,7 @@ class BloodElf(Breed):
         self._attributes[Attribute.STAMANIA] = 20
         self._attributes[Attribute.INTELLECT] = 23
         self._attributes[Attribute.SPIRIT] = 18
+        
 class Undead(Breed):
     def __init__(self) -> None:
         super().__init__(BreedType.UNDEAD)
@@ -110,6 +119,7 @@ class Undead(Breed):
         self._attributes[Attribute.STAMANIA] = 20
         self._attributes[Attribute.INTELLECT] = 18
         self._attributes[Attribute.SPIRIT] = 25
+        
 class Orc(Breed):
     def __init__(self) -> None:
         super().__init__(BreedType.ORC)
@@ -118,6 +128,7 @@ class Orc(Breed):
         self._attributes[Attribute.STAMANIA] = 21
         self._attributes[Attribute.INTELLECT] = 17
         self._attributes[Attribute.SPIRIT] = 22
+        
 class Troll(Breed):
     def __init__(self) -> None:
         super().__init__(BreedType.TROLL)
@@ -126,6 +137,7 @@ class Troll(Breed):
         self._attributes[Attribute.STAMANIA] = 20
         self._attributes[Attribute.INTELLECT] = 16
         self._attributes[Attribute.SPIRIT] = 21
+        
 class Tauren(Breed):
     def __init__(self) -> None:
         super().__init__(BreedType.TAUREN)
@@ -134,6 +146,7 @@ class Tauren(Breed):
         self._attributes[Attribute.STAMANIA] = 21
         self._attributes[Attribute.INTELLECT] = 16
         self._attributes[Attribute.SPIRIT] = 22
+        
 class Goblin(Breed):
     def __init__(self) -> None:
         super().__init__(BreedType.GOBLIN)
@@ -142,6 +155,7 @@ class Goblin(Breed):
         self._attributes[Attribute.STAMANIA] = 20
         self._attributes[Attribute.INTELLECT] = 17
         self._attributes[Attribute.SPIRIT] = 18
+        
 class Worgen(Breed):
     def __init__(self) -> None:
         super().__init__(BreedType.WORGEN)
@@ -150,6 +164,7 @@ class Worgen(Breed):
         self._attributes[Attribute.STAMANIA] = 20
         self._attributes[Attribute.INTELLECT] = 14
         self._attributes[Attribute.SPIRIT] = 19
+        
 
 
 class BreedFactory:

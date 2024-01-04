@@ -1,11 +1,11 @@
-from typing import TypeVar
+from typing import TypeVar, Generic
 T = TypeVar('T')
 
 class NoSuchElementException(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
-class Optional:
+class Optional(Generic[T]):
     """
     A container object which may or may not contain a non-null value. If a value is present, isPresent() will return true and get() will return the value.
     
@@ -85,7 +85,6 @@ class Color:
         return self.__alpha
     def to_tuple(self) -> tuple[int, int, int, int]:
         return (self.red, self.green, self.blue, self.alpha)
-    
 
 class SingletonMeta(type):
     """
