@@ -1,15 +1,70 @@
 from enum import Enum
+from pathlib import Path
 from rpg.gameplay.attributes import Attribute
 from rpg.gamedesign.interval_system import Range
+from rpg.gameplay.physiology import Morphology
+from rpg.csv import Csv, CsvReader
+from rpg.utils import Optional
+from rpg.gameplay.genders import Gender
 
 class BreedTypeValue:
     def __init__(self, name: str) -> None:
         self.__name: str = name
+        self.__morphologies: dict[Gender, Morphology] = {}
         
+        sizes_in_csv: Csv = CsvReader.read(Path("./resources/size-in-cm.csv"))
+        weight_in_csv: Csv = CsvReader.read(Path("./resources/weight-in-kg.csv"))
+        body_proportions_in_csv: Csv = CsvReader.read(Path("./resources/body-proportions.csv"))
+        
+        potential_sizes: Optional[list[object]] = sizes_in_csv.get_line_by_header(name)
+        potential_weights: Optional[list[object]] = weight_in_csv.get_line_by_header(name)
+        potential_head: Optional[list[object]] = body_proportions_in_csv.get_line_by_header("head")
+        potential_neck: Optional[list[object]] = body_proportions_in_csv.get_line_by_header("neck")
+        potential_arm: Optional[list[object]] = body_proportions_in_csv.get_line_by_header("arm")
+        potential_hand: Optional[list[object]] = body_proportions_in_csv.get_line_by_header("hand")
+        potential_body: Optional[list[object]] = body_proportions_in_csv.get_line_by_header("body")
+        potential_leg: Optional[list[object]] = body_proportions_in_csv.get_line_by_header("leg")
+        potential_foot: Optional[list[object]] = body_proportions_in_csv.get_line_by_header("foot")
+        if (potential_sizes.is_present() and potential_weights.is_present()):
+            sizes: list[int] = potential_sizes.get()
+            weights: list[int] = potential_weights.get()
+            head: list[int] = potential_head.get()
+            neck: list[int] = potential_neck.get()
+            arm: list[int] = potential_arm.get()
+            hand: list[int] = potential_hand.get()
+            body: list[int] = potential_body.get()
+            leg: list[int] = potential_leg.get()
+            foot: list[int] = potential_foot.get()
+            male_morphology = Morphology(
+                size=Range(sizes[0], sizes[1]), 
+                weight=Range(weights[0], weights[1]), 
+                arm_proportion=Range(arm[0], arm[1]),
+                body_proportion=Range(body[0], body[1]),
+                foot_proportion=Range(foot[0], foot[1]),
+                hand_proportion=Range(hand[0], hand[1]),
+                head_proportion=Range(head[0], head[1]),
+                leg_proportion=Range(leg[0], leg[1]),
+                neck_proportion=Range(neck[0], neck[1]))
+            female_morphology = Morphology(
+                size=Range(sizes[2], sizes[3]), 
+                weight=Range(weights[2], weights[3]),
+                arm_proportion=Range(arm[2], arm[3]),
+                body_proportion=Range(body[2], body[3]),
+                foot_proportion=Range(foot[2], foot[3]),
+                hand_proportion=Range(hand[2], hand[3]),
+                head_proportion=Range(head[2], head[3]),
+                leg_proportion=Range(leg[2], leg[3]),
+                neck_proportion=Range(neck[2], neck[3]))
+            self.__morphologies[Gender.MAN] = male_morphology
+            self.__morphologies[Gender.WOMAN] = female_morphology
     @property
     def name(self) -> str:
         return self.__name
 
+    def get_morphology(self, gender: Gender) -> Morphology:
+        if (gender is None):
+            raise ValueError()
+        return self.__morphologies.get(gender)
 
 class BreedType(Enum):
     HUMAN: BreedTypeValue = BreedTypeValue("HUMAN")

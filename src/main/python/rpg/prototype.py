@@ -6,7 +6,7 @@ from rpg.gameplay.classes import Class, ClassFactory
 from rpg.gameplay.genders import Gender
 from rpg.gamedesign.faction_system import Faction
 from rpg.gameplay.weapons import WeaponFactory, StuffPartType, QualityType, Range
-from rpg.csv import CsvReader, Csv
+from rpg.gameplay.physiology import SkeletonFactory
 
 def main():
     # name: str = "Hextanktion"
@@ -19,9 +19,11 @@ def main():
     # print(player.character_class.right_hand_weapon.gem_box.maximum_capacity)
     # print(player.character_class.right_hand_weapon)
     
-    csv = CsvReader.read(Path("C:/Users/NicolasMetivier/Documents/personal/rpg/src/main/python/rpg/resources/size-in-cm.csv"))
-    print(csv.get_line_by_header("draenei").get())
-    print(csv.get_column_by_header("woman_min").get())
+    # csv = CsvReader.read(Path("C:/Users/NicolasMetivier/Documents/personal/rpg/src/main/python/rpg/resources/size-in-cm.csv"))
+    # print(csv.get_line_by_header("draenei").get())
+    # print(csv.get_column_by_header("woman_min").get())
+    
+    SkeletonFactory.create_humanoid_skeleton(BreedFactory.blood_elf().breed_type.value.get_morphology(Gender.MAN))
 
 if (__name__ == "__main__"):
     main()

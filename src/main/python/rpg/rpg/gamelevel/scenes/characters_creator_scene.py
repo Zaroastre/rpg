@@ -8,7 +8,8 @@ from rpg.gameplay.breeds import BreedFactory, BreedType
 from rpg.gameplay.classes import ClassFactory, ClassType
 from rpg.gameplay.genders import Gender
 from rpg.gameplay.player import Player
-from rpg.csv import CsvReader, Csv, Optional
+from rpg.gameplay.physiology import Morphology, Skeleton, SkeletonFactory, BodyPart
+from rpg.gamedesign.geolocation_system import Position
 
 
 class CharacterCreationScreen(Scene):
@@ -17,6 +18,13 @@ class CharacterCreationScreen(Scene):
     __BREED_KEY: str = "breed"
     __CLASS_KEY: str = "class"
     __NAME_KEY: str = "name"
+    __HEIGHT_KEY: str = "height"
+    __SKELETON_KEY: str = "skeleton"
+    
+    __MAX_VERTICAL_RULE_HEIGHT_IN_CM: int = 350
+    __VERTICAL_RULE_MARGIN_TOP: int = 300
+    __VERTICAL_RULE_MARGIN_LEFT: int = 400
+    
     def __init__(self, width: int, height: int, player: Player) -> None:
         super().__init__(width, height, player)
         self.__button_font_size: int = 22
@@ -34,12 +42,13 @@ class CharacterCreationScreen(Scene):
         self.__selected_slot_index: int = 0
         self.__hover_slot_index: int = 0
         
-        self.__cache_for_characters_sizes: dict[BreedType, dict[Gender, tuple[int, int]]] = {}
-        
         self.__selected_gender_index: int = 0
         self.__selected_faction_index: int = 0
         self.__selected_breed_index: int = 0
         self.__selected_class_index: int = 0
+
+        self.__cursor_rule_height: pygame.Rect|None = None
+        self.__is_allowed_to_change_avatar_height: bool = False
         
         selected_configuration: dict[str, object] = {}
         selected_configuration[CharacterCreationScreen.__BREED_KEY]=None
@@ -47,6 +56,8 @@ class CharacterCreationScreen(Scene):
         selected_configuration[CharacterCreationScreen.__GENDER_KEY]=None
         selected_configuration[CharacterCreationScreen.__NAME_KEY]=None
         selected_configuration[CharacterCreationScreen.__FACTION_KEY]=None
+        selected_configuration[CharacterCreationScreen.__HEIGHT_KEY]=None
+        selected_configuration[CharacterCreationScreen.__SKELETON_KEY]=None
         self.__characters_configurations[self.__selected_slot_index] = selected_configuration
         self.__is_selecting_gender: bool = False
         self.__is_selecting_faction: bool = False
@@ -290,7 +301,30 @@ class CharacterCreationScreen(Scene):
                         selected_configuration[CharacterCreationScreen.__GENDER_KEY]=None
                         selected_configuration[CharacterCreationScreen.__NAME_KEY]=None
                         selected_configuration[CharacterCreationScreen.__FACTION_KEY]=None
+                        selected_configuration[CharacterCreationScreen.__HEIGHT_KEY]=None
+                        selected_configuration[CharacterCreationScreen.__SKELETON_KEY]=None
                         self.__characters_configurations[self.__selected_slot_index] = selected_configuration
+            elif (event.type == pygame.MOUSEBUTTONDOWN):
+                mouse_position: tuple[int, int] = pygame.mouse.get_pos()
+                if (self.__cursor_rule_height is not None):
+                    if (self.__cursor_rule_height.collidepoint(mouse_position)):
+                        self.__is_allowed_to_change_avatar_height = True
+            elif (event.type == pygame.MOUSEBUTTONUP):
+                if (self.__is_allowed_to_change_avatar_height):
+                    self.__is_allowed_to_change_avatar_height = False
+            elif (event.type == pygame.MOUSEMOTION):
+                if (self.__is_allowed_to_change_avatar_height):
+                    mouse_position: tuple[int, int] = pygame.mouse.get_pos()
+                    height:int = (CharacterCreationScreen.__VERTICAL_RULE_MARGIN_TOP + CharacterCreationScreen.__MAX_VERTICAL_RULE_HEIGHT_IN_CM)-mouse_position[1]
+                    breed_type: BreedType|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__BREED_KEY)
+                    gender: Gender|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__GENDER_KEY)
+                    morphology: Morphology = breed_type.value.get_morphology(gender)
+                    if (height < morphology.size.minimum):
+                        height = morphology.size.minimum
+                    elif (height > morphology.size.maximum):
+                        height = morphology.size.maximum
+                    self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__HEIGHT_KEY] = height
+
     def __draw_genders_buttons(self, master: pygame.Surface):
         space_between_each_buttons: int = 50
         button_width: int = 100
@@ -479,10 +513,10 @@ class CharacterCreationScreen(Scene):
         self._background_texture.blit(button, ((self.width-button.get_width()), (self.height - button.get_height())))
     
     def __draw_rule_size(self, master: pygame.Surface):
-        margin_top: int = 300
-        margin_left: int = 400
-        rule_size_in_cm: int = 350
-        origin_y_for_smaller_size: int = margin_left + rule_size_in_cm
+        margin_top: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_TOP
+        margin_left: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_LEFT
+        rule_size_in_cm: int = CharacterCreationScreen.__MAX_VERTICAL_RULE_HEIGHT_IN_CM
+        origin_y_for_smaller_size: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_TOP + rule_size_in_cm
         
         # Full Rule
         pygame.draw.line(self._background_texture, pygame.Color(255,255,255), (margin_left, margin_top), (margin_left, origin_y_for_smaller_size), 2)
@@ -492,37 +526,24 @@ class CharacterCreationScreen(Scene):
         max_size_label: pygame.Surface = self.__button_font.render(str(rule_size_in_cm), True, self.__button_font_color)
         self._background_texture.blit(max_size_label, (margin_left+10+10, margin_top-(min_size_label.get_height()/2)))
         self._background_texture.blit(min_size_label, (margin_left+10+10, origin_y_for_smaller_size-(max_size_label.get_height()/2)))
-    
+
     def __draw_rule_range_for_race(self, master: pygame.Surface):
-        margin_top: int = 300
-        margin_left: int = 400
-        rule_size_in_cm: int = 350
+        margin_top: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_TOP
+        margin_left: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_LEFT
+        rule_size_in_cm: int = CharacterCreationScreen.__MAX_VERTICAL_RULE_HEIGHT_IN_CM
         min_size: int = 0
         max_size: int = rule_size_in_cm
         breed_type: BreedType|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__BREED_KEY)
         gender: Gender|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__GENDER_KEY)
         
-        sizes: tuple[int, int]|None = None
+        morphology: Morphology|None = None
 
         if ((breed_type is not None) and (gender is not None)):
-            if (breed_type in list(self.__cache_for_characters_sizes.keys())):
-                if (gender in list(self.__cache_for_characters_sizes.get(breed_type).keys())):
-                    sizes = self.__cache_for_characters_sizes.get(breed_type).get(gender)
-                    print(sizes)
+            morphology = breed_type.value.get_morphology(gender)
 
-        if ((sizes is None) and (breed_type is not None) and (gender is not None)):
-            sizes_in_csv: Csv = CsvReader.read(Path("./resources/size-in-cm.csv"))
-            sizes_found: Optional[list[object]] = sizes_in_csv.get_line_by_header(breed_type.name)
-            if (sizes_found.is_present()):
-                gender_sizes: dict[Gender, tuple[int, int]] = {}
-                gender_sizes[Gender.MAN] = tuple(sizes_found.get()[0:2])
-                gender_sizes[Gender.WOMAN] = tuple(sizes_found.get()[2:4])
-                self.__cache_for_characters_sizes[breed_type] = gender_sizes
-                sizes = gender_sizes.get(gender)
-
-        if (sizes is not None):
-            min_size = sizes[0]
-            max_size = sizes[1]
+        if (morphology is not None):
+            min_size = morphology.size.minimum
+            max_size = morphology.size.maximum
 
         origin_y_for_smaller_size: int = margin_top + rule_size_in_cm
 
@@ -541,9 +562,56 @@ class CharacterCreationScreen(Scene):
         self._background_texture.blit(min_size_label, (x+10+10, min_y-(min_size_label.get_height()/2)))
         self._background_texture.blit(max_size_label, (x+10+10, max_y-(max_size_label.get_height()/2)))
     
+    def __draw_selected_cursor_size(self, master: pygame.Surface):
+        margin_top: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_TOP
+        margin_left: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_LEFT
+        rule_size_in_cm: int = CharacterCreationScreen.__MAX_VERTICAL_RULE_HEIGHT_IN_CM
+        triangle_length: int = 20
+        triangle_height: int = 10
+        
+        breed_type: BreedType|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__BREED_KEY)
+        gender: Gender|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__GENDER_KEY)
+        
+        if ((breed_type is not None) and (gender is not None)):
+            sizes = [breed_type.value.get_morphology(gender).size.minimum, breed_type.value.get_morphology(gender).size.maximum]
+            height: int|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__HEIGHT_KEY)
+            if (height is None):
+                height = int(sum(sizes)/(len(sizes)))
+            self.__cursor_rule_height = pygame.draw.polygon(self._background_texture, (0,255,0), ((margin_left-(triangle_length/2), (margin_top+rule_size_in_cm)-height), (margin_left-triangle_length, (margin_top+rule_size_in_cm)-(height+triangle_height)), (margin_left-triangle_length, (margin_top+rule_size_in_cm)-(height-triangle_height)))) # middle_right, top_left, bottom_left
+    
+            selected_height_label: pygame.Surface = self.__button_font.render(str(height), True, (0,255,0))
+            self._background_texture.blit(selected_height_label, ((margin_left-(triangle_length+selected_height_label.get_width())-10), ((margin_top+rule_size_in_cm)-(height+(selected_height_label.get_height()/2)))))
+
+    def __draw_avatar_skeleton(self, master: pygame.Surface):
+        rule_size_in_cm: int = CharacterCreationScreen.__MAX_VERTICAL_RULE_HEIGHT_IN_CM
+        origin_y_for_smaller_size: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_TOP + rule_size_in_cm
+        
+        breed_type: BreedType|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__BREED_KEY)
+        gender: Gender|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__GENDER_KEY)
+        if ((breed_type is not None) and (gender is not None)):
+            skeleton: Skeleton|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__SKELETON_KEY)
+            if (skeleton is None):
+                sizes = [breed_type.value.get_morphology(gender).size.minimum, breed_type.value.get_morphology(gender).size.maximum]
+                height: int|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__HEIGHT_KEY)
+                if (height is None):
+                    height = int(sum(sizes)/(len(sizes)))
+                skeleton = SkeletonFactory.create_humanoid_skeleton(breed_type.value.get_morphology(gender), height=height)
+                print(skeleton.size, skeleton.corpulence)
+                
+            for joint in skeleton.joints:
+                vertical_offset = origin_y_for_smaller_size - max(joint.position.y for joint in skeleton.joints)
+                horizontal_offset = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_LEFT+height
+                pygame.draw.circle(self._background_texture, (255,0,0), [joint.position.x+horizontal_offset, joint.position.y+vertical_offset], 5)
+                if (joint.parent is not None):
+                    pygame.draw.line(self._background_texture, (255,255,255), (joint.position.x+horizontal_offset, joint.position.y+vertical_offset), (joint.parent.position.x+horizontal_offset, joint.parent.position.y+vertical_offset))
+                # body_part_label: pygame.Surface = self.__button_font.render(joint.body_part.name, True, (0,255,0))
+                # self._background_texture.blit(body_part_label, (joint.position.x, joint.position.y))
+   
     def __draw_avatar(self, master: pygame.Surface):
         self.__draw_rule_size(master)
         self.__draw_rule_range_for_race(master)
+        self.__draw_selected_cursor_size(master)
+        self.__draw_avatar_skeleton(master)
         
     
     def draw(self, master: pygame.Surface):
