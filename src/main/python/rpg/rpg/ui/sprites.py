@@ -1,12 +1,71 @@
 from math import sqrt
 
 import pygame
+from pygame.event import Event
 import rpg.constants
 from rpg.characters import Character, Enemy, Projectil
 from rpg.gameapi import Draw, InputEventHandler
 from rpg.gameplay.teams import Group
 from rpg.math.geometry import Geometry, Position
+from rpg.gameplay.physiology import Skeleton, Joint
 
+class JointSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
+    def __init__(self, joint: Joint, sprites_group: pygame.sprite.Group) -> None:
+        pygame.sprite.Sprite.__init__(self, sprites_group)
+        self.__joint: Joint = joint
+        self.image = pygame.Surface((self.__joint.radius*2, self.__joint.radius*2), pygame.SRCALPHA)        
+        self.rect = pygame.Rect(0, 0, self.image.get_width(), self.image.get_height())
+        self.__hitbox: pygame.Rect = None
+        self.offset: pygame.math.Vector2 = pygame.math.Vector2()
+        self.__must_display_rotation_circle: bool = False
+
+    @property
+    def joint(self) -> Joint:
+        return self.__joint
+    
+    def handle(self, event: Event):
+        mouse_position: tuple[int, int] = pygame.mouse.get_pos()
+        if (self.rect is not None):
+            self.__must_display_rotation_circle = self.rect.collidepoint(mouse_position)
+        if (self.__must_display_rotation_circle):
+            raise Exception("Stop")
+    
+    def draw(self, master: pygame.Surface):
+        self.rect = pygame.draw.circle(master, (255,0,0), [self.joint.position.x+self.offset.x, self.joint.position.y+self.offset.y], 5)
+        if (self.__must_display_rotation_circle):
+            print(self.__must_display_rotation_circle)
+            pygame.draw.circle(master, (0,255,0), [self.joint.position.x+self.offset.x, self.joint.position.y+self.offset.y], 20, 2)
+            
+
+
+class SkeletonSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
+    def __init__(self, skeleton: Skeleton, sprites_group: pygame.sprite.Group) -> None:
+        pygame.sprite.Sprite.__init__(self, sprites_group)
+        self.__joints_sprites: list[JointSprite] = []
+        self.image = pygame.Surface((skeleton.size, skeleton.size), pygame.SRCALPHA)        
+        self.rect = pygame.Rect(0, 0, self.image.get_width(), self.image.get_height())
+        self.__hitbox: pygame.Rect = None
+        self.offset: pygame.math.Vector2 = pygame.math.Vector2()
+        for joint in skeleton.joints:
+            joint_sprite: JointSprite = JointSprite(joint, pygame.sprite.Group())
+            joint_sprite.offset = self.offset
+            self.__joints_sprites.append(joint_sprite)
+            
+    
+    def handle(self, event: pygame.event.Event):
+        if event is not None:
+            for joints_sprite in self.__joints_sprites:
+                joints_sprite.handle(event)
+    
+    def draw(self, master: pygame.Surface):
+        vertical_offset = self.offset.y - max(joint_sprite.joint.position.y for joint_sprite in self.__joints_sprites)
+        horizontal_offset = self.offset.x
+        for joint_sprite in self.__joints_sprites:
+            if (joint_sprite.joint.parent is not None):
+                pygame.draw.line(master, (255,255,255), (joint_sprite.joint.position.x+self.offset.x, joint_sprite.joint.position.y+self.offset.y), (joint_sprite.joint.parent.position.x+self.offset.x, joint_sprite.joint.parent.position.y+self.offset.y))
+            joint_sprite.offset.x = horizontal_offset
+            joint_sprite.offset.y = vertical_offset
+            joint_sprite.draw(master)
 
 class ProjectilSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
     HEALTH_COLOR: pygame.Color = pygame.Color(0, 200, 0)

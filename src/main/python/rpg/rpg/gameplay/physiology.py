@@ -183,9 +183,10 @@ class Skeleton:
     
     @property
     def size(self) -> int:
-        head: Bone = [bone for bone in self.__bones if bone.body_part == BodyPart.HEAD][0]
-        foot: Bone = [bone for bone in self.__bones if bone.body_part == BodyPart.LEFT_FOOT][0]
-        return abs(foot.position.y - head.position.y)
+        # head: Bone = [bone for bone in self.__bones if bone.body_part == BodyPart.HEAD][0]
+        # foot: Bone = [bone for bone in self.__bones if bone.body_part == BodyPart.LEFT_FOOT][0]
+        # return abs(foot.position.y - head.position.y)
+        return 0
     @property
     def corpulence(self) -> int:
         left_hip: Joint = [joint for joint in self.__joints if joint.body_part == BodyPart.LEFT_HIP][0]

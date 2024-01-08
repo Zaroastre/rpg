@@ -10,6 +10,7 @@ from rpg.gameplay.genders import Gender
 from rpg.gameplay.player import Player
 from rpg.gameplay.physiology import Morphology, Skeleton, SkeletonFactory, BodyPart
 from rpg.gamedesign.geolocation_system import Position
+from rpg.ui.sprites import SkeletonSprite
 
 
 class CharacterCreationScreen(Scene):
@@ -20,6 +21,7 @@ class CharacterCreationScreen(Scene):
     __NAME_KEY: str = "name"
     __HEIGHT_KEY: str = "height"
     __SKELETON_KEY: str = "skeleton"
+    __SKELETON_SPRITE_KEY: str = "skeleton_sprite"
     
     __MAX_VERTICAL_RULE_HEIGHT_IN_CM: int = 350
     __VERTICAL_RULE_MARGIN_TOP: int = 300
@@ -58,6 +60,7 @@ class CharacterCreationScreen(Scene):
         selected_configuration[CharacterCreationScreen.__FACTION_KEY]=None
         selected_configuration[CharacterCreationScreen.__HEIGHT_KEY]=None
         selected_configuration[CharacterCreationScreen.__SKELETON_KEY]=None
+        selected_configuration[CharacterCreationScreen.__SKELETON_SPRITE_KEY]=None
         self.__characters_configurations[self.__selected_slot_index] = selected_configuration
         self.__is_selecting_gender: bool = False
         self.__is_selecting_faction: bool = False
@@ -303,6 +306,7 @@ class CharacterCreationScreen(Scene):
                         selected_configuration[CharacterCreationScreen.__FACTION_KEY]=None
                         selected_configuration[CharacterCreationScreen.__HEIGHT_KEY]=None
                         selected_configuration[CharacterCreationScreen.__SKELETON_KEY]=None
+                        selected_configuration[CharacterCreationScreen.__SKELETON_SPRITE_KEY]=None
                         self.__characters_configurations[self.__selected_slot_index] = selected_configuration
             elif (event.type == pygame.MOUSEBUTTONDOWN):
                 mouse_position: tuple[int, int] = pygame.mouse.get_pos()
@@ -324,6 +328,11 @@ class CharacterCreationScreen(Scene):
                     elif (height > morphology.size.maximum):
                         height = morphology.size.maximum
                     self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__HEIGHT_KEY] = height
+
+            mouse_position: tuple[int, int] = pygame.mouse.get_pos()
+            skeleton_sprite: SkeletonSprite|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__SKELETON_SPRITE_KEY)
+            if (skeleton_sprite is not None):
+                skeleton_sprite.handle(event)
 
     def __draw_genders_buttons(self, master: pygame.Surface):
         space_between_each_buttons: int = 50
@@ -590,22 +599,30 @@ class CharacterCreationScreen(Scene):
         gender: Gender|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__GENDER_KEY)
         if ((breed_type is not None) and (gender is not None)):
             skeleton: Skeleton|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__SKELETON_KEY)
+            skeleton_sprite: SkeletonSprite|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__SKELETON_SPRITE_KEY)
+            height: int|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__HEIGHT_KEY)
+            skeleton_must_be_updated: bool = False
             if (skeleton is None):
                 sizes = [breed_type.value.get_morphology(gender).size.minimum, breed_type.value.get_morphology(gender).size.maximum]
-                height: int|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__HEIGHT_KEY)
                 if (height is None):
                     height = int(sum(sizes)/(len(sizes)))
                 skeleton = SkeletonFactory.create_humanoid_skeleton(breed_type.value.get_morphology(gender), height=height)
-                print(skeleton.size, skeleton.corpulence)
-                
-            for joint in skeleton.joints:
-                vertical_offset = origin_y_for_smaller_size - max(joint.position.y for joint in skeleton.joints)
-                horizontal_offset = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_LEFT+height
-                pygame.draw.circle(self._background_texture, (255,0,0), [joint.position.x+horizontal_offset, joint.position.y+vertical_offset], 5)
-                if (joint.parent is not None):
-                    pygame.draw.line(self._background_texture, (255,255,255), (joint.position.x+horizontal_offset, joint.position.y+vertical_offset), (joint.parent.position.x+horizontal_offset, joint.parent.position.y+vertical_offset))
-                # body_part_label: pygame.Surface = self.__button_font.render(joint.body_part.name, True, (0,255,0))
-                # self._background_texture.blit(body_part_label, (joint.position.x, joint.position.y))
+                skeleton_must_be_updated = True
+            else:
+                if ((height is not None) and (height != skeleton.size)):
+                    skeleton = SkeletonFactory.create_humanoid_skeleton(breed_type.value.get_morphology(gender), height=height)
+                    skeleton_must_be_updated = True
+            
+            if (skeleton_must_be_updated):
+                self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__SKELETON_KEY] = skeleton
+                self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__SKELETON_SPRITE_KEY] = skeleton_sprite
+                skeleton_sprite = SkeletonSprite(skeleton, pygame.sprite.Group())
+                self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__SKELETON_SPRITE_KEY] = skeleton_sprite
+                skeleton_sprite.offset.y = origin_y_for_smaller_size
+                skeleton_sprite.offset.x = self._background_texture.get_width()/2
+
+            if (skeleton_sprite is not None):
+                skeleton_sprite.draw(self._background_texture)
    
     def __draw_avatar(self, master: pygame.Surface):
         self.__draw_rule_size(master)
