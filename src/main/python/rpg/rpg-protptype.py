@@ -87,7 +87,6 @@ class App:
         self.__scene.set_event_listener_on_go_to_menu(self.__replace_scene_by_main_menu_scene)
         self.__scene.set_event_listener_on_play_again(self.__replace_scene_by_continue_game_scene)
 
-    
     def __handle(self):
         events: list[pygame.event.Event] = pygame.event.get()
         if (len(events) > 0):

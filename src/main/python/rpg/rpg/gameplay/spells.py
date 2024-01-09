@@ -47,11 +47,11 @@ class SpellTypeValue:
         return self.__name
 
 class SpellType(Enum):
-    HEALTH_OVER_TIME: SpellTypeValue = SpellTypeValue("HEALTH_OVER_TIME"),
-    INCREASE_STAT_OVER_TIME: SpellTypeValue = SpellTypeValue("INCREASE_STAT_OVER_TIME"),
-    DAMAGE_OVER_TIME: SpellTypeValue = SpellTypeValue("DAMAGE_OVER_TIME"),
-    DECREASE_STAT_OVER_TIME: SpellTypeValue = SpellTypeValue("DECREASE_STAT_OVER_TIME"),
-    HEALTH: SpellTypeValue = SpellTypeValue("HEALTH"),
+    HEALTH_OVER_TIME: SpellTypeValue = SpellTypeValue("HEALTH_OVER_TIME")
+    INCREASE_STAT_OVER_TIME: SpellTypeValue = SpellTypeValue("INCREASE_STAT_OVER_TIME")
+    DAMAGE_OVER_TIME: SpellTypeValue = SpellTypeValue("DAMAGE_OVER_TIME")
+    DECREASE_STAT_OVER_TIME: SpellTypeValue = SpellTypeValue("DECREASE_STAT_OVER_TIME")
+    HEALTH: SpellTypeValue = SpellTypeValue("HEALTH")
     DAMAGE: SpellTypeValue = SpellTypeValue("DAMAGE")
 
 class Spell(ABC):

@@ -4,7 +4,7 @@ from multiprocessing import Lock
 def synchonized(member):
     @wraps(member)
     def wrapper(*args, **kwargs):
-        lock = vars(member).get("_synchronized_lock", None)
+        lock: Lock|None = vars(member).get("_synchronized_lock", None)
         result: str = ""
         try:
             if (lock is None):

@@ -200,4 +200,6 @@ class Enemy(Character):
     
     def is_arrived_to_default_position(self) -> bool:
         return Position.are_equivalent(self.current_position, self.default_position, 1)
-    
+
+class EnemyFactory:
+    pass

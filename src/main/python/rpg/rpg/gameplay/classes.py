@@ -497,7 +497,7 @@ class DeathKnight(Class):
 class ClassFactory:
     @staticmethod
     def create(class_type: ClassType) -> Class:
-        character_class: Class = None
+        character_class: Class
         if (class_type is None):
             raise ValueError()
         match class_type:

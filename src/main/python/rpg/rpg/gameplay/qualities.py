@@ -3,7 +3,6 @@ from enum import Enum
 
 from rpg.utils import Color
 
-
 class QualityTypeValue:
     def __init__(self, name: str, color: Color) -> None:
         self.__name: str = name

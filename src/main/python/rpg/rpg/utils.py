@@ -64,7 +64,6 @@ class Optional(Generic[T]):
         """
         return Optional(None)
 
-
 class Color:
     def __init__(self, red: int, green: int, blue: int, alpha: int = 255) -> None:
         self.__red: int = red

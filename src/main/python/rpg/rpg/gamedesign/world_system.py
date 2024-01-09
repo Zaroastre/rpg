@@ -49,3 +49,43 @@ class Radar:
     @property
     def world_map(self) -> Map:
         return self.__map
+
+class RegionBuilder:
+    def __init__(self, name: str) -> None:
+        self.__name: str = name
+        self.__cities: list[City] = []
+
+    def with_city(self, city: City):
+        self.__cities.append(city)
+        return self
+
+    def build(self) -> Region:
+        return Region(self.__name, self.__cities)
+
+class ContinentBuilder:
+    def __init__(self, name: str) -> None:
+        self.__name: str = name
+        self.__regions: list[City] = []
+
+    def with_region(self, region: Region):
+        self.__regions.append(region)
+        return self
+
+    def build(self) -> Continent:
+        return Continent(self.__name, self.__regions)
+
+
+class WorldBuilder:
+    def __init__(self) -> None:
+        self.__continents: list[Continent] = []
+
+    def continent(self):
+        self.__continents.append(continent)
+        return ContinentBuilder()
+
+    def build(self) -> World:
+        return World(self.__continents)
+    
+
+world = WorldBuilder()
+world.continent()

@@ -61,8 +61,6 @@ class Life:
             maximum_boosts = sum([boost.maximum for boost in self.__boost], 0)
         return self.__maximum + maximum_boosts
     
-    # def up()
-
     @property
     def current(self) -> int:
         current_boosts: int = 0
@@ -88,6 +86,8 @@ class Life:
     
     @synchonized
     def heal(self, points: int):
+        if ((points is None) or (points < 0)):
+            raise ValueError()    
         self.__current += points
         if (self.__current > self.__maximum):
             self.__current = self.__maximum
@@ -103,25 +103,22 @@ class Life:
             callback()
     
     def win_boost(self, boost_life):
-        if (isinstance(boost_life, Life)):
+        if ((boost_life is not None) and (isinstance(boost_life, Life))):
             self.__boost.append(boost_life)
-        if (self.__on_boost_win is not None):
-            self.__on_boost_win(boost_life)
+            if (self.__on_boost_win is not None):
+                self.__on_boost_win(boost_life)
     
     def loose_boost(self, boost_life):
-        if (isinstance(boost_life, Life)):
-            if (boost_life in self.__boost):
-                self.__boost.remove(boost_life)
+        if ((boost_life is not None) and (isinstance(boost_life, Life)) and (boost_life in self.__boost)):
+            self.__boost.remove(boost_life)
+            if (self.__on_boost_lost is not None):
+                self.__on_boost_lost(boost_life)
         if (self.__current > self.__maximum):
             self.__current = self.__maximum
-        if (self.__on_boost_lost is not None):
-            self.__on_boost_lost(boost_life)
 
 class FormOfLife:
     def __init__(self) -> None:
         self.__life: Life = Life(100, 100)
-        # self.__on_suffered_damage: callable = None
-        # self.__on_inflicted_damage: callable = None
 
     @property
     def life(self) -> Life:
@@ -143,7 +140,7 @@ class BaseCharacter(FormOfLife, Tracker):
         self.__attack_speed: float = 2.6
         self.is_in_fight_mode: bool = False
         
-        self.__move_speed: int = 2.5
+        self.__move_speed: float = 2.5
         
         self.__level.set_on_level_up_event_listener(self.__on_level_up_handler)
         self.__health_regeneration: HealthRegenerationThread = HealthRegenerationThread(self)

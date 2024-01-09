@@ -4,8 +4,7 @@ from abc import abstractmethod
 from rpg.gameplay.attributes import Attribute
 
 class GemTypeValue:
-    def __init__(self) -> None:
-        pass
+    pass
 
 class GemType(Enum):
     RED: GemTypeValue = GemTypeValue()
