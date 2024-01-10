@@ -1,5 +1,6 @@
 import pygame
 from pathlib import Path
+from math import radians, cos, sin, atan2, sqrt
 from rpg.characters import Character
 from rpg.gamedesign.faction_system import Faction
 from rpg.gamelevel.scenes.scenes import Scene
@@ -8,9 +9,10 @@ from rpg.gameplay.breeds import BreedFactory, BreedType
 from rpg.gameplay.classes import ClassFactory, ClassType
 from rpg.gameplay.genders import Gender
 from rpg.gameplay.player import Player
-from rpg.gameplay.physiology import Morphology, Skeleton, SkeletonFactory, BodyPart
+from rpg.gameplay.physiology import Morphology, Skeleton, SkeletonFactory, BodyPart, Joint
 from rpg.gamedesign.geolocation_system import Position
 from rpg.ui.sprites import SkeletonSprite
+from rpg.math.geometry import Geometry
 
 
 class CharacterCreationScreen(Scene):
@@ -38,6 +40,7 @@ class CharacterCreationScreen(Scene):
         self.__unselected_button_background_color: pygame.Color = pygame.Color(0, 0, 0)
         self.__selected_button_background_color: pygame.Color = self.__button_border_color
         self.__maximum_character: int = 5
+        self.__selected_joint: Joint|None = None
         self.__characters_configurations: list[dict[str, object]] = []
         for _ in range(self.__maximum_character):
             self.__characters_configurations.append(None)
@@ -208,6 +211,53 @@ class CharacterCreationScreen(Scene):
                 self.__is_selecting_faction = False
                 self.__is_selecting_gender = False
 
+    def __handle_select_joint(self, event: pygame.event.Event):
+        skeleton_sprite: SkeletonSprite|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__SKELETON_SPRITE_KEY)
+        if (skeleton_sprite is not None):
+            if (event.type == pygame.MOUSEBUTTONDOWN):
+                mouse_position: tuple[int, int] = pygame.mouse.get_pos()
+                print(mouse_position)
+                for joint_sprite in skeleton_sprite.joints_sprites:
+                    if joint_sprite.rect.collidepoint(mouse_position):
+                        print("selected!")
+                        self.__selected_joint = joint_sprite.joint
+                        break
+    def __retrieve_children(self, parent: Joint) -> list[Joint]:
+        print(f"Retrieve list of childre for POINT {parent.name}")
+        skeleton: Skeleton = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__SKELETON_KEY)
+        children: list[Joint] = [point for point in skeleton.joints if point.parent == parent]
+        for child in children:
+            depth_children: list[Joint] = self.__retrieve_children(child)
+            for depth_child in depth_children:
+                children.append(depth_child)
+        children = list(set(children))
+        print("Children are: " + str(children))
+        return list(set(children))
+    
+    def __handle_process_joint_rotation(self, event: pygame.event.Event):
+        if (event.type == pygame.MOUSEMOTION):
+            if (self.__selected_joint is not None):
+                if (self.__selected_joint.parent is not None):
+                    print("Rotation required!")
+                    mouse_position: tuple[int, int] = pygame.mouse.get_pos()
+                    parent: Joint = self.__selected_joint.parent
+                    angle = atan2(mouse_position[1] - parent.position.y, mouse_position[0] - parent.position.x)
+                    radius: float = sqrt((parent.position.x - self.__selected_joint.position.x)**2 + (parent.position.y - self.__selected_joint.position.y)**2)
+                    point_x = parent.position.x + radius * cos(angle)
+                    point_y = parent.position.y + radius * sin(angle)
+                    point_old_position: Position = self.__selected_joint.position
+                    self.__selected_joint.position = Position(point_x, point_y)
+                    children_points: list[Joint] = self.__retrieve_children(self.__selected_joint)
+                    rotate_angle: float = -Geometry.compute_rotation_angle(parent.position, point_old_position, self.__selected_joint.position)
+                    for child in children_points:
+                        child.position = Geometry.compute_rotation_point(child.position, parent.position, radians(rotate_angle))
+
+    def __handle_unselect_joint(self, event: pygame.event.Event):
+        if (event.type == pygame.MOUSEBUTTONUP):
+            if (self.__selected_joint is not None):
+                self.__selected_joint = None
+                print("unselected!")
+
     def handle(self, event: pygame.event.Event):
         if (event is not None):
             if (event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT):
@@ -270,6 +320,13 @@ class CharacterCreationScreen(Scene):
                     self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__CLASS_KEY] = list(ClassType)[self.__selected_class_index]
                 elif (self.__is_selecting_breed):
                     self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__BREED_KEY] = list(BreedType)[self.__selected_breed_index]
+                    
+                    breed_type: BreedType|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__BREED_KEY)
+                    gender: Gender|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__GENDER_KEY)
+                    if (breed_type is not None and gender is not None):
+                        morphology: Morphology = breed_type.value.get_morphology(gender)
+                        average_size: int = int((morphology.size.minimum+morphology.size.maximum)/2)
+                        self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__HEIGHT_KEY] = average_size
                 elif (self.__is_selecting_play):
                     characters: list[Character] = []
                     for configuration in self.__characters_configurations:
@@ -333,6 +390,9 @@ class CharacterCreationScreen(Scene):
             skeleton_sprite: SkeletonSprite|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__SKELETON_SPRITE_KEY)
             if (skeleton_sprite is not None):
                 skeleton_sprite.handle(event)
+                self.__handle_select_joint(event)
+                self.__handle_process_joint_rotation(event)
+                self.__handle_unselect_joint(event)
 
     def __draw_genders_buttons(self, master: pygame.Surface):
         space_between_each_buttons: int = 50
@@ -603,6 +663,7 @@ class CharacterCreationScreen(Scene):
             height: int|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__HEIGHT_KEY)
             skeleton_must_be_updated: bool = False
             if (skeleton is None):
+                print("Skeleton not exists")
                 sizes = [breed_type.value.get_morphology(gender).size.minimum, breed_type.value.get_morphology(gender).size.maximum]
                 if (height is None):
                     height = int(sum(sizes)/(len(sizes)))
@@ -614,12 +675,13 @@ class CharacterCreationScreen(Scene):
                     skeleton_must_be_updated = True
             
             if (skeleton_must_be_updated):
+                print("new skeleton")
                 self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__SKELETON_KEY] = skeleton
                 self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__SKELETON_SPRITE_KEY] = skeleton_sprite
                 skeleton_sprite = SkeletonSprite(skeleton, pygame.sprite.Group())
                 self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__SKELETON_SPRITE_KEY] = skeleton_sprite
-                skeleton_sprite.offset.y = origin_y_for_smaller_size
-                skeleton_sprite.offset.x = self._background_texture.get_width()/2
+                skeleton_sprite.offset.y = origin_y_for_smaller_size - max(joint.position.y for joint in skeleton.joints)
+                skeleton_sprite.offset.x = self._background_texture.get_width()/2 - (skeleton.wingspan/2)
 
             if (skeleton_sprite is not None):
                 skeleton_sprite.draw(self._background_texture)

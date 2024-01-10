@@ -8,7 +8,7 @@
         "level": 30,
         "experience": 154,
         "position.x": 1147,
-        "position.y": 104,
+        "position.y": 259,
         "position.z": 0
     },
     "1": {
@@ -19,8 +19,8 @@
         "class": "WARRIOR",
         "level": 13,
         "experience": 378,
-        "position.x": 1164,
-        "position.y": 113,
+        "position.x": 1162,
+        "position.y": 230,
         "position.z": 0
     },
     "2": {
@@ -31,8 +31,8 @@
         "class": "PRIEST",
         "level": 15,
         "experience": 53,
-        "position.x": 937,
-        "position.y": 358,
+        "position.x": 1144,
+        "position.y": 239,
         "position.z": 0
     },
     "3": {
@@ -43,8 +43,8 @@
         "class": "DEMONIST",
         "level": 14,
         "experience": 328,
-        "position.x": 1161,
-        "position.y": 94,
+        "position.x": 1145,
+        "position.y": 196,
         "position.z": 0
     },
     "4": {
@@ -55,8 +55,8 @@
         "class": "SHAMAN",
         "level": 13,
         "experience": 84,
-        "position.x": 1146,
-        "position.y": 123,
+        "position.x": 1145,
+        "position.y": 219,
         "position.z": 0
     }
 }

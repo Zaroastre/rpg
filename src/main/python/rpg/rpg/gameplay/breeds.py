@@ -6,16 +6,20 @@ from rpg.gameplay.physiology import Morphology
 from rpg.csv import Csv, CsvReader
 from rpg.utils import Optional
 from rpg.gameplay.genders import Gender
+from rpg.utils import Color, ColorPallet
 
 class BreedTypeValue:
     def __init__(self, name: str) -> None:
         self.__name: str = name
         self.__morphologies: dict[Gender, Morphology] = {}
+        self.__skin_colors: list[Color] = []
         
         sizes_in_csv: Csv = CsvReader.read(Path("./resources/size-in-cm.csv"))
         weight_in_csv: Csv = CsvReader.read(Path("./resources/weight-in-kg.csv"))
         body_proportions_in_csv: Csv = CsvReader.read(Path("./resources/body-proportions.csv"))
+        skin_color_in_csv: Csv = CsvReader.read(Path("./resources/skins-colors.csv"))
         
+        potential_skin_colors: Optional[list[object]] = skin_color_in_csv.get_line_by_header(name)
         potential_sizes: Optional[list[object]] = sizes_in_csv.get_line_by_header(name)
         potential_weights: Optional[list[object]] = weight_in_csv.get_line_by_header(name)
         potential_head: Optional[list[object]] = body_proportions_in_csv.get_line_by_header("head")
@@ -25,7 +29,7 @@ class BreedTypeValue:
         potential_body: Optional[list[object]] = body_proportions_in_csv.get_line_by_header("body")
         potential_leg: Optional[list[object]] = body_proportions_in_csv.get_line_by_header("leg")
         potential_foot: Optional[list[object]] = body_proportions_in_csv.get_line_by_header("foot")
-        if (potential_sizes.is_present() and potential_weights.is_present()):
+        if (potential_sizes.is_present() and potential_weights.is_present() and potential_skin_colors.is_present()):
             sizes: list[int] = potential_sizes.get()
             weights: list[int] = potential_weights.get()
             head: list[int] = potential_head.get()
@@ -60,6 +64,10 @@ class BreedTypeValue:
     @property
     def name(self) -> str:
         return self.__name
+    
+    @property
+    def skin_colors(self) -> list[Color]:
+        return self.__skin_colors
 
     def get_morphology(self, gender: Gender) -> Morphology:
         if (gender is None):

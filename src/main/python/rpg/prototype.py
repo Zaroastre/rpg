@@ -7,6 +7,7 @@ from rpg.gameplay.genders import Gender
 from rpg.gamedesign.faction_system import Faction
 from rpg.gameplay.weapons import WeaponFactory, StuffPartType, QualityType, Range
 from rpg.gameplay.physiology import SkeletonFactory
+from rpg.utils import Color, ColorPallet
 
 def main():
     # name: str = "Hextanktion"
@@ -23,7 +24,8 @@ def main():
     # print(csv.get_line_by_header("draenei").get())
     # print(csv.get_column_by_header("woman_min").get())
     
-    SkeletonFactory.create_humanoid_skeleton(BreedFactory.blood_elf().breed_type.value.get_morphology(Gender.MAN))
+    # SkeletonFactory.create_humanoid_skeleton(BreedFactory.blood_elf().breed_type.value.get_morphology(Gender.MAN))
+    print(ColorPallet.generate_colors_pallet(Color.from_hexa("#FFE0BD"), Color.from_hexa("#D1A48E"), 10))
 
 if (__name__ == "__main__"):
     main()

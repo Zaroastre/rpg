@@ -164,9 +164,10 @@ class Bone:
     
     
 class Skeleton:
-    def __init__(self, bones: list[Bone], joints: list[Joint]) -> None:
+    def __init__(self, height: int, bones: list[Bone], joints: list[Joint]) -> None:
         self.__bones: list[Bone] = bones
         self.__joints: list[Joint] = joints
+        self.__height: int = height
     
     @property
     def total_bones(self) -> int:
@@ -183,10 +184,14 @@ class Skeleton:
     
     @property
     def size(self) -> int:
-        # head: Bone = [bone for bone in self.__bones if bone.body_part == BodyPart.HEAD][0]
-        # foot: Bone = [bone for bone in self.__bones if bone.body_part == BodyPart.LEFT_FOOT][0]
-        # return abs(foot.position.y - head.position.y)
-        return 0
+        return self.__height
+    
+    @property
+    def wingspan(self) ->int :
+        left_wrist: Joint = [joint for joint in self.__joints if joint.body_part == BodyPart.LEFT_WRIST][0]
+        right_wrist: Joint = [joint for joint in self.__joints if joint.body_part == BodyPart.RIGHT_WRIST][0]
+        return right_wrist.position.x - left_wrist.position.x
+    
     @property
     def corpulence(self) -> int:
         left_hip: Joint = [joint for joint in self.__joints if joint.body_part == BodyPart.LEFT_HIP][0]
@@ -295,7 +300,7 @@ class SkeletonFactory:
                 bone: Bone = Bone(position_start, position_end, 10, body_part_bone)
                 bones.append(bone)
 
-        return Skeleton(bones, joints)
+        return Skeleton(default_humanoid_body_height, bones, joints)
 
     @staticmethod
     def __create_joints_for_right_leg(middle_canvas_width: int, bottom_right_joints: list[Joint], joints: list[Joint], head_height: int, neck_height: int, body_height: int, leg_height: int, previous_joint: Joint|None):

@@ -18,6 +18,8 @@ class JointSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
         self.__hitbox: pygame.Rect = None
         self.offset: pygame.math.Vector2 = pygame.math.Vector2()
         self.__must_display_rotation_circle: bool = False
+        self.__texture_color: pygame.Color = pygame.Color(200, 200, 200)
+        self.__radius_rotation_color: pygame.Color = pygame.Color(200, 200, 200)
 
     @property
     def joint(self) -> Joint:
@@ -27,14 +29,12 @@ class JointSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
         mouse_position: tuple[int, int] = pygame.mouse.get_pos()
         if (self.rect is not None):
             self.__must_display_rotation_circle = self.rect.collidepoint(mouse_position)
-        if (self.__must_display_rotation_circle):
-            raise Exception("Stop")
     
     def draw(self, master: pygame.Surface):
-        self.rect = pygame.draw.circle(master, (255,0,0), [self.joint.position.x+self.offset.x, self.joint.position.y+self.offset.y], 5)
+        self.rect = pygame.draw.circle(master, self.__texture_color, [self.joint.position.x+self.offset.x, self.joint.position.y+self.offset.y], 5)
         if (self.__must_display_rotation_circle):
-            print(self.__must_display_rotation_circle)
-            pygame.draw.circle(master, (0,255,0), [self.joint.position.x+self.offset.x, self.joint.position.y+self.offset.y], 20, 2)
+            if (self.joint.parent is not None and self.joint.parent.parent is not None):
+                pygame.draw.circle(master, self.__radius_rotation_color, [self.joint.parent.position.x+self.offset.x, self.joint.parent.position.y+self.offset.y], 20, 2)
             
 
 
@@ -50,7 +50,10 @@ class SkeletonSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
             joint_sprite: JointSprite = JointSprite(joint, pygame.sprite.Group())
             joint_sprite.offset = self.offset
             self.__joints_sprites.append(joint_sprite)
-            
+
+    @property
+    def joints_sprites(self) -> list[JointSprite]:
+        return self.__joints_sprites
     
     def handle(self, event: pygame.event.Event):
         if event is not None:
@@ -58,11 +61,12 @@ class SkeletonSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
                 joints_sprite.handle(event)
     
     def draw(self, master: pygame.Surface):
-        vertical_offset = self.offset.y - max(joint_sprite.joint.position.y for joint_sprite in self.__joints_sprites)
+        vertical_offset = self.offset.y # - max(joint_sprite.joint.position.y for joint_sprite in self.__joints_sprites)
         horizontal_offset = self.offset.x
+        
         for joint_sprite in self.__joints_sprites:
             if (joint_sprite.joint.parent is not None):
-                pygame.draw.line(master, (255,255,255), (joint_sprite.joint.position.x+self.offset.x, joint_sprite.joint.position.y+self.offset.y), (joint_sprite.joint.parent.position.x+self.offset.x, joint_sprite.joint.parent.position.y+self.offset.y))
+                pygame.draw.line(master, (255,255,255), (joint_sprite.joint.position.x+self.offset.x, joint_sprite.joint.position.y+self.offset.y), (joint_sprite.joint.parent.position.x+self.offset.x, joint_sprite.joint.parent.position.y+self.offset.y), 5)
             joint_sprite.offset.x = horizontal_offset
             joint_sprite.offset.y = vertical_offset
             joint_sprite.draw(master)
