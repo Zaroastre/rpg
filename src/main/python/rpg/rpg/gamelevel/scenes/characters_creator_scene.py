@@ -691,7 +691,19 @@ class CharacterCreationScreen(Scene):
         self.__draw_rule_range_for_race(master)
         self.__draw_selected_cursor_size(master)
         self.__draw_avatar_skeleton(master)
-        
+    
+    def __draw_skin_colors_pallet(self, master: pygame.Surface):
+        breed_type: BreedType|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__BREED_KEY)
+        if (breed_type is not None):
+            surface_width: int = 20
+            surface_height: int = 10
+            y: int = 0
+            for skin_color in breed_type.value.skin_colors:
+                color_texture: pygame.Surface = pygame.Surface((surface_width, surface_height))
+                color_texture.fill(skin_color.to_tuple())
+                self._background_texture.blit(color_texture, (0, y))
+                y += surface_height   
+            
     
     def draw(self, master: pygame.Surface):
         self._background_texture.fill(self._background_color)
@@ -703,4 +715,5 @@ class CharacterCreationScreen(Scene):
         self.__draw_back_button(master)
         self.__draw_play_button(master)
         self.__draw_avatar(master)
+        self.__draw_skin_colors_pallet(master)
         super().draw(master)

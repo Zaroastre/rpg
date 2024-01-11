@@ -5,7 +5,7 @@ from enum import Enum
 from rpg.gamedesign.geolocation_system import Position, Tracker
 from rpg.gamedesign.interval_system import Range
 from rpg.gamedesign.progression_system import Rank
-from rpg.utils import Color
+from rpg.colors import Color
 
 
 class Projectil(Tracker):

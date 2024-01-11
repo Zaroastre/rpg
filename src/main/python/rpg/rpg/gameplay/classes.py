@@ -10,7 +10,7 @@ from rpg.gameplay.spells import Spell, SpellBuilder, SpellsBook, SpellType, Proj
 from rpg.gameplay.stuffs import StuffPartType
 from rpg.gameplay.talents import TalentsBook, TalentsBookFactory, TalentsTree
 from rpg.gameplay.weapons import Weapon, WeaponFactory, WeaponType
-from rpg.utils import Color
+from rpg.colors import Color
 
 
 class ClassTypeValue:

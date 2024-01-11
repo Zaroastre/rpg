@@ -1,0 +1,76 @@
+{
+    "Eastern Kingdoms": {
+      "Elwynn Forest": ["Goldshire", "Stormwind City"],
+      "Duskwood": ["Darkshire"],
+      "Redridge Mountains": ["Lakeshire"],
+      "Stranglethorn Vale": ["Booty Bay"],
+      "Westfall": ["Sentinel Hill"],
+      "Deadwind Pass": ["Deadwind Pass"],
+      "Swamp of Sorrows": ["Stonard"],
+      "Burning Steppes": ["Flame Crest"],
+      "The Hinterlands": ["Aerie Peak"],
+      "Searing Gorge": ["Iron Summit"],
+      "Eastern Plaguelands": ["Light's Hope Chapel"],
+      "Hillsbrad Foothills": ["Southshore"],
+      "Silverpine Forest": ["The Sepulcher"],
+      "Tirisfal Glades": ["Undercity"],
+      "Arathi Highlands": ["Refuge Pointe"]
+    },
+    "Kalimdor": {
+      "Durotar": ["Orgrimmar"],
+      "Mulgore": ["Thunder Bluff"],
+      "Northern Barrens": ["Ratchet"],
+      "Southern Barrens": ["Northwatch Hold"],
+      "Stonetalon Mountains": ["Stonetalon Peak"],
+      "Ashenvale": ["Astranaar"],
+      "Azshara": ["Bilgewater Harbor"],
+      "Desolace": ["Nijel's Point"],
+      "Dustwallow Marsh": ["Theramore Isle"],
+      "Felwood": ["Jaedenar"],
+      "Feralas": ["Feathermoon Stronghold"],
+      "Silithus": ["Cenarion Hold"],
+      "Tanaris": ["Gadgetzan"],
+      "Thousand Needles": ["Freewind Post"],
+      "Un'Goro Crater": ["Marshal's Refuge"],
+      "Winterspring": ["Everlook"]
+    },
+    "Northrend": {
+      "Borean Tundra": ["Valiance Keep"],
+      "Howling Fjord": ["Valgarde"],
+      "Dragonblight": ["Wyrmrest Temple"],
+      "Grizzly Hills": ["Amberpine Lodge"],
+      "Zul'Drak": ["Gundrak"],
+      "Sholazar Basin": ["River's Heart"],
+      "Crystalsong Forest": ["Dalaran"],
+      "The Storm Peaks": ["K3"],
+      "Icecrown": ["Argent Tournament Grounds"]
+    },
+    "Pandaria": {
+      "The Jade Forest": ["Paw'Don Village"],
+      "Valley of the Four Winds": ["Halfhill"],
+      "Krasarang Wilds": ["Marista"],
+      "Kun-Lai Summit": ["Binan Village"],
+      "Townlong Steppes": ["Longying Outpost"],
+      "Dread Wastes": ["Soggy's Gamble"],
+      "Vale of Eternal Blossoms": ["Mistfall Village"]
+    },
+    "Broken Isles": {
+      "Azsuna": ["Wardens' Redoubt"],
+      "Val'sharah": ["Lorlathil"],
+      "Highmountain": ["Thunder Totem"],
+      "Stormheim": ["Valdisdall"],
+      "Suramar": ["Meredil"],
+      "The Broken Shore": ["Deliverance Point"]
+    },
+    "Zandalar": {
+      "Zuldazar": ["Dazar'alor"],
+      "Nazmir": ["Gloom Hollow"],
+      "Vol'dun": ["Vulpera Hideaway"]
+    },
+    "Kul Tiras": {
+      "Tiragarde Sound": ["Boralus"],
+      "Drustvar": ["Fallhaven"],
+      "Stormsong Valley": ["Brennadam"]
+    }
+  }
+  

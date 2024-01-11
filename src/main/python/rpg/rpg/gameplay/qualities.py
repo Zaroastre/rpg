@@ -1,7 +1,7 @@
 from abc import ABC
 from enum import Enum
 
-from rpg.utils import Color
+from rpg.colors import Color
 
 class QualityTypeValue:
     def __init__(self, name: str, color: Color) -> None:

@@ -43,6 +43,10 @@ class Position:
                 result = True
         return result
 
+class Shape:
+    def __init__(self, points: list[Position]) -> None:
+        pass
+
 class Geometry:
     """Utilitary class that can be used to computes usefull algorythm for geometry computation.
     """

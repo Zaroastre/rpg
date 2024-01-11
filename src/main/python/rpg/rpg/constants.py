@@ -1,4 +1,4 @@
-from rpg.utils import Color
+from rpg.colors import Color
 from rpg.gamedesign.geolocation_system import Position
 
 FRAMES_PER_SECOND: int = 60

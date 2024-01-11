@@ -7,7 +7,7 @@ from rpg.gameplay.genders import Gender
 from rpg.gamedesign.faction_system import Faction
 from rpg.gameplay.weapons import WeaponFactory, StuffPartType, QualityType, Range
 from rpg.gameplay.physiology import SkeletonFactory
-from rpg.utils import Color, ColorPallet
+from rpg.colors import Color, ColorPallet
 
 def main():
     # name: str = "Hextanktion"

@@ -1,5 +1,5 @@
 from enum import Enum
-from rpg.utils import Color
+from rpg.colors import Color
 
 class AttributeType(Enum):
     PRIMARY=1

@@ -1,5 +1,5 @@
 from enum import Enum
-from rpg.utils import Color
+from rpg.colors import Color
 from rpg.gamedesign.progression_system import Level
 
 class DifficultyValue:

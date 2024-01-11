@@ -6,7 +6,7 @@ from rpg.gameplay.physiology import Morphology
 from rpg.csv import Csv, CsvReader
 from rpg.utils import Optional
 from rpg.gameplay.genders import Gender
-from rpg.utils import Color, ColorPallet
+from rpg.colors import Color, ColorPallet
 
 class BreedTypeValue:
     def __init__(self, name: str) -> None:
@@ -61,6 +61,14 @@ class BreedTypeValue:
                 neck_proportion=Range(neck[2], neck[3]))
             self.__morphologies[Gender.MAN] = male_morphology
             self.__morphologies[Gender.WOMAN] = female_morphology
+            skins_colors_ranges: list[str] = str(potential_skin_colors.get()[0]).split(";")
+            for skin_color_range in skins_colors_ranges:
+                skin_colors: list[str] = skin_color_range.split("-")
+                if (len(skin_colors) == 2):
+                    skin_color_pallet: list[Color] = ColorPallet.generate_colors_pallet(Color.from_hexa(skin_colors[0].strip()), Color.from_hexa(skin_colors[1].strip()), 20)
+                    for skin_color in skin_color_pallet:
+                        self.__skin_colors.append(skin_color)
+            
     @property
     def name(self) -> str:
         return self.__name
@@ -80,7 +88,7 @@ class BreedType(Enum):
     DRAENEI: BreedTypeValue = BreedTypeValue("DRAENEI")
     NIGHT_ELF: BreedTypeValue = BreedTypeValue("NIGHT_ELF")
     PANDAREN: BreedTypeValue = BreedTypeValue("PANDAREN")
-    KNOWF: BreedTypeValue = BreedTypeValue("KNOWF")
+    DWARF: BreedTypeValue = BreedTypeValue("DWARF")
     BLOOD_ELF: BreedTypeValue = BreedTypeValue("BLOOD_ELF")
     UNDEAD: BreedTypeValue = BreedTypeValue("UNDEAD")
     ORC: BreedTypeValue = BreedTypeValue("ORC")
@@ -156,9 +164,9 @@ class Pandaren(Breed):
         self._attributes[Attribute.INTELLECT] = 19
         self._attributes[Attribute.SPIRIT] = 22
         
-class Knowrf(Breed):
+class Dwarf(Breed):
     def __init__(self) -> None:
-        super().__init__(BreedType.KNOWF)
+        super().__init__(BreedType.DWARF)
         self._attributes[Attribute.STRENGTH] = 25
         self._attributes[Attribute.AGILITY] = 16
         self._attributes[Attribute.STAMANIA] = 21
@@ -233,7 +241,7 @@ class Worgen(Breed):
 class BreedFactory:
     @staticmethod
     def create(breed_type: BreedType) -> Breed:
-        breed: Breed = None
+        breed: Breed|None = None
         if (breed_type is None):
             raise ValueError()
         match breed_type:
@@ -247,8 +255,8 @@ class BreedFactory:
                 breed = BreedFactory.night_elf()
             case BreedType.PANDAREN:
                 breed = BreedFactory.pandaren()
-            case BreedType.KNOWF:
-                breed = BreedFactory.knowrf()
+            case BreedType.DWARF:
+                breed = BreedFactory.dwarf()
             case BreedType.BLOOD_ELF:
                 breed = BreedFactory.blood_elf()
             case BreedType.UNDEAD:
@@ -281,8 +289,8 @@ class BreedFactory:
     def pandaren() -> Pandaren:
         return Pandaren()
     @staticmethod
-    def knowrf() -> Knowrf:
-        return Knowrf()
+    def dwarf() -> Dwarf:
+        return Dwarf()
     @staticmethod
     def blood_elf() -> BloodElf:
         return BloodElf()

@@ -14,7 +14,7 @@ from rpg.gameplay.genders import Gender
 from rpg.gameplay.spells import Projectil
 from rpg.gameplay.storages import Storage
 from rpg.math.geometry import Geometry
-from rpg.utils import Color
+from rpg.colors import Color
 
 class Character(BaseCharacter):
     _MINIMUM_AGGRO_AREA_RADIUS: int = 5

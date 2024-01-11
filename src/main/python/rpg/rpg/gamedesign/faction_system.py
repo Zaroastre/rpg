@@ -1,5 +1,5 @@
 from enum import Enum
-from rpg.utils import Color
+from rpg.colors import Color
 
 class FactionValue:
     def __init__(self, name: str, color: Color) -> None:
