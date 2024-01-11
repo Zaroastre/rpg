@@ -97,7 +97,6 @@ class BreedType(Enum):
     GOBLIN: BreedTypeValue = BreedTypeValue("GOBLIN")
     WORGEN: BreedTypeValue = BreedTypeValue("WORGEN")
 
-
 class Breed:
     def __init__(self, breed_type: BreedType) -> None:
         super().__init__()
@@ -126,8 +125,7 @@ class Human(Breed):
         self._attributes[Attribute.STAMANIA] = 20
         self._attributes[Attribute.INTELLECT] = 20
         self._attributes[Attribute.SPIRIT] = 20
-        
-        
+
 class Gnome(Breed):
     def __init__(self) -> None:
         super().__init__(BreedType.GNOME)
@@ -235,8 +233,6 @@ class Worgen(Breed):
         self._attributes[Attribute.STAMANIA] = 20
         self._attributes[Attribute.INTELLECT] = 14
         self._attributes[Attribute.SPIRIT] = 19
-        
-
 
 class BreedFactory:
     @staticmethod

@@ -18,7 +18,6 @@ class AttributeValue:
     @property
     def name(self) -> str:
         return self.__name
-    
 
 class Attribute(Enum):
     STAMANIA: AttributeValue = AttributeValue("STAMANIA", AttributeType.PRIMARY)

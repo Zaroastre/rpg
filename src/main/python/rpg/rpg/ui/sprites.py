@@ -6,8 +6,87 @@ import rpg.constants
 from rpg.characters import Character, Enemy, Projectil
 from rpg.gameapi import Draw, InputEventHandler
 from rpg.gameplay.teams import Group
+from rpg.gameplay.breeds import BreedType
+from rpg.gameplay.genders import Gender
+from rpg.gameplay.physiology import Morphology
 from rpg.math.geometry import Geometry, Position
 from rpg.gameplay.physiology import Skeleton, Joint
+
+class AvatarRulerSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
+    def __init__(self, size: int) -> None:
+        pygame.sprite.Sprite.__init__(self)
+        self.__size: int = size
+        self.__width: int = 20
+        self.__thickness: int = 2
+        self.__font_size: int = 22
+        self.__font: pygame.font.Font = pygame.font.Font(None, self.__font_size)
+        self.__font_color: pygame.Color = pygame.Color(255, 255, 255)
+        self.__ruler_color: pygame.Color = pygame.Color(255, 255, 255)
+        self.__breed_ruler_color: pygame.Color = pygame.Color(0, 255, 0)
+        self.__min_size_label: pygame.Surface = self.__font.render(str(0), True, self.__font_color)
+        self.__max_size_label: pygame.Surface = self.__font.render(str(self.__size), True, self.__font_color)
+        self.image = pygame.Surface((self.__width+(self.__thickness*2)+self.__max_size_label.get_width(), self.__size+(self.__thickness*2)+self.__max_size_label.get_height()), pygame.SRCALPHA)        
+        self.rect = pygame.Rect(0, 0, self.image.get_width(), self.image.get_height())
+        self.offset: pygame.math.Vector2 = pygame.math.Vector2()
+        self.__breed_type: BreedType|None = None
+        self.__gender: Gender|None = None
+        
+    
+    def set_breed(self, breed_type: BreedType):
+        self.__breed_type = breed_type
+        
+    def set_gender(self, gender: Gender):
+        self.__gender = gender
+
+    def __draw_default_rule(self, master: pygame.Surface):
+        start_x: int = self.__max_size_label.get_width()+(self.__width/2)
+        stop_x: int = self.__max_size_label.get_width()+(self.__width/2)
+        start_y: int = 0+(self.__max_size_label.get_height()/2)
+        stop_y: int = self.__size+(self.__max_size_label.get_height()/2)
+        vertical_line: pygame.Rect = pygame.draw.line(self.image, self.__ruler_color, (start_x, start_y), (stop_x, stop_y), self.__thickness)
+        start_x = self.__max_size_label.get_width()
+        stop_x = self.__max_size_label.get_width()+self.__width
+        start_y = (self.__max_size_label.get_height()/2)
+        stop_y = (self.__max_size_label.get_height()/2)
+        top_horizontal_line: pygame.Rect = pygame.draw.line(self.image, self.__ruler_color, (start_x, start_y), (stop_x, stop_y), self.__thickness)
+        start_y = self.__size+(self.__max_size_label.get_height()/2)
+        stop_y = self.__size+(self.__max_size_label.get_height()/2)
+        bottom_horizontal_line: pygame.Rect = pygame.draw.line(self.image, self.__ruler_color, (start_x, start_y), (stop_x, stop_y), self.__thickness)
+        self.image.blit(self.__max_size_label, (0, 0))
+        self.image.blit(self.__min_size_label, (0, self.__size))
+
+    def __draw_specific_rule_for_breed(self, master: pygame.Surface):
+        if ((self.__breed_type is not None) and (self.__gender is not None)):
+            min_size: int = 0
+            max_size: int = self.__size
+            morphology: Morphology|None = self.__breed_type.value.get_morphology(self.__gender)
+
+            if (morphology is not None):
+                min_size = morphology.size.minimum
+                max_size = morphology.size.maximum
+
+            origin_y_for_smaller_size: int = self.offset.y + self.__size
+
+            x: int = self.offset.x
+            min_x: int = x-5
+            max_x: int = x+5
+            min_y: int = origin_y_for_smaller_size-min_size
+            max_y: int = origin_y_for_smaller_size-max_size
+
+            pygame.draw.line(master, pygame.Color(0,255,0), (x, min_y), (x, max_y), 4) # Bas en Haut
+            pygame.draw.line(master, pygame.Color(0,255,0), (min_x, min_y), (max_x, min_y), 2)
+            pygame.draw.line(master, pygame.Color(0,255,0), (min_x, max_y), (max_x, max_y), 2)
+            
+            min_size_label: pygame.Surface = self.__font.render(str(min_size), True, self.__font_color)
+            max_size_label: pygame.Surface = self.__font.render(str(max_size), True, self.__font_color)
+            
+            master.blit(min_size_label, (x+10+10, min_y-(min_size_label.get_height()/2)))
+            master.blit(max_size_label, (x+10+10, max_y-(max_size_label.get_height()/2)))
+
+    def draw(self, master: pygame.Surface):
+        self.__draw_default_rule(master)
+        self.__draw_specific_rule_for_breed(master)
+        master.blit(self.image, self.offset)
 
 class JointSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
     def __init__(self, joint: Joint, sprites_group: pygame.sprite.Group) -> None:
@@ -27,16 +106,23 @@ class JointSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
     
     def handle(self, event: Event):
         mouse_position: tuple[int, int] = pygame.mouse.get_pos()
+        is_mouse_hover: bool = self.rect.collidepoint(mouse_position)
         if (self.rect is not None):
-            self.__must_display_rotation_circle = self.rect.collidepoint(mouse_position)
-    
+            if (event.type == pygame.MOUSEBUTTONDOWN):
+                if (is_mouse_hover):
+                    self.__joint.select()
+            if (event.type == pygame.MOUSEBUTTONUP):
+                if (self.__joint.is_selected()):
+                    self.__joint.unselect()
+            self.__must_display_rotation_circle = self.__joint.is_selected()
+        if (is_mouse_hover):
+            self.__must_display_rotation_circle = True
+
     def draw(self, master: pygame.Surface):
         self.rect = pygame.draw.circle(master, self.__texture_color, [self.joint.position.x+self.offset.x, self.joint.position.y+self.offset.y], 5)
         if (self.__must_display_rotation_circle):
             if (self.joint.parent is not None and self.joint.parent.parent is not None):
                 pygame.draw.circle(master, self.__radius_rotation_color, [self.joint.parent.position.x+self.offset.x, self.joint.parent.position.y+self.offset.y], 20, 2)
-            
-
 
 class SkeletonSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
     def __init__(self, skeleton: Skeleton, sprites_group: pygame.sprite.Group) -> None:
@@ -95,8 +181,8 @@ class ProjectilSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
 class CharacterSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
     MENACE_AREA_COLOR: pygame.Color = pygame.Color(255, 255, 0, a=100)
     ZONING_AREA_COLOR: pygame.Color = pygame.Color(255,200, 0)
-    def __init__(self, character: Character, sprites_group: pygame.sprite.Group) -> None:
-        pygame.sprite.Sprite.__init__(self, sprites_group)
+    def __init__(self, character: Character) -> None:
+        pygame.sprite.Sprite.__init__(self)
         self.__is_going_to_the_left: bool = False
         self.__is_going_to_the_bottom: bool = False
         self.__is_going_to_the_right: bool = False
@@ -114,7 +200,6 @@ class CharacterSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
         self._title: pygame.Surface = self.__font.render(
             self.character.name[0], True, self.__font_color)
         self.__projectils_components: list[ProjectilSprite] = []
-        self.offset: pygame.math.Vector2 = pygame.math.Vector2()
 
     def is_selected(self) -> bool:
         return self.__is_selected
@@ -228,19 +313,19 @@ class CharacterSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
         # offset_position = sprite.rect.topleft - self.offset
         # pygame.draw.circle(master, CharacterSprite.MENACE_AREA_COLOR, (self.character.current_position.x,self.character.current_position.y), self.character.threat.level, 2)
         if (self.character.zone_center is not None):
-            pygame.draw.circle(master, CharacterSprite.ZONING_AREA_COLOR, (self.character.zone_center.x,self.character.zone_center.y)-self.offset, self.character.zone_radius, 1)
+            pygame.draw.circle(master, CharacterSprite.ZONING_AREA_COLOR, (self.character.zone_center.x,self.character.zone_center.y), self.character.zone_radius, 1)
         # self.image.fill(pygame.Color(0,0,0,0))
         self.__hitbox = pygame.draw.circle(
-            self.image, self.__texture_color, (self.character.radius, self.character.radius)-self.offset, self.character.radius)
-        self.rect = master.blit(self.image, (self.character.current_position.x-self.character.radius, self.character.current_position.y-self.character.radius)-self.offset)
-        master.blit(self._title, (self.character.current_position.x-(self.character.radius/2), self.character.current_position.y-(self.character.radius/2))-self.offset)
+            self.image, self.__texture_color, (self.character.radius, self.character.radius), self.character.radius)
+        self.rect = master.blit(self.image, (self.character.current_position.x-self.character.radius, self.character.current_position.y-self.character.radius))
+        master.blit(self._title, (self.character.current_position.x-(self.character.radius/2), self.character.current_position.y-(self.character.radius/2)))
         for projectil in self.character.trigged_projectils:
             projectil_component: ProjectilSprite = ProjectilSprite(projectil, self.groups()[0])
             projectil_component.draw(master)
 
 class EnemySprite(CharacterSprite):
-    def __init__(self, enemy: Enemy, sprites_group: pygame.sprite.Group) -> None:
-        super().__init__(enemy, sprites_group)
+    def __init__(self, enemy: Enemy) -> None:
+        super().__init__(enemy)
         self.__dificulty_color: pygame.Color = pygame.Color(255,150,0)
     @property
     def character(self) -> Enemy:
@@ -248,26 +333,25 @@ class EnemySprite(CharacterSprite):
 
     def draw(self, master: pygame.Surface):
         
-        pygame.draw.line(master, self.character.character_class.class_type.value.color, (self.character.default_position.x, self.character.default_position.y)-self.offset, (self.character.current_position.x, self.character.current_position.y)-self.offset)
-        pygame.draw.circle(master, self.character.character_class.class_type.value.color, (self.character.current_position.x,self.character.current_position.y)-self.offset, self.character.radius + self.character.aggro_area_radius)
-        pygame.draw.circle(master, self.character.character_class.class_type.value.color, (self.character.default_position.x,self.character.default_position.y)-self.offset, self.character.zone_radius, 2)
+        pygame.draw.line(master, self.character.character_class.class_type.value.color, (self.character.default_position.x, self.character.default_position.y), (self.character.current_position.x, self.character.current_position.y))
+        pygame.draw.circle(master, self.character.character_class.class_type.value.color, (self.character.current_position.x,self.character.current_position.y), self.character.radius + self.character.aggro_area_radius)
+        pygame.draw.circle(master, self.character.character_class.class_type.value.color, (self.character.default_position.x,self.character.default_position.y), self.character.zone_radius, 2)
         self.image.fill(pygame.Color(0,0,0,0))
         self._hitbox = pygame.draw.circle(
-            self.image, self.__dificulty_color, (self.character.radius, self.character.radius)-self.offset, self.character.radius)
-        self.rect = master.blit(self.image, (self.character.current_position.x-self.character.radius, self.character.current_position.y-self.character.radius)-self.offset)
+            self.image, self.__dificulty_color, (self.character.radius, self.character.radius), self.character.radius)
+        self.rect = master.blit(self.image, (self.character.current_position.x-self.character.radius, self.character.current_position.y-self.character.radius))
         lifebar: pygame.Surface = pygame.Surface((50, 10))
         lifebar.fill(pygame.Color(100,0,0))
         lifeleft: pygame.Surface = pygame.Surface((((self.character.life.current *lifebar.get_width())/self.character.life.maximum), lifebar.get_height()))
         lifeleft.fill(pygame.Color(255,0,0))
         lifebar.blit(lifeleft, (0,0))
-        master.blit(lifebar, (self.character.current_position.x-(lifebar.get_width()/2), self.character.current_position.y+self.character.radius+lifebar.get_height())-self.offset)
+        master.blit(lifebar, (self.character.current_position.x-(lifebar.get_width()/2), self.character.current_position.y+self.character.radius+lifebar.get_height()))
         for projectil in self.character.trigged_projectils:
             projectil_component: ProjectilSprite = ProjectilSprite(projectil, self.groups()[0])
             projectil_component.draw(master)
 
     def set_difficulty_color(self, color: pygame.Color):
         self.__dificulty_color = color
-        
 
 class GroupComponent(pygame.sprite.Sprite, InputEventHandler, Draw):
     def __init__(self, group: Group) -> None:

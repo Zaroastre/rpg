@@ -69,7 +69,6 @@ class GemFactory:
     def orange_gem(value: int, attribute: Attribute) -> OrangeGem:
         return OrangeGem(value, attribute)
 
-
 class NoGemSpaceException(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
@@ -122,4 +121,3 @@ class GemsBox(Gemable):
 
     def can_be_crimped(self) -> bool:
         return len(self.__gems) < self.__maximum_capacity
-    

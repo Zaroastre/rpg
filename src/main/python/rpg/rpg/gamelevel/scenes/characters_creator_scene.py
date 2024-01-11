@@ -11,7 +11,7 @@ from rpg.gameplay.genders import Gender
 from rpg.gameplay.player import Player
 from rpg.gameplay.physiology import Morphology, Skeleton, SkeletonFactory, BodyPart, Joint
 from rpg.gamedesign.geolocation_system import Position
-from rpg.ui.sprites import SkeletonSprite
+from rpg.ui.sprites import SkeletonSprite, AvatarRulerSprite
 from rpg.math.geometry import Geometry
 
 
@@ -46,6 +46,9 @@ class CharacterCreationScreen(Scene):
             self.__characters_configurations.append(None)
         self.__selected_slot_index: int = 0
         self.__hover_slot_index: int = 0
+        self.__avatar_ruler_sprite: AvatarRulerSprite = AvatarRulerSprite(350)
+        self.__avatar_ruler_sprite.offset.x = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_LEFT
+        self.__avatar_ruler_sprite.offset.y = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_TOP
         
         self.__selected_gender_index: int = 0
         self.__selected_faction_index: int = 0
@@ -75,16 +78,13 @@ class CharacterCreationScreen(Scene):
         
         self.__on_back_event_listener: callable = None
         self.__on_play_event_listener: callable = None
-        
-        
 
     def set_event_listener_on_back(self, callback: callable):
         self.__on_back_event_listener = callback
     
     def set_event_listener_on_play(self, callback: callable):
         self.__on_play_event_listener = callback
-    
-    
+
     def __select_next_character(self):
         if (self.__is_selecting_slot):
             if (self.__hover_slot_index+1 < self.__maximum_character):
@@ -172,7 +172,6 @@ class CharacterCreationScreen(Scene):
                 self.__is_selecting_class = False
                 self.__is_selecting_gender = False
 
-
     def __select_next_class(self):
         if (self.__is_selecting_class):
             if (self.__selected_class_index+1 < len(ClassType)):
@@ -216,14 +215,11 @@ class CharacterCreationScreen(Scene):
         if (skeleton_sprite is not None):
             if (event.type == pygame.MOUSEBUTTONDOWN):
                 mouse_position: tuple[int, int] = pygame.mouse.get_pos()
-                print(mouse_position)
                 for joint_sprite in skeleton_sprite.joints_sprites:
                     if joint_sprite.rect.collidepoint(mouse_position):
-                        print("selected!")
                         self.__selected_joint = joint_sprite.joint
                         break
     def __retrieve_children(self, parent: Joint) -> list[Joint]:
-        print(f"Retrieve list of childre for POINT {parent.name}")
         skeleton: Skeleton = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__SKELETON_KEY)
         children: list[Joint] = [point for point in skeleton.joints if point.parent == parent]
         for child in children:
@@ -231,14 +227,12 @@ class CharacterCreationScreen(Scene):
             for depth_child in depth_children:
                 children.append(depth_child)
         children = list(set(children))
-        print("Children are: " + str(children))
         return list(set(children))
     
     def __handle_process_joint_rotation(self, event: pygame.event.Event):
         if (event.type == pygame.MOUSEMOTION):
             if (self.__selected_joint is not None):
                 if (self.__selected_joint.parent is not None):
-                    print("Rotation required!")
                     mouse_position: tuple[int, int] = pygame.mouse.get_pos()
                     parent: Joint = self.__selected_joint.parent
                     angle = atan2(mouse_position[1] - parent.position.y, mouse_position[0] - parent.position.x)
@@ -256,7 +250,6 @@ class CharacterCreationScreen(Scene):
         if (event.type == pygame.MOUSEBUTTONUP):
             if (self.__selected_joint is not None):
                 self.__selected_joint = None
-                print("unselected!")
 
     def handle(self, event: pygame.event.Event):
         if (event is not None):
@@ -313,7 +306,9 @@ class CharacterCreationScreen(Scene):
 
             elif (event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN):
                 if (self.__is_selecting_gender):
-                    self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__GENDER_KEY] = list(Gender)[self.__selected_gender_index]
+                    gender: Gender = list(Gender)[self.__selected_gender_index]
+                    self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__GENDER_KEY] = gender
+                    self.__avatar_ruler_sprite.set_gender(gender)
                 elif (self.__is_selecting_faction):
                     self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__FACTION_KEY] = list(Faction)[self.__selected_faction_index]
                 elif (self.__is_selecting_class):
@@ -324,6 +319,8 @@ class CharacterCreationScreen(Scene):
                     breed_type: BreedType|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__BREED_KEY)
                     gender: Gender|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__GENDER_KEY)
                     if (breed_type is not None and gender is not None):
+                        self.__avatar_ruler_sprite.set_breed(breed_type)
+                        self.__avatar_ruler_sprite.set_gender(gender)
                         morphology: Morphology = breed_type.value.get_morphology(gender)
                         average_size: int = int((morphology.size.minimum+morphology.size.maximum)/2)
                         self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__HEIGHT_KEY] = average_size
@@ -450,7 +447,7 @@ class CharacterCreationScreen(Scene):
             button.blit(button_border, (0,0))
             buttons_panel.blit(button, (button_position_x, 0))
             button_position_x += (button_width + space_between_each_buttons)
-        self._background_texture.blit(buttons_panel, (((self.width/2)-(buttons_panel.get_width()/2)), 100))
+        master.blit(buttons_panel, (((self.width/2)-(buttons_panel.get_width()/2)), 100))
 
     def __draw_breeds_buttons(self, master: pygame.Surface):
         space_between_each_buttons: int = 10
@@ -480,7 +477,7 @@ class CharacterCreationScreen(Scene):
             button.blit(button_border, (0,0))
             buttons_panel.blit(button, (0, button_position_y))
             button_position_y += (button_height + space_between_each_buttons)
-        self._background_texture.blit(buttons_panel, (0, (self.height/2)-(buttons_panel.get_height()/2)))
+        master.blit(buttons_panel, (0, (self.height/2)-(buttons_panel.get_height()/2)))
 
     def __draw_classes_buttons(self, master: pygame.Surface):
         space_between_each_buttons: int = 10
@@ -510,7 +507,7 @@ class CharacterCreationScreen(Scene):
             button.blit(button_border, (0,0))
             buttons_panel.blit(button, (0, button_position_y))
             button_position_y += (button_height + space_between_each_buttons)
-        self._background_texture.blit(buttons_panel, (self.width-buttons_panel.get_width(), (self.height/2)-(buttons_panel.get_height()/2)))
+        master.blit(buttons_panel, (self.width-buttons_panel.get_width(), (self.height/2)-(buttons_panel.get_height()/2)))
       
     def __draw_characters_slots_buttons(self, master: pygame.Surface):
         space_between_each_buttons: int = 50
@@ -543,7 +540,7 @@ class CharacterCreationScreen(Scene):
             button.blit(button_border, (0,0))
             buttons_panel.blit(button, (button_position_x, 0))
             button_position_x += (button_size + space_between_each_buttons)
-        self._background_texture.blit(buttons_panel, (((self.width/2)-(buttons_panel.get_width()/2)), (self.height - buttons_panel.get_height())))
+        master.blit(buttons_panel, (((self.width/2)-(buttons_panel.get_width()/2)), (self.height - buttons_panel.get_height())))
     
     def __draw_back_button(self, master: pygame.Surface):
         button: pygame.Surface = pygame.Surface((100, 50))
@@ -561,7 +558,7 @@ class CharacterCreationScreen(Scene):
         button_background.blit(label, (label_position_x, label_position_y))
         button_border.blit(button_background, (button_border_size, button_border_size))
         button.blit(button_border, (0,0))
-        self._background_texture.blit(button, (0, self.height - button.get_height()))
+        master.blit(button, (0, self.height - button.get_height()))
     
     def __draw_play_button(self, master: pygame.Surface):
         button: pygame.Surface = pygame.Surface((100, 50))
@@ -579,57 +576,7 @@ class CharacterCreationScreen(Scene):
         button_background.blit(label, (label_position_x, label_position_y))
         button_border.blit(button_background, (button_border_size, button_border_size))
         button.blit(button_border, (0,0))
-        self._background_texture.blit(button, ((self.width-button.get_width()), (self.height - button.get_height())))
-    
-    def __draw_rule_size(self, master: pygame.Surface):
-        margin_top: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_TOP
-        margin_left: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_LEFT
-        rule_size_in_cm: int = CharacterCreationScreen.__MAX_VERTICAL_RULE_HEIGHT_IN_CM
-        origin_y_for_smaller_size: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_TOP + rule_size_in_cm
-        
-        # Full Rule
-        pygame.draw.line(self._background_texture, pygame.Color(255,255,255), (margin_left, margin_top), (margin_left, origin_y_for_smaller_size), 2)
-        pygame.draw.line(self._background_texture, pygame.Color(255,255,255), (margin_left-10, margin_top), (margin_left+10, margin_top), 2)
-        pygame.draw.line(self._background_texture, pygame.Color(255,255,255), (margin_left-10, origin_y_for_smaller_size), (margin_left+10, origin_y_for_smaller_size), 2)
-        min_size_label: pygame.Surface = self.__button_font.render(str(0), True, self.__button_font_color)
-        max_size_label: pygame.Surface = self.__button_font.render(str(rule_size_in_cm), True, self.__button_font_color)
-        self._background_texture.blit(max_size_label, (margin_left+10+10, margin_top-(min_size_label.get_height()/2)))
-        self._background_texture.blit(min_size_label, (margin_left+10+10, origin_y_for_smaller_size-(max_size_label.get_height()/2)))
-
-    def __draw_rule_range_for_race(self, master: pygame.Surface):
-        margin_top: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_TOP
-        margin_left: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_LEFT
-        rule_size_in_cm: int = CharacterCreationScreen.__MAX_VERTICAL_RULE_HEIGHT_IN_CM
-        min_size: int = 0
-        max_size: int = rule_size_in_cm
-        breed_type: BreedType|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__BREED_KEY)
-        gender: Gender|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__GENDER_KEY)
-        
-        morphology: Morphology|None = None
-
-        if ((breed_type is not None) and (gender is not None)):
-            morphology = breed_type.value.get_morphology(gender)
-
-        if (morphology is not None):
-            min_size = morphology.size.minimum
-            max_size = morphology.size.maximum
-
-        origin_y_for_smaller_size: int = margin_top + rule_size_in_cm
-
-        x: int = margin_left
-        min_x: int = x-5
-        max_x: int = x+5
-        min_y: int = origin_y_for_smaller_size-min_size
-        max_y: int = origin_y_for_smaller_size-max_size
-
-        pygame.draw.line(self._background_texture, pygame.Color(0,255,0), (x, min_y), (x, max_y), 4) # Bas en Haut
-        pygame.draw.line(self._background_texture, pygame.Color(0,255,0), (min_x, min_y), (max_x, min_y), 2)
-        pygame.draw.line(self._background_texture, pygame.Color(0,255,0), (min_x, max_y), (max_x, max_y), 2)
-        
-        min_size_label: pygame.Surface = self.__button_font.render(str(min_size), True, self.__button_font_color)
-        max_size_label: pygame.Surface = self.__button_font.render(str(max_size), True, self.__button_font_color)
-        self._background_texture.blit(min_size_label, (x+10+10, min_y-(min_size_label.get_height()/2)))
-        self._background_texture.blit(max_size_label, (x+10+10, max_y-(max_size_label.get_height()/2)))
+        master.blit(button, ((self.width-button.get_width()), (self.height - button.get_height())))
     
     def __draw_selected_cursor_size(self, master: pygame.Surface):
         margin_top: int = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_TOP
@@ -646,10 +593,10 @@ class CharacterCreationScreen(Scene):
             height: int|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__HEIGHT_KEY)
             if (height is None):
                 height = int(sum(sizes)/(len(sizes)))
-            self.__cursor_rule_height = pygame.draw.polygon(self._background_texture, (0,255,0), ((margin_left-(triangle_length/2), (margin_top+rule_size_in_cm)-height), (margin_left-triangle_length, (margin_top+rule_size_in_cm)-(height+triangle_height)), (margin_left-triangle_length, (margin_top+rule_size_in_cm)-(height-triangle_height)))) # middle_right, top_left, bottom_left
+            self.__cursor_rule_height = pygame.draw.polygon(master, (0,255,0), ((margin_left-(triangle_length/2), (margin_top+rule_size_in_cm)-height), (margin_left-triangle_length, (margin_top+rule_size_in_cm)-(height+triangle_height)), (margin_left-triangle_length, (margin_top+rule_size_in_cm)-(height-triangle_height)))) # middle_right, top_left, bottom_left
     
             selected_height_label: pygame.Surface = self.__button_font.render(str(height), True, (0,255,0))
-            self._background_texture.blit(selected_height_label, ((margin_left-(triangle_length+selected_height_label.get_width())-10), ((margin_top+rule_size_in_cm)-(height+(selected_height_label.get_height()/2)))))
+            master.blit(selected_height_label, ((margin_left-(triangle_length+selected_height_label.get_width())-10), ((margin_top+rule_size_in_cm)-(height+(selected_height_label.get_height()/2)))))
 
     def __draw_avatar_skeleton(self, master: pygame.Surface):
         rule_size_in_cm: int = CharacterCreationScreen.__MAX_VERTICAL_RULE_HEIGHT_IN_CM
@@ -663,7 +610,6 @@ class CharacterCreationScreen(Scene):
             height: int|None = self.__characters_configurations[self.__selected_slot_index].get(CharacterCreationScreen.__HEIGHT_KEY)
             skeleton_must_be_updated: bool = False
             if (skeleton is None):
-                print("Skeleton not exists")
                 sizes = [breed_type.value.get_morphology(gender).size.minimum, breed_type.value.get_morphology(gender).size.maximum]
                 if (height is None):
                     height = int(sum(sizes)/(len(sizes)))
@@ -675,20 +621,17 @@ class CharacterCreationScreen(Scene):
                     skeleton_must_be_updated = True
             
             if (skeleton_must_be_updated):
-                print("new skeleton")
                 self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__SKELETON_KEY] = skeleton
                 self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__SKELETON_SPRITE_KEY] = skeleton_sprite
                 skeleton_sprite = SkeletonSprite(skeleton, pygame.sprite.Group())
                 self.__characters_configurations[self.__selected_slot_index][CharacterCreationScreen.__SKELETON_SPRITE_KEY] = skeleton_sprite
                 skeleton_sprite.offset.y = origin_y_for_smaller_size - max(joint.position.y for joint in skeleton.joints)
-                skeleton_sprite.offset.x = self._background_texture.get_width()/2 - (skeleton.wingspan/2)
+                skeleton_sprite.offset.x = master.get_width()/2 - (skeleton.wingspan/2)
 
             if (skeleton_sprite is not None):
-                skeleton_sprite.draw(self._background_texture)
+                skeleton_sprite.draw(master)
    
     def __draw_avatar(self, master: pygame.Surface):
-        self.__draw_rule_size(master)
-        self.__draw_rule_range_for_race(master)
         self.__draw_selected_cursor_size(master)
         self.__draw_avatar_skeleton(master)
     
@@ -701,19 +644,19 @@ class CharacterCreationScreen(Scene):
             for skin_color in breed_type.value.skin_colors:
                 color_texture: pygame.Surface = pygame.Surface((surface_width, surface_height))
                 color_texture.fill(skin_color.to_tuple())
-                self._background_texture.blit(color_texture, (0, y))
+                master.blit(color_texture, (0, y))
                 y += surface_height   
-            
     
     def draw(self, master: pygame.Surface):
         self._background_texture.fill(self._background_color)
-        self.__draw_genders_buttons(master)
-        self.__draw_factions_buttons(master)
-        self.__draw_breeds_buttons(master)
-        self.__draw_classes_buttons(master)
-        self.__draw_characters_slots_buttons(master)
-        self.__draw_back_button(master)
-        self.__draw_play_button(master)
-        self.__draw_avatar(master)
-        self.__draw_skin_colors_pallet(master)
+        self.__draw_genders_buttons(self._background_texture)
+        self.__draw_factions_buttons(self._background_texture)
+        self.__draw_breeds_buttons(self._background_texture)
+        self.__draw_classes_buttons(self._background_texture)
+        self.__draw_characters_slots_buttons(self._background_texture)
+        self.__draw_back_button(self._background_texture)
+        self.__draw_play_button(self._background_texture)
+        self.__draw_avatar(self._background_texture)
+        # self.__draw_skin_colors_pallet(self._background_texture)
+        self.__avatar_ruler_sprite.draw(self._background_texture)
         super().draw(master)

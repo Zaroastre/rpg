@@ -12,7 +12,6 @@ from rpg.gameplay.talents import TalentsBook, TalentsBookFactory, TalentsTree
 from rpg.gameplay.weapons import Weapon, WeaponFactory, WeaponType
 from rpg.colors import Color
 
-
 class ClassTypeValue:
     def __init__(self, name: str, color: Color) -> None:
         self.__name: str = name
@@ -24,7 +23,6 @@ class ClassTypeValue:
     @property
     def color(self) -> tuple[int, int, int, int]:
         return self.__color.to_tuple()
-
 
 class ClassType(Enum):
     DEMONIST: ClassTypeValue = ClassTypeValue("DEMONIST", Color(135,136,238))

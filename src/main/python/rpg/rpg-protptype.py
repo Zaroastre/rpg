@@ -366,13 +366,6 @@ class App:
                 .region("Stormsong Valley")\
                 .continent().world()
         world: World = world_builder.build()
-        for continent in world.continents:
-            print("Contient: " + continent.name)
-            for region in continent.regions:
-                print("\tRegion: " + region.name + " " + str(region.minimal_recommanded_level))
-                for city in region.cities:
-                    print("\t\tCity: " + city.name)
-                    
         return world
 
     def __replace_scene_by_create_new_game_scene(self):

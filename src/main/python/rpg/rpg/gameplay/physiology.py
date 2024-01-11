@@ -5,11 +5,10 @@ from rpg.utils import Optional
 from rpg.math.geometry import Geometry
 
 class BodyPartValue:
-    def __init__(self, id: int, is_bone: bool, tilt: Range|None=None) -> None:
+    def __init__(self, id: int, is_bone: bool) -> None:
         self.__id: int = id
         self.__is_bone: bool = is_bone
         self.__is_joint: bool = not self.__is_bone
-        self.__tilt: Range|None = tilt
 
     @property
     def id(self) -> int:
@@ -20,26 +19,23 @@ class BodyPartValue:
     @property
     def is_joint(self) -> bool:
         return self.__is_joint
-    @property
-    def tilt(self) -> Optional[Range]:
-        return Optional.of_nullable(self.__tilt)
 
 class BodyPart(Enum):
     HORN=BodyPartValue(1, True)
     HEAD=BodyPartValue(10, True)
-    NECK=BodyPartValue(20, False, Range(-40, 40))
-    LEFT_SHOULDER=BodyPartValue(1_000, False, Range(0, 180))
-    RIGHT_SHOULDER=BodyPartValue(2_000, False, Range(0, 180))
+    NECK=BodyPartValue(20, False)
+    LEFT_SHOULDER=BodyPartValue(1_000, False)
+    RIGHT_SHOULDER=BodyPartValue(2_000, False)
     STERNUM_JOINT=BodyPartValue(30, False)
     STERNUM=BodyPartValue(40, True)
     LEFT_FOREARM=BodyPartValue(1_010, True)
     RIGHT_FOREARM=BodyPartValue(2_010, True)
-    LEFT_ELBOW=BodyPartValue(1_020, False, Range(0, 145))
-    RIGHT_ELBOW=BodyPartValue(2_020, False, Range(0, 145))
+    LEFT_ELBOW=BodyPartValue(1_020, False)
+    RIGHT_ELBOW=BodyPartValue(2_020, False)
     LEFT_ARM=BodyPartValue(1_030, True)
     RIGHT_ARM=BodyPartValue(2_030, True)
-    LEFT_WRIST=BodyPartValue(1_040, False, Range(-15, 15))
-    RIGHT_WRIST=BodyPartValue(2_040, False, Range(-15, 15))
+    LEFT_WRIST=BodyPartValue(1_040, False)
+    RIGHT_WRIST=BodyPartValue(2_040, False)
     LEFT_HAND=BodyPartValue(1_050, True)
     RIGHT_HAND=BodyPartValue(2_050, True)
     CHEST=BodyPartValue(50, True)
@@ -49,8 +45,8 @@ class BodyPart(Enum):
     TAIL=BodyPartValue(70, True)
     PELVIS=BodyPartValue(80, True)
     PELVIS_JOINT=BodyPartValue(90, False)
-    LEFT_HIP=BodyPartValue(5_000, False, Range(0, 40))
-    RIGHT_HIP=BodyPartValue(6_000, False, Range(0, 40))
+    LEFT_HIP=BodyPartValue(5_000, False)
+    RIGHT_HIP=BodyPartValue(6_000, False)
     LEFT_THIGH=BodyPartValue(5_010, True)
     RIGHT_THIGH=BodyPartValue(6_010, True)
     LEFT_KNEE=BodyPartValue(5_020, False)
@@ -108,7 +104,7 @@ class Morphology:
 
 class Joint:
     TOTAL_CREATED: int = 0
-    def __init__(self, position: Position, radius: int, body_part: BodyPart) -> None:
+    def __init__(self, position: Position, radius: int, body_part: BodyPart, flexion: float, extension: float, abduction: float, adduction: float, pronation: float, supination: float, internal_rotation: float, external_rotation: float) -> None:
         Joint.TOTAL_CREATED += 1
         self.__name: str = "PNT-#"+body_part.name
         self.parent: Joint|None = None
@@ -117,6 +113,49 @@ class Joint:
         self.__body_part: BodyPart = body_part
         self.__radius: int = radius
         self.__children: list[Joint] = []
+        
+        self.__max_flexion: float = flexion
+        self.__max_extension: float = extension
+        self.__max_abduction: float = abduction
+        self.__max_adduction: float = adduction
+        self.__max_pronation: float = pronation
+        self.__max_supination: float = supination
+        self.__max_internal_rotation: float = internal_rotation
+        self.__max_external_rotation: float = external_rotation
+        
+        self.current_flexion: float = flexion
+        self.current_extension: float = extension
+        self.current_abduction: float = abduction
+        self.current_adduction: float = adduction
+        self.current_pronation: float = pronation
+        self.current_supination: float = supination
+        self.current_internal_rotation: float = internal_rotation
+        self.current_external_rotation: float = external_rotation
+
+    @property
+    def max_flexion(self) -> float:
+        return self.__max_flexion
+    @property
+    def max_extension(self) -> float:
+        return self.__max_extension
+    @property
+    def max_abduction(self) -> float:
+        return self.__max_abduction
+    @property
+    def max_adduction(self) -> float:
+        return self.__max_adduction
+    @property
+    def max_pronation(self) -> float:
+        return self.__max_pronation
+    @property
+    def max_supination(self) -> float:
+        return self.__max_supination
+    @property
+    def max_internal_rotation(self) -> float:
+        return self.__max_internal_rotation
+    @property
+    def max_external_rotation(self) -> float:
+        return self.__max_external_rotation
 
     @property
     def body_part(self) -> BodyPart:
@@ -309,6 +348,14 @@ class SkeletonFactory:
     @staticmethod
     def __create_joints_for_right_leg(middle_canvas_width: int, bottom_right_joints: list[Joint], joints: list[Joint], head_height: int, neck_height: int, body_height: int, leg_height: int, previous_joint: Joint|None):
         for body_part_joint in bottom_right_joints:
+            flexion: float = 0.0
+            extension: float = 0.0
+            abduction: float = 0.0
+            adduction: float = 0.0
+            pronation: float = 0.0
+            supination: float = 0.0
+            internal_rotation: float = 0.0
+            external_rotation: float = 0.0
             radius: int = 2
             if body_part_joint == BodyPart.RIGHT_HIP:
                 x_position = middle_canvas_width+(head_height*1.25)
@@ -322,7 +369,7 @@ class SkeletonFactory:
                 y_position = head_height+neck_height+body_height + leg_height
 
             position: Position = Position(x_position,  y_position)
-            joint: Joint = Joint(position, radius, body_part_joint)
+            joint: Joint = Joint(position, radius, body_part_joint, flexion, extension, abduction, adduction, pronation, supination, internal_rotation, external_rotation)
             if (previous_joint is not None):
                 joint.parent = previous_joint
             previous_joint = joint
@@ -331,6 +378,14 @@ class SkeletonFactory:
     @staticmethod
     def __create_joints_for_left_leg(middle_canvas_width: int, bottom_left_joints: list[Joint], joints: list[Joint], head_height: int, neck_height: int, body_height: int, leg_height: int, previous_joint: Joint|None):
         for body_part_joint in bottom_left_joints:
+            flexion: float = 0.0
+            extension: float = 0.0
+            abduction: float = 0.0
+            adduction: float = 0.0
+            pronation: float = 0.0
+            supination: float = 0.0
+            internal_rotation: float = 0.0
+            external_rotation: float = 0.0
             radius: int = 2
             if body_part_joint == BodyPart.LEFT_HIP:
                 x_position = middle_canvas_width-(head_height*1.25)
@@ -344,7 +399,7 @@ class SkeletonFactory:
                 y_position = head_height+neck_height+body_height + leg_height
 
             position: Position = Position(x_position,  y_position)
-            joint: Joint = Joint(position, radius, body_part_joint)
+            joint: Joint = Joint(position, radius, body_part_joint, flexion, extension, abduction, adduction, pronation, supination, internal_rotation, external_rotation)
             if (previous_joint is not None):
                 joint.parent = previous_joint
             previous_joint = joint
@@ -353,20 +408,42 @@ class SkeletonFactory:
     @staticmethod
     def __create_joints_for_right_arm(default_humanoid_body_height, middle_canvas_width: int, top_right_joints: list[Joint], joints: list[Joint], head_height: int, neck_height: int, previous_joint: Joint|None):
         for body_part_joint in top_right_joints:
+            flexion: float = 0.0
+            extension: float = 0.0
+            abduction: float = 0.0
+            adduction: float = 0.0
+            pronation: float = 0.0
+            supination: float = 0.0
+            internal_rotation: float = 0.0
+            external_rotation: float = 0.0
             radius: int = 2
             if body_part_joint == BodyPart.RIGHT_SHOULDER:
                 x_position = middle_canvas_width+(head_height*1.75)
                 y_position = head_height+neck_height
                 radius = 5
+                flexion = 180.0
+                extension = 55.0
+                abduction = 180.0
+                internal_rotation = 90.0
+                external_rotation = 90.0
             elif body_part_joint == BodyPart.RIGHT_ELBOW:
                 x_position = middle_canvas_width + (default_humanoid_body_height * SkeletonFactory.proportion_coude)
                 y_position = head_height + neck_height
+                flexion = 150.0
+                pronation = 90.0
+                supination = 90.0
             elif body_part_joint == BodyPart.RIGHT_WRIST:
                 x_position = middle_canvas_width + (default_humanoid_body_height * SkeletonFactory.proportion_poignet)
                 y_position = head_height + neck_height
+                flexion = 90.0
+                extension = 80.0
+                pronation = 90.0
+                supination = 90.0
+                abduction = 20.0
+                adduction = 20.0
 
             position: Position = Position(x_position,  y_position)
-            joint: Joint = Joint(position, radius, body_part_joint)
+            joint: Joint = Joint(position, radius, body_part_joint, flexion, extension, abduction, adduction, pronation, supination, internal_rotation, external_rotation)
             if (previous_joint is not None):
                 joint.parent = previous_joint
             previous_joint = joint
@@ -376,19 +453,41 @@ class SkeletonFactory:
     def __create_joints_for_left_arm(default_humanoid_body_height, middle_canvas_width: int, top_left_joints: list[Joint], joints: list[Joint], head_height: int, neck_height: int, previous_joint: Joint|None):
         for body_part_joint in top_left_joints:
             radius: int = 2
+            flexion: float = 0.0
+            extension: float = 0.0
+            abduction: float = 0.0
+            adduction: float = 0.0
+            pronation: float = 0.0
+            supination: float = 0.0
+            internal_rotation: float = 0.0
+            external_rotation: float = 0.0
             if body_part_joint == BodyPart.LEFT_SHOULDER:
                 x_position = middle_canvas_width-(head_height*1.75)
                 y_position = head_height+neck_height
                 radius = 5
+                flexion = 180.0
+                extension = 55.0
+                abduction = 180.0
+                internal_rotation = 90.0
+                external_rotation = 90.0
             elif body_part_joint == BodyPart.LEFT_ELBOW:
                 x_position = middle_canvas_width - (default_humanoid_body_height * SkeletonFactory.proportion_coude)
                 y_position = head_height + neck_height
+                flexion = 150.0
+                pronation = 90.0
+                supination = 90.0
             elif body_part_joint == BodyPart.LEFT_WRIST:
                 x_position = middle_canvas_width - (default_humanoid_body_height * SkeletonFactory.proportion_poignet)
                 y_position = head_height + neck_height
+                flexion = 90.0
+                extension = 80.0
+                pronation = 90.0
+                supination = 90.0
+                abduction = 20.0
+                adduction = 20.0
 
             position: Position = Position(x_position,  y_position)
-            joint: Joint = Joint(position, radius, body_part_joint)
+            joint: Joint = Joint(position, radius, body_part_joint, flexion, extension, abduction, adduction, pronation, supination, internal_rotation, external_rotation)
             if (previous_joint is not None):
                 joint.parent = previous_joint
             previous_joint = joint
@@ -398,6 +497,15 @@ class SkeletonFactory:
     def __create_joints_for_body_middle(middle_canvas_width: int, middle_joints: list[Joint], joints: list[Joint], head_height: int, neck_height: int, body_height: int, previous_joint: Joint|None):
         for body_part_joint in middle_joints:
             radius: int = 2
+            radius: int = 2
+            flexion: float = 0.0
+            extension: float = 0.0
+            abduction: float = 0.0
+            adduction: float = 0.0
+            pronation: float = 0.0
+            supination: float = 0.0
+            internal_rotation: float = 0.0
+            external_rotation: float = 0.0
             if body_part_joint == BodyPart.NECK:
                 y_position = head_height
                 radius = int(head_height/4)
@@ -406,7 +514,7 @@ class SkeletonFactory:
             elif body_part_joint == BodyPart.PELVIS_JOINT:
                 y_position = head_height + neck_height + body_height
             position: Position = Position(middle_canvas_width, y_position)
-            joint: Joint = Joint(position, radius, body_part_joint)
+            joint: Joint = Joint(position, radius, body_part_joint, flexion, extension, abduction, adduction, pronation, supination, internal_rotation, external_rotation)
             if (body_part_joint == BodyPart.STERNUM_JOINT):
                 sternum_joint = joint
             elif (body_part_joint == BodyPart.PELVIS_JOINT):

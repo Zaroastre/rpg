@@ -18,105 +18,10 @@ from rpg.ui.graphics import (ActionPanel, ExperiencePanel, GroupPanel,
                              MessagePanel, SpellDetailPopup, TargetHUD)
 from rpg.ui.sprites import CharacterSprite, EnemySprite, ProjectilSprite
 from rpg.artificial_intelligency.registry import ArtificialIntelligencyRegistry
-
-class CameraGroup(pygame.sprite.Group):
-    def __init__(self) -> None:
-        super().__init__()
-        self.__disaply_surface: pygame.Surface = pygame.display.get_surface()
-        
-        self.__offset: pygame.math.Vector2 = pygame.math.Vector2()
-        self.__width: float = self.__disaply_surface.get_width() // 2
-        self.__height: float = self.__disaply_surface.get_height() // 2
-        self.__camera_left: int = self.__width/2
-        self.__camera_top: int = self.__height/2
-        self.__camera_width: int = self.__disaply_surface.get_width()-(self.__camera_left*2)
-        self.__camera_height: int = self.__disaply_surface.get_height()-(self.__camera_top*2)
-        self.__camera_rect: pygame.Rect = pygame.Rect(self.__camera_left, self.__camera_top, self.__camera_width, self.__camera_height)
-        
-        self.__ground_surface: pygame.Surface = pygame.Surface((10_000, 10_000))
-        self.__ground_surface.fill(pygame.Color(0,0,0))
-        self.__ground_rect: pygame.Rect = self.__ground_surface.get_rect(topleft=(0,0))
-        self.__sprite_to_track: CharacterSprite = None
-
-        self.__zoom_scale: float = 1
-        self.internal_surface_size = (2500,2500)
-        self.internal_surface = pygame.Surface(self.internal_surface_size, pygame.SRCALPHA)
-        self.internal_rect = self.internal_surface.get_rect(center=(self.__width, self.__height))
-        self.internal_suface_size_vector: pygame.math.Vector2 = pygame.math.Vector2(self.internal_surface_size)
-        self.internal_offset: pygame.math.Vector2 = pygame.math.Vector2()
-        self.internal_offset.x = self.internal_surface_size[0] //2 - self.__width
-        self.internal_offset.y = self.internal_surface_size[1] //2 - self.__height
-    
-    def set_character_to_track(self, character_sprite: CharacterSprite):
-        self.__sprite_to_track = character_sprite
-    
-    def box_target_camera(self):
-        if (self.__sprite_to_track is not None):
-            if (self.__sprite_to_track.rect.left < self.__camera_rect.left):
-                self.__camera_rect.left = self.__sprite_to_track.rect.left
-            if (self.__sprite_to_track.rect.right > self.__camera_rect.right):
-                self.__camera_rect.right = self.__sprite_to_track.rect.right
-            if (self.__sprite_to_track.rect.bottom > self.__camera_rect.bottom):
-                self.__camera_rect.bottom = self.__sprite_to_track.rect.bottom
-            if (self.__sprite_to_track.rect.top < self.__camera_rect.top):
-                self.__camera_rect.top = self.__sprite_to_track.rect.top
-            self.__offset.x = self.__camera_rect.left - self.__camera_left
-            self.__offset.y = self.__camera_rect.top - self.__camera_top
-    
-    def zoom_keyboard_control(self):
-        keys = pygame.key.get_pressed()
-        if (keys[pygame.K_p]):
-            self.__zoom_scale += 0.1
-        if (keys[pygame.K_m]):
-            self.__zoom_scale -= 0.1
-    
-    def keyboard_control(self):
-        keys = pygame.key.get_pressed()
-        if (keys[pygame.K_a]):
-            self.__camera_rect.x-= 5
-        if (keys[pygame.K_e]):
-            self.__camera_rect.x+= 5
-        if (keys[pygame.K_r]):
-            self.__camera_rect.y-= 5
-        if (keys[pygame.K_f]):
-            self.__camera_rect.y+= 5
-                
-        if (self.__sprite_to_track is not None):
-            self.__offset.x = self.__sprite_to_track.rect.centerx - self.__width
-            self.__offset.y = self.__sprite_to_track.rect.centery - self.__height
-    
-    def __center_camera_on_target_to_track(self):
-        if (self.__sprite_to_track is not None):
-            self.__offset.x = self.__sprite_to_track.rect.centerx - self.__width
-            self.__offset.y = self.__sprite_to_track.rect.centery - self.__height
-        
-    def draw_tracking_target(self):
-        # self.__center_camera_on_target_to_track()
-        self.zoom_keyboard_control()
-        self.keyboard_control()
-        self.box_target_camera()
-        
-        self.internal_surface.fill(pygame.Color(30,30,30))
-
-        # Ground
-        ground_offset = self.__ground_rect.topleft - self.__offset + self.internal_offset
-        self.internal_surface.blit(self.__ground_surface, ground_offset)
-        
-        # Active elements
-        for sprite in sorted(self.sprites(), key=lambda sprite: sprite.rect.centery):
-            offset_position = sprite.rect.topleft - self.__offset + self.internal_offset
-            sprite.offset = self.__offset
-            sprite.draw(self.internal_surface)
-            # self.__disaply_surface.blit(sprite.image, offset_possition)
-        scaled_surface = pygame.transform.scale(self.internal_surface, self.internal_suface_size_vector*self.__zoom_scale)
-        scaled_rect = scaled_surface.get_rect(center=(self.__width, self.__height))
-        self.__disaply_surface.blit(scaled_surface, scaled_rect)
-        pygame.draw.rect(self.__disaply_surface, pygame.Color(255,0,0), self.__camera_rect, 1)
-        
+  
 class GameScene(Scene):
     def __init__(self, width: int, height: int, player: Player) -> None:
         super().__init__(width, height, player)
-        self.__camera_group: CameraGroup = CameraGroup()
         self.__friends_group: Group = Group(max_capacity=5)
         
         self.__action_panel: ActionPanel = ActionPanel(rpg.constants.ACTION_PANEL_WIDTH, rpg.constants.ACTION_PANEL_HEIGHT, rpg.constants.ACTION_PANEL_POSITION)
@@ -156,11 +61,11 @@ class GameScene(Scene):
             # player.threat.increase(20.0)
             self.__friends_group.add_member(player)
             self.player.set_character(player)
-            self.__friends_sprites.append(CharacterSprite(player, self.__camera_group))
+            self.__friends_sprites.append(CharacterSprite(player))
             for friend in friends:
                 if (friend is not player):
                     self.__friends_group.add_member(friend)
-                    self.__friends_sprites.append(CharacterSprite(player, self.__camera_group))
+                    self.__friends_sprites.append(CharacterSprite(friend))
         self.__update_character()
     def __initialize_events_listeners(self):
         self.__action_panel.on_spell_slot_hover(self.__handle_on_spell_slot_hover)
@@ -212,7 +117,7 @@ class GameScene(Scene):
             level: int = Range(1, 20).random()
             while (enemy.level.value < level):
                 enemy.level.up()
-            self.__enemies_sprites.append(EnemySprite(enemy, self.__camera_group))
+            self.__enemies_sprites.append(EnemySprite(enemy))
 
     def __prevent_character_to_disapear_from_scene(self, character: Character):
         new_position: Position = None
@@ -456,10 +361,10 @@ class GameScene(Scene):
         self.__target_hud.set_character(self.player.character)
         self.__action_panel.set_spells_wheel(self.player.spells_wheel)
         self.__experience_panel.set_character(self.player.character)
-        for friend_sprite in self.__friends_sprites:
-            if (friend_sprite.character.is_selected()):
-                self.__camera_group.set_character_to_track(friend_sprite)
-                break
+        # for friend_sprite in self.__friends_sprites:
+        #     if (friend_sprite.character.is_selected()):
+        #         # self.__camera_group.set_character_to_track(friend_sprite)
+        #         break
     
     def __change_character_for_player(self):
         previous_character: Character = self.player.character
@@ -482,10 +387,8 @@ class GameScene(Scene):
             self.__handle_event(event)
         else:
             self.__handle()
-        self.__camera_group.update()
         
         self.__change_character_for_player()
-        
         
         if (self.player.character.is_moving):
             for member in self.__friends_group.members:
@@ -497,9 +400,9 @@ class GameScene(Scene):
     def draw(self, master: pygame.Surface):
         heroes_alive: list[Character] = [member for member in self.__friends_group.members if member.life.is_alive()]
         if (len(heroes_alive) > 0):
-            self.__camera_group.draw_tracking_target()
-            # self.__draw_scene(master)
+            self.__draw_scene(master)
             self.__draw_hud(master)
+            # self.__camera.draw_tracking_target(master)
         else:
             if (self.__on_game_over_event_listener is not None):
                 self.__on_game_over_event_listener()

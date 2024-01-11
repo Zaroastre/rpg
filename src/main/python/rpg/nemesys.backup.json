@@ -5,11 +5,11 @@
         "faction": "HORDE",
         "breed": "BLOOD_ELF",
         "class": "PALADIN",
-        "level": 30,
-        "experience": 154,
-        "position.x": 1147,
-        "position.y": 259,
-        "position.z": 0
+        "level": 31,
+        "experience": 209,
+        "position.x": 1150.139556387543,
+        "position.y": 702.788944046271,
+        "position.z": 0.0
     },
     "1": {
         "name": "Hextankxion",
@@ -17,11 +17,11 @@
         "faction": "HORDE",
         "breed": "UNDEAD",
         "class": "WARRIOR",
-        "level": 13,
-        "experience": 378,
-        "position.x": 1162,
-        "position.y": 230,
-        "position.z": 0
+        "level": 15,
+        "experience": 28,
+        "position.x": 1461.988491201859,
+        "position.y": 324.84430459604926,
+        "position.z": 0.0
     },
     "2": {
         "name": "Eryma",
@@ -29,11 +29,11 @@
         "faction": "HORDE",
         "breed": "BLOOD_ELF",
         "class": "PRIEST",
-        "level": 15,
-        "experience": 53,
-        "position.x": 1144,
-        "position.y": 239,
-        "position.z": 0
+        "level": 16,
+        "experience": 132,
+        "position.x": 1448.5222379890708,
+        "position.y": 336.020619928442,
+        "position.z": 0.0
     },
     "3": {
         "name": "Valichnya",
@@ -41,11 +41,11 @@
         "faction": "HORDE",
         "breed": "UNDEAD",
         "class": "DEMONIST",
-        "level": 14,
-        "experience": 328,
-        "position.x": 1145,
-        "position.y": 196,
-        "position.z": 0
+        "level": 15,
+        "experience": 359,
+        "position.x": 1449.1230155530686,
+        "position.y": 355.2546183280151,
+        "position.z": 0.0
     },
     "4": {
         "name": "Plogojouish",
@@ -53,10 +53,10 @@
         "faction": "HORDE",
         "breed": "TROLL",
         "class": "SHAMAN",
-        "level": 13,
-        "experience": 84,
-        "position.x": 1145,
-        "position.y": 219,
-        "position.z": 0
+        "level": 14,
+        "experience": 119,
+        "position.x": 769.9998389699549,
+        "position.y": 552.4885965082335,
+        "position.z": 0.0
     }
 }
