@@ -396,14 +396,14 @@ class CharacterCreationScreen(Scene):
         button_width: int = 100
         button_height: int = 50
         genders: list[Gender] = list(Gender)
-        buttons_panel: pygame.Surface = pygame.Surface((((button_width*len(genders))+space_between_each_buttons), button_height))
+        buttons_panel: pygame.Surface = pygame.Surface((((button_width*len(genders))+space_between_each_buttons), button_height), pygame.SRCALPHA, 32).convert_alpha()
         button_position_x: int = 0
         for index, gender in enumerate(genders):
-            button: pygame.Surface = pygame.Surface((button_width, button_height))
+            button: pygame.Surface = pygame.Surface((button_width, button_height), pygame.SRCALPHA, 32).convert_alpha()
             button_border_size: int = 5
             button_border: pygame.Surface = button.copy()
             button_border.fill(self.__button_border_color)
-            button_background: pygame.Surface = pygame.Surface((button.get_width()-(button_border_size*2), button.get_height()-(button_border_size*2)))
+            button_background: pygame.Surface = pygame.Surface((button.get_width()-(button_border_size*2), button.get_height()-(button_border_size*2)), pygame.SRCALPHA, 32).convert_alpha()
             label: pygame.Surface = self.__button_font.render(gender.name.capitalize(), True, self.__button_font_color)
             label_position_x: int = (button_background.get_width()/2)-(label.get_width()/2)
             label_position_y: int = (button_background.get_height()/2)-(label.get_height()/2)

@@ -189,7 +189,7 @@ class CharacterSprite(pygame.sprite.Sprite, InputEventHandler, Draw):
         self.__is_going_to_the_top: bool = False
         self.__character: Character = character
         self.__is_selected: bool = False
-        self.image = pygame.Surface((self.character.radius*2, self.character.radius*2), pygame.SRCALPHA)        
+        self.image = pygame.Surface((self.character.radius*2, self.character.radius*2), pygame.SRCALPHA, 32).convert_alpha()      
         self.rect = pygame.Rect(self.character.current_position.x-self.character.radius, self.character.current_position.y-self.character.radius, self.image.get_width(), self.image.get_height())
         self.__hitbox: pygame.Rect = None
         self.__font_size: int = 20

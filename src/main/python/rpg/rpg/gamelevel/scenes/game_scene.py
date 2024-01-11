@@ -398,6 +398,7 @@ class GameScene(Scene):
         self.__handle_interaction_and_moves_for_enemies()
 
     def draw(self, master: pygame.Surface):
+        print(self.player.character.name)
         heroes_alive: list[Character] = [member for member in self.__friends_group.members if member.life.is_alive()]
         if (len(heroes_alive) > 0):
             self.__draw_scene(master)
