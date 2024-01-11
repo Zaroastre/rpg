@@ -5,10 +5,11 @@ from rpg.utils import Optional
 from rpg.math.geometry import Geometry
 
 class BodyPartValue:
-    def __init__(self, id: int, is_bone: bool) -> None:
+    def __init__(self, id: int, is_bone: bool, tilt: Range|None=None) -> None:
         self.__id: int = id
         self.__is_bone: bool = is_bone
         self.__is_joint: bool = not self.__is_bone
+        self.__tilt: Range|None = tilt
 
     @property
     def id(self) -> int:
@@ -19,23 +20,26 @@ class BodyPartValue:
     @property
     def is_joint(self) -> bool:
         return self.__is_joint
+    @property
+    def tilt(self) -> Optional[Range]:
+        return Optional.of_nullable(self.__tilt)
 
 class BodyPart(Enum):
     HORN=BodyPartValue(1, True)
     HEAD=BodyPartValue(10, True)
-    NECK=BodyPartValue(20, False)
-    LEFT_SHOULDER=BodyPartValue(1_000, False)
-    RIGHT_SHOULDER=BodyPartValue(2_000, False)
+    NECK=BodyPartValue(20, False, Range(-40, 40))
+    LEFT_SHOULDER=BodyPartValue(1_000, False, Range(0, 180))
+    RIGHT_SHOULDER=BodyPartValue(2_000, False, Range(0, 180))
     STERNUM_JOINT=BodyPartValue(30, False)
     STERNUM=BodyPartValue(40, True)
     LEFT_FOREARM=BodyPartValue(1_010, True)
     RIGHT_FOREARM=BodyPartValue(2_010, True)
-    LEFT_ELBOW=BodyPartValue(1_020, False)
-    RIGHT_ELBOW=BodyPartValue(2_020, False)
+    LEFT_ELBOW=BodyPartValue(1_020, False, Range(0, 145))
+    RIGHT_ELBOW=BodyPartValue(2_020, False, Range(0, 145))
     LEFT_ARM=BodyPartValue(1_030, True)
     RIGHT_ARM=BodyPartValue(2_030, True)
-    LEFT_WRIST=BodyPartValue(1_040, False)
-    RIGHT_WRIST=BodyPartValue(2_040, False)
+    LEFT_WRIST=BodyPartValue(1_040, False, Range(-15, 15))
+    RIGHT_WRIST=BodyPartValue(2_040, False, Range(-15, 15))
     LEFT_HAND=BodyPartValue(1_050, True)
     RIGHT_HAND=BodyPartValue(2_050, True)
     CHEST=BodyPartValue(50, True)
@@ -45,8 +49,8 @@ class BodyPart(Enum):
     TAIL=BodyPartValue(70, True)
     PELVIS=BodyPartValue(80, True)
     PELVIS_JOINT=BodyPartValue(90, False)
-    LEFT_HIP=BodyPartValue(5_000, False)
-    RIGHT_HIP=BodyPartValue(6_000, False)
+    LEFT_HIP=BodyPartValue(5_000, False, Range(0, 40))
+    RIGHT_HIP=BodyPartValue(6_000, False, Range(0, 40))
     LEFT_THIGH=BodyPartValue(5_010, True)
     RIGHT_THIGH=BodyPartValue(6_010, True)
     LEFT_KNEE=BodyPartValue(5_020, False)

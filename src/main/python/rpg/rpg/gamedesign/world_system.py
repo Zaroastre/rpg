@@ -1,4 +1,21 @@
+from enum import Enum
+from rpg.utils import Optional
 from rpg.gamedesign.faction_system import Faction
+
+class ContinentNames(Enum):
+    EASTERN_KINGDOMS="EASTERN_KINGDOMS"
+    KALIMDOR="KALIMDOR"
+    OUTLAND="OUTLAND"
+    NORTHREND="NORTHREND"
+    THE_MAELSTROM="THE_MAELSTROM"
+    PANDARIA="PANDARIA"
+    DRAENOR="DRAENOR"
+    BROKEN_ISLES="BROKEN_ISLES"
+    ARGUS="ARGUS"
+    INVASION_POINTS="INVASION_POINTS"
+    KUL_TIRAS="KUL_TIRAS"
+    ZANDALAR="ZANDALAR"
+    SHADOWLANDS="SHADOWLANDS"
 
 class City:
     def __init__(self, name: str, is_capital: bool, faction: Faction) -> None:
@@ -19,8 +36,13 @@ class Region:
         self.__cities: list[City] = cities
         self.__land: Land = Land()
     @property
+    def minimal_recommanded_level(self) -> int:
+        return self.__minimal_recommanded_level
+
+    @property
     def name(self) -> str:
         return self.__name
+
     @property
     def cities(self) -> list[City]:
         return self.__cities.copy()
@@ -42,6 +64,13 @@ class World:
     @property
     def continents(self) -> list[Continent]:
         return self.__continents.copy()
+    
+    def get_continent(self, continent_name: ContinentNames) -> Optional[Continent]:
+        continent_found: Optional[Continent] = Optional.empty()
+        for continent in self.__continents:
+            if (continent.name.lower().replace("'", " ") == continent_name.name.lower().replace("_", " ")):
+                continent_found = Optional.of(continent)
+        return continent_found
 
 class Map:
     def __init__(self, world: World) -> None:
@@ -126,6 +155,8 @@ class ContinentBuilder:
         return Continent(self.__name, self.__regions)
 
     def world(self):
+        continent: Continent = self.build()
+        self.__world_builder.with_continent(continent)
         return self.__world_builder
 
 

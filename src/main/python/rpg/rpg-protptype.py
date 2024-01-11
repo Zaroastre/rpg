@@ -110,11 +110,76 @@ class App:
                 .city("Moonbrook").faction(Faction.ALLIANCE).region()\
             .continent()
         continent_builder.region("Deadwind Pass")\
+                .with_minimal_recommanded_level(10)\
+                .city("Karazhan").faction(Faction.NEUTRAL).region()\
             .continent()
         continent_builder.region("Swamp of Sorrows")\
+                .with_minimal_recommanded_level(15)\
+                .city("The Harborage").faction(Faction.ALLIANCE).region()\
+                .city("Stonard").faction(Faction.HORDE).region()\
+                .city("Bogpaddle").faction(Faction.NEUTRAL).region()\
+            .continent()
+        continent_builder.region("Blasted Lands")\
+                .with_minimal_recommanded_level(15)\
+                .city("Nethergarde Keep").faction(Faction.ALLIANCE).region()\
+                .city("Surwich").faction(Faction.ALLIANCE).region()\
+                .city("Dreadmaul Hold").faction(Faction.HORDE).region()\
+                .city("Sunveil Excursion").faction(Faction.HORDE).region()\
             .continent()
 
+        continent_builder.region("Isle of Quel'Danas")\
+                .with_minimal_recommanded_level(30)\
+                .city("Sun's Reach").faction(Faction.NEUTRAL).region()\
+            .continent()
+            
+        continent_builder.region("Kelp'thar Forest")\
+                .with_minimal_recommanded_level(30)\
+                .city("Seafarer's Tomb").faction(Faction.ALLIANCE).region()\
+                .city("Legion's Fate").faction(Faction.HORDE).region()\
+                .city("Deepmist Grotto").faction(Faction.NEUTRAL).region()\
+            .continent()
+            
+        continent_builder.region("Shimmering Expanse")\
+                .with_minimal_recommanded_level(30)\
+                .city("Tranquil Wash").faction(Faction.ALLIANCE).region()\
+                .city("Legion's Rest").faction(Faction.HORDE).region()\
+                .city("Silver Tide Hollow").faction(Faction.NEUTRAL).region()\
+            .continent()
+            
+        continent_builder.region("Abyssal Depths")\
+                .with_minimal_recommanded_level(30)\
+                .city("Darkbreak Cove").faction(Faction.ALLIANCE).region()\
+                .city("Tenebrous Cavern").faction(Faction.NEUTRAL).region()\
+            .continent()
+            
+        continent_builder.region("Twilight Highlands ")\
+                .with_minimal_recommanded_level(30)\
+                .city("Highbank").faction(Faction.ALLIANCE).region()\
+                .city("Firebeard's Patrol").faction(Faction.ALLIANCE).region()\
+                .city("Victor's Point").faction(Faction.ALLIANCE).region()\
+                .city("Thundermar").faction(Faction.ALLIANCE).region()\
+                .city("Kirthaven").faction(Faction.ALLIANCE).region()\
+                .city("Dragonmaw Port").faction(Faction.HORDE).region()\
+                .city("Krazzworks").faction(Faction.HORDE).region()\
+                .city("Bloodgulch").faction(Faction.HORDE).region()\
+                .city("Crushblow").faction(Faction.HORDE).region()\
+                .city("The Gullet").faction(Faction.HORDE).region()\
+            .continent()
+            
+        continent_builder.region("Tol Barad Peninsula")\
+                .with_minimal_recommanded_level(30)\
+                .city("Baradin Base Camp").faction(Faction.ALLIANCE).region()\
+                .city("Hellscream's Grasp").faction(Faction.HORDE).region()\
+            .continent()
+            
+        continent_builder.region("Tol Barad")\
+                .with_minimal_recommanded_level(30)\
+                .city("Baradin Hold").faction(Faction.NEUTRAL).region()\
+            .continent()
+            
         continent_builder.region("Burning Steppes")\
+                .with_minimal_recommanded_level(15)\
+                .city("Morgan's Vigil").faction(Faction.ALLIANCE).region()\
                 .city("Flame Crest").faction(Faction.HORDE).region()\
             .continent()
 
@@ -187,8 +252,6 @@ class App:
                 .city("Andorhal").faction(Faction.HORDE).region()\
                 .continent()
                 
-                
-        
         continent_builder.region("Badlands")\
                 .with_minimal_recommanded_level(15)\
                 .city("Dragon's Mouth").faction(Faction.ALLIANCE).region()\
@@ -196,8 +259,6 @@ class App:
                 .city("Fuselight").faction(Faction.NEUTRAL).region()\
             .continent()
             
-            
-                
         continent_builder.region("The Cape of Stranglethorn")\
                 .with_minimal_recommanded_level(10)\
                 .city("Explorers' League Digsite, ").faction(Faction.ALLIANCE).region()\
@@ -304,7 +365,15 @@ class App:
                 .continent()\
                 .region("Stormsong Valley")\
                 .continent().world()
-        return world_builder.build()
+        world: World = world_builder.build()
+        for continent in world.continents:
+            print("Contient: " + continent.name)
+            for region in continent.regions:
+                print("\tRegion: " + region.name + " " + str(region.minimal_recommanded_level))
+                for city in region.cities:
+                    print("\t\tCity: " + city.name)
+                    
+        return world
 
     def __replace_scene_by_create_new_game_scene(self):
         self.__scene = CharacterCreationScreen(width=self.__window.get_width(), height=self.__window.get_height(), player=self.__player)
