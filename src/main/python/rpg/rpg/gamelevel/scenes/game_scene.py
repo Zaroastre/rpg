@@ -13,6 +13,7 @@ from rpg.gameplay.player import Player
 from rpg.gameplay.spells import Spell
 from rpg.gamedesign.camera_system import Camera
 from rpg.gameplay.teams import Group
+from rpg.gamedesign.camera_system import Camera
 from rpg.math.geometry import Geometry
 from rpg.ui.graphics import (ActionPanel, ExperiencePanel, GroupPanel,
                              MessagePanel, SpellDetailPopup, TargetHUD)
@@ -37,8 +38,10 @@ class GameScene(Scene):
         self.__message_broker: MessageBroker = MessageBroker()
         self.__ai_registry: ArtificialIntelligencyRegistry|None = None 
         self.__fights: dict[str, Fight] = {}
+        self.__camera: Camera = Camera(self._background_texture)
         
         self.__on_game_over_event_listener: callable = None
+        
         
         self.__generate_enemies()
         self.__initialize_events_listeners()
@@ -206,6 +209,7 @@ class GameScene(Scene):
         self.__target_hud.draw(master)
         if (self.__spell_detail_popup is not None):
             self.__spell_detail_popup.draw(master)
+        pygame.draw.rect(master, pygame.Color(255,0,0), self.__camera.rect, 1)
 
     def __draw_scene(self, master: pygame.Surface):
         for hero_sprite in self.__friends_sprites:
