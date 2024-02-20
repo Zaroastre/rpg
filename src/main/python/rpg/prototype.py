@@ -1,31 +1,34 @@
-from pathlib import Path
+from rpg.ui.widgets.radiobuttons import RadioButtonGroup
+from rpg.ui.widgets.comboboxes import Combobox
 
-from rpg.characters import Character
-from rpg.gameplay.breeds import BreedFactory, Breed
-from rpg.gameplay.classes import Class, ClassFactory
-from rpg.gameplay.genders import Gender
-from rpg.gamedesign.faction_system import Faction
-from rpg.gameplay.weapons import WeaponFactory, StuffPartType, QualityType, Range
-from rpg.gameplay.physiology import SkeletonFactory
-from rpg.colors import Color, ColorPallet
 
 def main():
-    # name: str = "Hextanktion"
-    # breed: Breed = BreedFactory.undead()
-    # character_class: Class = ClassFactory.paladin()
-    # gender: Gender = Gender.MAN
-    # faction: Faction = Faction.HORDE
-    # player: Character = Character(name, breed, character_class, gender, faction)
-    # player.character_class.use_weapon(WeaponFactory.two_hands_mace(None, None, StuffPartType.RIGHT_HAND_OBJECT, QualityType.ARTIFACT, 1, Range(1, 10), 0.0))
-    # print(player.character_class.right_hand_weapon.gem_box.maximum_capacity)
-    # print(player.character_class.right_hand_weapon)
-    
-    # csv = CsvReader.read(Path("C:/Users/NicolasMetivier/Documents/personal/rpg/src/main/python/rpg/resources/size-in-cm.csv"))
-    # print(csv.get_line_by_header("draenei").get())
-    # print(csv.get_column_by_header("woman_min").get())
-    
-    # SkeletonFactory.create_humanoid_skeleton(BreedFactory.blood_elf().breed_type.value.get_morphology(Gender.MAN))
-    print(ColorPallet.generate_colors_pallet(Color.from_hexa("#FFE0BD"), Color.from_hexa("#D1A48E"), 10))
+    horde_characters_radio_buttons_group: RadioButtonGroup[str] = RadioButtonGroup("horde", 200, 50)
+    alliance_characters_radio_buttons_group: RadioButtonGroup[int] = RadioButtonGroup("alliance", 200, 50)
+
+    horde_characters_radio_buttons_group.add_radio_button("Eryma", "Eryma: Elfe de Sang - Prêtresse")
+    horde_characters_radio_buttons_group.add_radio_button("Jxalo", "Jxalo: Elfe de Sang - Paladin")
+    horde_characters_radio_buttons_group.add_radio_button("Valichnya", "Valichnya: Mort-vivante - Démoniste", True)
+    horde_characters_radio_buttons_group.add_radio_button("Mortuaire", "Mortuaire: Mort-vivant - Guerrier")
+    horde_characters_radio_buttons_group.add_radio_button("Plogojouish", "Plogojouish: Troll - Chaman")
+
+    alliance_characters_radio_buttons_group.add_radio_button("Jxaleyna", "Jxaleyna: Draeney - Chamane")
+
+    # for radio_button in horde_characters_radio_buttons_group.buttons:
+    #     print(radio_button.text, radio_button.value, radio_button.is_selected)
+
+    horde_characters_combobox: Combobox[str] = Combobox("Select your character...", 200, 50)
+    horde_characters_combobox.add_item("Eryma", "Eryma: Elfe de Sang - Prêtresse")
+    horde_characters_combobox.add_item("Jxalo", "Jxalo: Elfe de Sang - Paladin")
+    horde_characters_combobox.add_item("Valichnya", "Valichnya: Mort-vivante - Démoniste")
+    horde_characters_combobox.add_item("Mortuaire", "Mortuaire: Mort-vivant - Guerrier")
+    horde_characters_combobox.add_item("Plogojouish", "Plogojouish: Troll - Chaman", True)
+    alliance_characters_combobox: Combobox[str] = Combobox("Select your character...", 200, 50)
+
+
+    for combobox_item in horde_characters_combobox.items:
+        print(combobox_item.text, combobox_item.value, combobox_item.is_selected)
+    print(horde_characters_combobox.items[0].rect)
 
 if (__name__ == "__main__"):
     main()

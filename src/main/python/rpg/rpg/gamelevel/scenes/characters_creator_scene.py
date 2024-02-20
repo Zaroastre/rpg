@@ -1,6 +1,7 @@
 import pygame
 from pathlib import Path
 from math import radians, cos, sin, atan2, sqrt
+from typing import TypeVar, Generic
 from rpg.characters import Character
 from rpg.gamedesign.faction_system import Faction
 from rpg.gamelevel.scenes.scenes import Scene
@@ -14,6 +15,9 @@ from rpg.gamedesign.geolocation_system import Position
 from rpg.ui.sprites import SkeletonSprite, AvatarRulerSprite
 from rpg.math.geometry import Geometry
 
+from rpg.ui.widgets.radiobuttons import RadioButtonGroup
+
+T = TypeVar('T')
 
 class CharacterCreationScreen(Scene):
     __GENDER_KEY: str = "gender"
@@ -49,6 +53,10 @@ class CharacterCreationScreen(Scene):
         self.__avatar_ruler_sprite: AvatarRulerSprite = AvatarRulerSprite(350)
         self.__avatar_ruler_sprite.offset.x = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_LEFT
         self.__avatar_ruler_sprite.offset.y = CharacterCreationScreen.__VERTICAL_RULE_MARGIN_TOP
+
+        self.__gender_buttons_group: RadioButtonGroup = RadioButtonGroup("genders")
+        for gender in list(Gender):
+            self.__gender_buttons_group.add(gender.name, gender)
         
         self.__selected_gender_index: int = 0
         self.__selected_faction_index: int = 0
